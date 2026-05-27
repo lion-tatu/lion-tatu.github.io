@@ -235,7 +235,6 @@
         let distributionMode = "auto";
         let windowPriorities = {};
         let currentActiveTask = null;
-        let problemListenerStarted = false;
         let queueCurrentPage = 1;
         let queueItemsPerPage = 5;
         
@@ -270,14 +269,57 @@
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
         
-        function getDeviceInfo() {
+        // ============ ОПРЕДЕЛЕНИЕ ПОЛНОЙ МОДЕЛИ УСТРОЙСТВА ============
+        async function getFullDeviceModel() {
             const ua = navigator.userAgent;
-            if (ua.includes("iPhone")) return "iPhone";
-            if (ua.includes("iPad")) return "iPad";
-            if (ua.includes("Android")) return "Android";
-            if (ua.includes("Windows")) return "Windows PC";
-            if (ua.includes("Mac")) return "Mac";
-            return "Unknown";
+            let deviceModel = "Unknown";
+            
+            const uaLower = ua.toLowerCase();
+            
+            if (uaLower.includes('mi ') || uaLower.includes('redmi') || uaLower.includes('poco')) {
+                const match = ua.match(/Redmi [\w\d\s]+|Mi [\w\d\s]+|POCO [\w\d\s]+/i);
+                if (match) deviceModel = match[0];
+                else deviceModel = "Xiaomi Device";
+            }
+            else if (uaLower.includes('samsung') || uaLower.includes('sm-')) {
+                const match = ua.match(/SM-[A-Za-z0-9]+|Galaxy [\w\d\s]+/i);
+                if (match) deviceModel = match[0];
+                else deviceModel = "Samsung Galaxy";
+            }
+            else if (uaLower.includes('huawei') || uaLower.includes('honor')) {
+                const match = ua.match(/Huawei [\w\d\s]+|Honor [\w\d\s]+/i);
+                if (match) deviceModel = match[0];
+                else deviceModel = "Huawei Device";
+            }
+            else if (uaLower.includes('pixel')) {
+                const match = ua.match(/Pixel [\d]+/i);
+                if (match) deviceModel = match[0];
+                else deviceModel = "Google Pixel";
+            }
+            else if (uaLower.includes('iphone')) {
+                const match = ua.match(/iPhone (\d+,\d+|\d+)/i);
+                if (match) deviceModel = `iPhone ${match[1]}`;
+                else deviceModel = "iPhone";
+            }
+            else if (uaLower.includes('android')) {
+                const match = ua.match(/Android; [\w\d\s]+; ([\w\d\s]+) Build/i);
+                if (match && match[1]) deviceModel = match[1];
+                else deviceModel = "Android Device";
+            }
+            else if (uaLower.includes('windows')) {
+                deviceModel = "Windows PC";
+            }
+            else if (uaLower.includes('mac')) {
+                deviceModel = "Mac";
+            }
+            
+            return {
+                fullModel: deviceModel,
+                screenResolution: `${window.screen.width}x${window.screen.height}`,
+                language: navigator.language || 'unknown',
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
+                userAgent: ua.substring(0, 200)
+            };
         }
         
         // ============ ИНИЦИАЛИЗАЦИЯ ПОЛЬЗОВАТЕЛЕЙ ============
@@ -325,10 +367,15 @@
             if (!userData) { showError("Неверный номер окна!"); return false; }
             if (userData.password !== password) { showError("Неверный пароль!"); return false; }
             
+            const deviceInfo = await getFullDeviceModel();
             await database.ref(`users/${windowNumber}`).update({
                 online: true,
                 lastSeen: Date.now(),
-                deviceModel: getDeviceInfo()
+                deviceModel: deviceInfo.fullModel,
+                deviceScreen: deviceInfo.screenResolution,
+                deviceLanguage: deviceInfo.language,
+                deviceTimezone: deviceInfo.timezone,
+                deviceUserAgent: deviceInfo.userAgent
             });
             
             currentUser = windowNumber;
@@ -347,10 +394,6 @@
         
         async function logout() {
             if (currentUser) await database.ref(`users/${currentUser}`).update({ online: false });
-            if (problemListenerStarted) {
-                database.ref('problems').off();
-                problemListenerStarted = false;
-            }
             currentUser = null; currentRole = null; currentWindow = null;
             localStorage.removeItem('user');
             renderLoginScreen();
@@ -590,10 +633,10 @@
             });
         }
         
-        // ============ СОХРАНЕНИЕ В БАЗУ ЧЕКОВ (ВТОРАЯ БАЗА) ============
+        // ============ СОХРАНЕНИЕ В БАЗУ ЧЕКОВ (ТОЛЬКО ВТОРАЯ БАЗА) ============
         async function saveToCheckLog(checkData) {
             const logId = `${Date.now()}_${checkData.id}`;
-            // Сохраняем во ВТОРУЮ базу (cheki-tatu-save)
+            // ✅ ТОЛЬКО во вторую базу! Никакой записи в основную
             await chekiDatabase.ref(`checkLogs/${logId}`).set({
                 ...checkData,
                 logId: logId,
@@ -601,7 +644,7 @@
                 date: new Date().toLocaleDateString('ru-RU'),
                 fullDateTime: new Date().toLocaleString('ru-RU')
             });
-            console.log("✅ Чек сохранён во вторую базу:", logId);
+            console.log("✅ Чек сохранён во вторую базу (cheki-tatu-save):", logId);
         }
         
         async function getBestWindow() {
@@ -639,55 +682,23 @@
             }
         }
         
-        // ============ ПРОБЛЕМЫ ============
+        // ============ ПРОБЛЕМЫ (НЕ СОХРАНЯЮТСЯ В БАЗЕ) ============
         async function sendProblemFromWorker() {
+            const problemId = Date.now();
             const problemData = {
-                id: Date.now(),
+                id: problemId,
                 window: currentWindow,
                 windowNum: currentUser,
                 ticket: currentActiveTask?.id || null,
                 time: new Date().toLocaleTimeString(),
-                timestamp: Date.now(),
-                status: "new"
+                timestamp: problemId
             };
-            await database.ref('problems').push(problemData);
+            
+            showCashierProblemNotification(problemData);
             showSuccess(`🔴 Сигнал о проблеме отправлен кассиру`);
         }
         
-        async function sendProblemFromCashierToWindow(windowNum) {
-            const users = await loadUsers();
-            if (!users[windowNum]) { showError(`Окно ${windowNum} не найдено!`); return; }
-            
-            const problemData = {
-                id: Date.now(),
-                window: users[windowNum].name,
-                windowNum: windowNum,
-                ticket: null,
-                time: new Date().toLocaleTimeString(),
-                timestamp: Date.now(),
-                status: "new"
-            };
-            await database.ref('problems').push(problemData);
-            showSuccess(`🔴 Сигнал о проблеме отправлен на окно ${windowNum}`);
-        }
-        
-        function startProblemListener() {
-            if (problemListenerStarted) return;
-            if (currentRole !== 'CASHBOX') return;
-            
-            problemListenerStarted = true;
-            
-            database.ref('problems').orderByChild('status').equalTo('new').on('child_added', (snapshot) => {
-                const problem = snapshot.val();
-                if (problem && problem.status === 'new') {
-                    showProblemNotification(problem, snapshot.key);
-                }
-            });
-        }
-        
-        function showProblemNotification(problem, problemId) {
-            speak(`ВНИМАНИЕ! ПРОБЛЕМА НА ОКНЕ ${problem.windowNum}!`, true);
-            
+        function showCashierProblemNotification(problem) {
             const notificationHtml = `
                 <div id="problemNotify_${problem.id}" class="problem-notify">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
@@ -697,7 +708,7 @@
                             ${problem.ticket ? `<div style="font-size: 16px;">🎫 Билет: №${problem.ticket}</div>` : '<div style="font-size: 16px;">⚠️ Общая проблема</div>'}
                             <div style="font-size: 14px;">⏰ Время: ${problem.time}</div>
                         </div>
-                        <button onclick="resolveProblem('${problemId}', '${problem.windowNum}')" style="background: #00ff66; color: #0a0a0f; padding: 15px 30px; font-size: 18px; font-weight: bold; border: none; border-radius: 50px; cursor: pointer;">
+                        <button onclick="resolveProblemLocally('${problem.id}', '${problem.windowNum}')" style="background: #00ff66; color: #0a0a0f; padding: 15px 30px; font-size: 18px; font-weight: bold; border: none; border-radius: 50px; cursor: pointer;">
                             🚶‍♂️ ИДУ
                         </button>
                     </div>
@@ -709,13 +720,39 @@
             notifyDiv.id = `problemNotify_${problem.id}`;
             notifyDiv.innerHTML = notificationHtml;
             app.insertBefore(notifyDiv, app.firstChild);
+            
+            speak(`ВНИМАНИЕ! ПРОБЛЕМА НА ОКНЕ ${problem.windowNum}!`, true);
+            
+            setTimeout(() => {
+                const el = document.getElementById(`problemNotify_${problem.id}`);
+                if (el) el.remove();
+            }, 30000);
         }
         
-        async function resolveProblem(problemId, windowNum) {
-            await database.ref(`problems/${problemId}`).update({ status: "resolved" });
-            const notifyDiv = document.getElementById(`problemNotify_${problemId.split('_')[1]}`);
-            if (notifyDiv) notifyDiv.remove();
-            showSuccess(`✅ Проблема на окне ${windowNum} решена`);
+        function resolveProblemLocally(problemId, windowNum) {
+            const notifyDiv = document.getElementById(`problemNotify_${problemId}`);
+            if (notifyDiv) {
+                notifyDiv.remove();
+                showSuccess(`✅ Проблема на окне ${windowNum} решена`);
+            }
+        }
+        
+        async function sendProblemFromCashierToWindow(windowNum) {
+            const users = await loadUsers();
+            if (!users[windowNum]) { showError(`Окно ${windowNum} не найдено!`); return; }
+            
+            const problemId = Date.now();
+            const problemData = {
+                id: problemId,
+                window: users[windowNum].name,
+                windowNum: windowNum,
+                ticket: null,
+                time: new Date().toLocaleTimeString(),
+                timestamp: problemId
+            };
+            
+            showCashierProblemNotification(problemData);
+            showSuccess(`🔴 Сигнал о проблеме отправлен на окно ${windowNum}`);
         }
         
         // ============ УВЕДОМЛЕНИЯ ============
@@ -782,7 +819,6 @@
             if (success) {
                 await loadDistributionSettings();
                 if (currentRole === 'CASHBOX') {
-                    startProblemListener();
                     startQueueListener();
                     renderCashierScreen();
                 } else {
@@ -948,7 +984,6 @@
             let targetWindow = null;
             let appointmentTime = null;
             
-            // Пытаемся найти свободного мастера
             if (distributionMode === "manual") {
                 const users = await loadUsers();
                 const freeWindows = Object.entries(users)
@@ -968,7 +1003,6 @@
             }
             
             if (targetWindow) {
-                // Есть свободный мастер — отправляем сразу
                 const users = await loadUsers();
                 const masterName = users[targetWindow]?.name || `Окно ${targetWindow}`;
                 const timeSelect = document.getElementById('timeSelect');
@@ -992,7 +1026,7 @@
                 
                 await saveTask(task);
                 
-                // ============ СОХРАНЯЕМ ЧЕК ВО ВТОРУЮ БАЗУ ============
+                // ✅ Сохраняем чек ТОЛЬКО во вторую базу
                 await saveToCheckLog({
                     id: ticketId,
                     code6: code6,
@@ -1010,7 +1044,6 @@
                 await navigator.clipboard.writeText(code6);
                 
             } else {
-                // Нет свободных мастеров — ставим в очередь (+5 минут)
                 const futureTime = new Date(currentTime.getTime() + 5 * 60000);
                 const hours = futureTime.getHours().toString().padStart(2, '0');
                 const minutes = futureTime.getMinutes().toString().padStart(2, '0');
@@ -1029,7 +1062,7 @@
                 
                 await addToQueue(orderData);
                 
-                // ============ СОХРАНЯЕМ ЧЕК ВО ВТОРУЮ БАЗУ ============
+                // ✅ Сохраняем чек ТОЛЬКО во вторую базу
                 await saveToCheckLog({
                     id: ticketId,
                     code6: code6,
@@ -1074,13 +1107,12 @@
                     else if (status === "busy") { statusText = "🔴 ЗАНЯТ"; color = "#ff0000"; }
                     else if (status === "break") { statusText = "🟡 ПЕРЕРЫВ"; color = "#ffcc00"; }
                     
-                    const priority = windowPriorities[num] || 1;
-                    
                     container.innerHTML += `
                         <div class="window-row">
-                            <span><strong>${user.name}</strong> (приор: ${priority})</span>
+                            <span><strong>${user.name}</strong></span>
                             <span style="color: ${color}">${statusText}</span>
                             <span>📊 заказов: ${user.todayOrders || 0}</span>
+                            <span title="📱 ${user.deviceModel || 'Unknown'}">📱 ${(user.deviceModel || 'Unknown').substring(0, 15)}</span>
                             <div style="display: flex; gap: 5px;">
                                 ${status === "busy" ? `<button onclick="freeWindow(${num})" class="btn-sm">🔓 Освободить</button>` : ''}
                                 ${status === "free" ? `<button onclick="setBreakByCashier(${num})" class="btn-sm btn-warning">🟡 Перерыв</button>` : ''}
@@ -1096,6 +1128,7 @@
         async function freeWindow(windowNum) {
             await updateUserStatus(windowNum, "free");
             await loadWindowsStatus();
+            showSuccess(`🔓 Окно ${windowNum} освобождено`);
         }
         
         async function setBreakByCashier(windowNum) {
@@ -1278,13 +1311,14 @@
                         <div class="window-row">
                             <span><strong>${user.name}</strong></span>
                             <span>${user.online ? '🟢 Онлайн' : '⚫ Оффлайн'}</span>
-                            <span>${user.deviceModel || 'Unknown'}</span>
+                            <span title="${user.deviceUserAgent || ''}">📱 ${user.deviceModel || 'Unknown'}</span>
                             <span>📊 заказов: <strong style="color: #00ff66;">${user.todayOrders || 0}</strong></span>
                             <span>${user.workStatus === 'free' ? '🟢 Свободен' : user.workStatus === 'busy' ? '🔴 Занят' : '🟡 Перерыв'}</span>
                             <div style="display: flex; gap: 5px;">
                                 <button onclick="kickWorker(${num})" class="btn-danger btn-sm">🚪 ВЫГНАТЬ</button>
                                 <button onclick="forceFreeWindow(${num})" class="btn-success btn-sm">🔓 Освободить</button>
                                 <button onclick="setBreakByCashier(${num})" class="btn-warning btn-sm">🟡 Перерыв</button>
+                                <button onclick="removeBreakByCashier(${num})" class="btn-success btn-sm">✅ Снять перерыв</button>
                             </div>
                         </div>
                     `;
@@ -1529,7 +1563,6 @@
                 currentRole = user.role;
                 currentWindow = user.name;
                 if (currentRole === 'CASHBOX') {
-                    startProblemListener();
                     startQueueListener();
                     renderCashierScreen();
                 } else {
