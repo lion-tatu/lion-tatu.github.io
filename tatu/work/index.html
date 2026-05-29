@@ -176,6 +176,17 @@
             color: #00ff66;
             font-weight: bold;
         }
+        .fullscreen-clock {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            min-height: 400px;
+            font-size: 8vw;
+            font-family: monospace;
+            color: #05d9e8;
+            text-shadow: 0 0 20px rgba(5, 217, 232, 0.5);
+        }
         @media (max-width: 768px) {
             .container { padding: 15px; }
             .flex-row { flex-direction: column; }
@@ -183,6 +194,7 @@
             button { width: 100%; }
             .problem-notify { left: 10px; right: 10px; }
             .floating-code { left: 10px; right: 10px; bottom: 10px; }
+            .fullscreen-clock { font-size: 15vw; min-height: 300px; }
         }
     </style>
 </head>
@@ -193,7 +205,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <script>
-        // ============ FIREBASE КОНФИГ (ОСНОВНАЯ БАЗА) ============
+        // ============ FIREBASE КОНФИГ ============
         const MAIN_FIREBASE_CONFIG = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_AUTH_DOMAIN",
@@ -204,7 +216,6 @@
             appId: "YOUR_APP_ID"
         };
         
-        // ============ FIREBASE КОНФИГ (БАЗА ЧЕКОВ) ============
         const CHEKI_FIREBASE_CONFIG = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_AUTH_DOMAIN",
@@ -215,7 +226,6 @@
             appId: "YOUR_APP_ID"
         };
         
-        // Инициализация ДВУХ баз
         firebase.initializeApp(MAIN_FIREBASE_CONFIG, 'main');
         firebase.initializeApp(CHEKI_FIREBASE_CONFIG, 'cheki');
         
@@ -229,7 +239,6 @@
         let cart = [];
         let currentCount = 1;
         let ttsEnabled = true;
-        let voices = [];
         let selectedVoice = null;
         let currentTicketNumber = 1;
         let distributionMode = "auto";
@@ -237,96 +246,112 @@
         let currentActiveTask = null;
         let queueCurrentPage = 1;
         let queueItemsPerPage = 5;
+        let problemListenerStarted = false;
         
         const prices = { "ручка": 4, "маркер": 6 };
         
-        // ============ TTS ============
-        function initTTS() {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.onvoiceschanged = () => {
-                    voices = window.speechSynthesis.getVoices();
-                    selectedVoice = voices.find(v => v.lang.includes('ru')) || voices[0];
-                };
-                voices = window.speechSynthesis.getVoices();
-                selectedVoice = voices.find(v => v.lang.includes('ru')) || voices[0];
-            }
+        // ============ MICROSOFT ELENA TTS ============
+        function loadRussianVoice() {
+            return new Promise((resolve) => {
+                const voices = window.speechSynthesis.getVoices();
+                if (voices.length) {
+                    selectedVoice = voices.find(v => v.lang.includes('ru') && (v.name.includes('Microsoft') || v.name.includes('Elena'))) ||
+                                   voices.find(v => v.lang.includes('ru')) || voices[0];
+                    resolve(selectedVoice);
+                } else {
+                    window.speechSynthesis.onvoiceschanged = () => {
+                        const newVoices = window.speechSynthesis.getVoices();
+                        selectedVoice = newVoices.find(v => v.lang.includes('ru') && (v.name.includes('Microsoft') || v.name.includes('Elena'))) ||
+                                       newVoices.find(v => v.lang.includes('ru')) || newVoices[0];
+                        resolve(selectedVoice);
+                    };
+                }
+            });
         }
         
-        function speak(text) {
+        function speakText(text, rate = 0.85, volume = 0.9) {
             if (!ttsEnabled) return;
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ru-RU';
-                if (selectedVoice) utterance.voice = selectedVoice;
-                utterance.rate = 0.85;
-                window.speechSynthesis.cancel();
-                window.speechSynthesis.speak(utterance);
-            }
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ru-RU';
+            utterance.rate = rate;
+            utterance.volume = volume;
+            if (selectedVoice) utterance.voice = selectedVoice;
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
         }
+        
+        function speakNumber(num) {
+            const units = ['ноль', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
+            const teens = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
+            const tens = ['', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто'];
+            if (num < 10) speakText(units[num]);
+            else if (num < 20) speakText(teens[num - 10]);
+            else if (num < 100) {
+                const ten = Math.floor(num / 10);
+                const unit = num % 10;
+                let text = tens[ten];
+                if (unit > 0) text += ' ' + units[unit];
+                speakText(text);
+            } else speakText(num.toString().split('').join(' '));
+        }
+        
+        function speakCode(code) {
+            const digits = code.toString().split('');
+            const words = ['ноль', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
+            let text = '';
+            for (const digit of digits) text += words[parseInt(digit)] + ' ';
+            speakText(text.trim());
+        }
+        
+        function announceNewOrder(ticketId, code6) {
+            speakText(`Новый заказ! Билет номер`);
+            setTimeout(() => { speakNumber(ticketId);
+                setTimeout(() => { speakText(`Код на чеке`);
+                    setTimeout(() => { speakCode(code6);
+                        setTimeout(() => speakText(`Сообщите клиенту код`), 500);
+                    }, 300);
+                }, 300);
+            }, 300);
+        }
+        
+        function announceQueue(ticketId, minutes) {
+            speakText(`Заказ поставлен в очередь. Билет номер`);
+            setTimeout(() => { speakNumber(ticketId);
+                setTimeout(() => { speakText(`Ожидание примерно`);
+                    setTimeout(() => { speakNumber(minutes);
+                        setTimeout(() => speakText(`минут`), 500);
+                    }, 300);
+                }, 300);
+            }, 300);
+        }
+        
+        function announceClientArrived() { speakText(`Здравствуйте, присаживайтесь! Выберите татуировку`); }
+        function announceProblem(windowNum) { speakText(`Внимание! Проблема на окне`); setTimeout(() => speakNumber(windowNum), 500); setTimeout(() => speakText(`Срочно подойдите`), 1500); }
+        function announceComplete() { speakText(`Заказ завершён. Хорошего дня, будем ждать вас снова`); }
+        function announceWindowFree(windowNum) { speakText(`Окно`); setTimeout(() => { speakNumber(windowNum); setTimeout(() => speakText(`освобождено`), 500); }, 300); }
+        function announceProblemResolved(windowNum) { speakText(`Проблема на окне`); setTimeout(() => { speakNumber(windowNum); setTimeout(() => speakText(`решена`), 500); }, 300); }
         
         // ============ ГЕНЕРАЦИЯ ============
-        function generate6DigitCode() {
-            return Math.floor(100000 + Math.random() * 900000).toString();
-        }
+        function generate6DigitCode() { return Math.floor(100000 + Math.random() * 900000).toString(); }
         
-        // ============ ОПРЕДЕЛЕНИЕ ПОЛНОЙ МОДЕЛИ УСТРОЙСТВА ============
+        // ============ ОПРЕДЕЛЕНИЕ МОДЕЛИ ============
         async function getFullDeviceModel() {
             const ua = navigator.userAgent;
             let deviceModel = "Unknown";
-            
-            const uaLower = ua.toLowerCase();
-            
-            if (uaLower.includes('mi ') || uaLower.includes('redmi') || uaLower.includes('poco')) {
-                const match = ua.match(/Redmi [\w\d\s]+|Mi [\w\d\s]+|POCO [\w\d\s]+/i);
-                if (match) deviceModel = match[0];
-                else deviceModel = "Xiaomi Device";
-            }
-            else if (uaLower.includes('samsung') || uaLower.includes('sm-')) {
-                const match = ua.match(/SM-[A-Za-z0-9]+|Galaxy [\w\d\s]+/i);
-                if (match) deviceModel = match[0];
-                else deviceModel = "Samsung Galaxy";
-            }
-            else if (uaLower.includes('huawei') || uaLower.includes('honor')) {
-                const match = ua.match(/Huawei [\w\d\s]+|Honor [\w\d\s]+/i);
-                if (match) deviceModel = match[0];
-                else deviceModel = "Huawei Device";
-            }
-            else if (uaLower.includes('pixel')) {
-                const match = ua.match(/Pixel [\d]+/i);
-                if (match) deviceModel = match[0];
-                else deviceModel = "Google Pixel";
-            }
-            else if (uaLower.includes('iphone')) {
-                const match = ua.match(/iPhone (\d+,\d+|\d+)/i);
-                if (match) deviceModel = `iPhone ${match[1]}`;
-                else deviceModel = "iPhone";
-            }
-            else if (uaLower.includes('android')) {
+            if (ua.includes("iPhone")) deviceModel = "iPhone";
+            else if (ua.includes("iPad")) deviceModel = "iPad";
+            else if (ua.includes("Android")) {
                 const match = ua.match(/Android; [\w\d\s]+; ([\w\d\s]+) Build/i);
-                if (match && match[1]) deviceModel = match[1];
-                else deviceModel = "Android Device";
-            }
-            else if (uaLower.includes('windows')) {
-                deviceModel = "Windows PC";
-            }
-            else if (uaLower.includes('mac')) {
-                deviceModel = "Mac";
-            }
-            
-            return {
-                fullModel: deviceModel,
-                screenResolution: `${window.screen.width}x${window.screen.height}`,
-                language: navigator.language || 'unknown',
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
-                userAgent: ua.substring(0, 200)
-            };
+                deviceModel = match && match[1] ? match[1] : "Android";
+            } else if (ua.includes("Windows")) deviceModel = "Windows PC";
+            else if (ua.includes("Mac")) deviceModel = "Mac";
+            return { fullModel: deviceModel, screen: `${window.screen.width}x${window.screen.height}`, language: navigator.language, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, userAgent: ua.substring(0, 200) };
         }
         
-        // ============ ИНИЦИАЛИЗАЦИЯ ПОЛЬЗОВАТЕЛЕЙ ============
+        // ============ ИНИЦИАЛИЗАЦИЯ ============
         async function initDefaultUsers() {
             const snapshot = await database.ref('users').once('value');
             if (snapshot.exists()) return;
-            
             const defaultUsers = {
                 "0": { password: "admin123321", role: "CASHBOX", name: "Касса", workStatus: "free", online: false, priority: 0, todayOrders: 0 },
                 "1": { password: "okno1", role: "WORKER", name: "Александр", workStatus: "free", online: false, priority: 1, todayOrders: 0 },
@@ -334,11 +359,7 @@
                 "3": { password: "okno3", role: "WORKER", name: "Иван", workStatus: "free", online: false, priority: 1, todayOrders: 0 },
                 "4": { password: "okno4", role: "WORKER", name: "Екатерина", workStatus: "free", online: false, priority: 1, todayOrders: 0 }
             };
-            
-            for (const [key, value] of Object.entries(defaultUsers)) {
-                await database.ref(`users/${key}`).set(value);
-            }
-            
+            for (const [key, value] of Object.entries(defaultUsers)) await database.ref(`users/${key}`).set(value);
             await database.ref('settings/distributionMode').set("auto");
             await database.ref('settings/windowPriorities').set({ "1": 1, "2": 1, "3": 1, "4": 1 });
             await database.ref('counter').set(1);
@@ -348,14 +369,10 @@
         async function initDefaultSchedule() {
             const snapshot = await database.ref('schedule').once('value');
             if (snapshot.exists()) return;
-            
             const defaultSchedule = {};
-            for (let hour = 12; hour <= 20; hour++) {
-                for (const minute of ['00', '15', '30', '45']) {
-                    const time = `${hour}:${minute}`;
-                    defaultSchedule[time] = { available: true, bookedBy: null };
-                }
-            }
+            for (let hour = 12; hour <= 20; hour++)
+                for (const minute of ['00', '15', '30', '45'])
+                    defaultSchedule[`${hour}:${minute}`] = { available: true, bookedBy: null };
             await database.ref('schedule').set(defaultSchedule);
         }
         
@@ -363,32 +380,20 @@
         async function login(windowNumber, password) {
             const snapshot = await database.ref(`users/${windowNumber}`).once('value');
             const userData = snapshot.val();
-            
             if (!userData) { showError("Неверный номер окна!"); return false; }
             if (userData.password !== password) { showError("Неверный пароль!"); return false; }
-            
             const deviceInfo = await getFullDeviceModel();
             await database.ref(`users/${windowNumber}`).update({
-                online: true,
-                lastSeen: Date.now(),
-                deviceModel: deviceInfo.fullModel,
-                deviceScreen: deviceInfo.screenResolution,
-                deviceLanguage: deviceInfo.language,
-                deviceTimezone: deviceInfo.timezone,
-                deviceUserAgent: deviceInfo.userAgent
+                online: true, lastSeen: Date.now(), deviceModel: deviceInfo.fullModel,
+                deviceScreen: deviceInfo.screen, deviceLanguage: deviceInfo.language,
+                deviceTimezone: deviceInfo.timezone, deviceUserAgent: deviceInfo.userAgent
             });
-            
             currentUser = windowNumber;
             currentRole = userData.role;
             currentWindow = userData.name;
-            
-            localStorage.setItem('user', JSON.stringify({
-                windowNumber: windowNumber,
-                role: userData.role,
-                name: userData.name
-            }));
-            
-            initTTS();
+            localStorage.setItem('user', JSON.stringify({ windowNumber, role: userData.role, name: userData.name }));
+            setupPageVisibilityTracking();
+            startProblemListener();
             return true;
         }
         
@@ -399,411 +404,162 @@
             renderLoginScreen();
         }
         
+        function setupPageVisibilityTracking() {
+            window.addEventListener('beforeunload', async () => { if (currentUser) await database.ref(`users/${currentUser}`).update({ online: false }); });
+            document.addEventListener('visibilitychange', async () => { if (currentUser) await database.ref(`users/${currentUser}`).update({ online: !document.hidden }); });
+        }
+        
         // ============ ЗАГРУЗКА ДАННЫХ ============
-        async function loadCounter() {
-            const snapshot = await database.ref('counter').once('value');
-            return snapshot.val() || 1;
-        }
+        async function loadCounter() { const s = await database.ref('counter').once('value'); return s.val() || 1; }
+        async function updateCounter(v) { await database.ref('counter').set(v); }
+        async function loadTasks() { const s = await database.ref('tasks').once('value'); return s.val() || {}; }
+        async function saveTask(t) { await database.ref(`tasks/${t.id}`).set(t); }
+        async function deleteTask(id) { await database.ref(`tasks/${id}`).remove(); }
+        async function updateTaskStatus(id, status, master = null) { const t = (await database.ref(`tasks/${id}`).once('value')).val(); if (t) { t.status = status; if (master) t.master = master; await database.ref(`tasks/${id}`).set(t); } }
+        async function loadUsers() { const s = await database.ref('users').once('value'); return s.val() || {}; }
+        async function updateUserStatus(num, status) { await database.ref(`users/${num}/workStatus`).set(status); }
+        async function updateUserTodayOrders(num, inc = true) { const u = (await database.ref(`users/${num}`).once('value')).val(); if (u) await database.ref(`users/${num}/todayOrders`).set((u.todayOrders || 0) + (inc ? 1 : 0)); }
         
-        async function updateCounter(value) {
-            await database.ref('counter').set(value);
-        }
-        
-        async function loadTasks() {
-            const snapshot = await database.ref('tasks').once('value');
-            return snapshot.val() || {};
-        }
-        
-        async function saveTask(task) {
-            await database.ref(`tasks/${task.id}`).set(task);
-        }
-        
-        async function deleteTask(taskId) {
-            await database.ref(`tasks/${taskId}`).remove();
-        }
-        
-        async function updateTaskStatus(taskId, status, master = null) {
-            const taskRef = database.ref(`tasks/${taskId}`);
-            const snapshot = await taskRef.once('value');
-            const task = snapshot.val();
-            if (task) {
-                task.status = status;
-                if (master) task.master = master;
-                await taskRef.set(task);
-            }
-        }
-        
-        async function loadUsers() {
-            const snapshot = await database.ref('users').once('value');
-            return snapshot.val() || {};
-        }
-        
-        async function updateUserStatus(windowNumber, status) {
-            await database.ref(`users/${windowNumber}/workStatus`).set(status);
-        }
-        
-        async function updateUserTodayOrders(windowNumber, increment = true) {
-            const userRef = database.ref(`users/${windowNumber}`);
-            const snapshot = await userRef.once('value');
-            const user = snapshot.val();
-            if (user) {
-                const newCount = (user.todayOrders || 0) + (increment ? 1 : 0);
-                await userRef.update({ todayOrders: newCount });
-            }
-        }
-        
-        // ============ РАСПРЕДЕЛЕНИЕ ЗАКАЗОВ ============
         async function loadDistributionSettings() {
-            const modeSnap = await database.ref('settings/distributionMode').once('value');
-            distributionMode = modeSnap.val() || "auto";
-            const prioritiesSnap = await database.ref('settings/windowPriorities').once('value');
-            windowPriorities = prioritiesSnap.val() || { "1": 1, "2": 1, "3": 1, "4": 1 };
+            const m = await database.ref('settings/distributionMode').once('value');
+            distributionMode = m.val() || "auto";
+            const p = await database.ref('settings/windowPriorities').once('value');
+            windowPriorities = p.val() || { "1": 1, "2": 1, "3": 1, "4": 1 };
         }
         
-        async function saveDistributionMode(mode) {
-            distributionMode = mode;
-            await database.ref('settings/distributionMode').set(mode);
-            showSuccess(`Режим распределения: ${mode === 'auto' ? 'Автоматический' : mode === 'manual' ? 'Ручной' : 'Приоритетный'}`);
-            if (currentRole === 'CASHBOX') renderCashierScreen();
-        }
-        
-        async function saveWindowPriority(windowNum, priority) {
-            windowPriorities[windowNum] = priority;
-            await database.ref('settings/windowPriorities').set(windowPriorities);
-            await database.ref(`users/${windowNum}/priority`).set(priority);
-            showSuccess(`Приоритет окна ${windowNum} установлен на ${priority}`);
-        }
+        async function saveDistributionMode(mode) { distributionMode = mode; await database.ref('settings/distributionMode').set(mode); showSuccess(`Режим: ${mode}`); if (currentRole === 'CASHBOX') renderCashierScreen(); }
+        async function saveWindowPriority(num, priority) { windowPriorities[num] = priority; await database.ref('settings/windowPriorities').set(windowPriorities); await database.ref(`users/${num}/priority`).set(priority); showSuccess(`Приоритет окна ${num} = ${priority}`); }
         
         async function getAvailableSlots() {
-            const schedule = await database.ref('schedule').once('value');
-            const scheduleData = schedule.val() || {};
+            const schedule = (await database.ref('schedule').once('value')).val() || {};
             const tasks = await loadTasks();
-            const bookedTimes = Object.values(tasks).map(t => t.appointmentTime).filter(t => t);
-            
-            const slots = [];
-            for (const [time, data] of Object.entries(scheduleData)) {
-                if (data.available && !bookedTimes.includes(time)) {
-                    slots.push(time);
-                }
-            }
-            return slots.sort();
+            const booked = Object.values(tasks).map(t => t.appointmentTime).filter(t => t);
+            return Object.entries(schedule).filter(([t, d]) => d.available && !booked.includes(t)).map(([t]) => t).sort();
         }
         
         // ============ ОЧЕРЕДЬ ============
-        async function addToQueue(orderData) {
-            const queueId = Date.now();
-            await database.ref(`queue/${queueId}`).set({
-                ...orderData,
-                queueId: queueId,
-                queuedAt: Date.now(),
-                status: "waiting"
-            });
-        }
-        
-        async function getNextFromQueue() {
-            const snapshot = await database.ref('queue').orderByChild('queuedAt').once('value');
-            const queue = snapshot.val() || {};
-            const sorted = Object.values(queue).sort((a, b) => a.queuedAt - b.queuedAt);
-            return sorted[0] || null;
-        }
-        
-        async function getAllQueueItems() {
-            const snapshot = await database.ref('queue').orderByChild('queuedAt').once('value');
-            const queue = snapshot.val() || {};
-            return Object.values(queue).sort((a, b) => a.queuedAt - b.queuedAt);
-        }
-        
-        async function removeFromQueue(queueId) {
-            await database.ref(`queue/${queueId}`).remove();
-        }
+        async function addToQueue(data) { await database.ref(`queue/${Date.now()}`).set({ ...data, queuedAt: Date.now(), status: "waiting" }); }
+        async function getNextFromQueue() { const q = (await database.ref('queue').orderByChild('queuedAt').once('value')).val() || {}; return Object.values(q).sort((a,b)=>a.queuedAt-b.queuedAt)[0] || null; }
+        async function getAllQueueItems() { const q = (await database.ref('queue').once('value')).val() || {}; return Object.values(q).sort((a,b)=>a.queuedAt-b.queuedAt); }
+        async function removeFromQueue(id) { await database.ref(`queue/${id}`).remove(); }
         
         async function assignOrderToMaster(order, masterNum) {
             const users = await loadUsers();
             const masterName = users[masterNum]?.name || `Окно ${masterNum}`;
-            
             await updateUserStatus(masterNum, "busy");
-            
-            const task = {
-                id: order.id,
-                code6: order.code6,
-                items: order.items,
-                total: order.total,
-                time: order.time,
-                appointmentTime: order.appointmentTime,
-                status: "waiting",
-                master: masterName,
-                clientStatus: "waiting",
-                createdAt: order.createdAt,
-                windowNum: masterNum
-            };
-            
-            await saveTask(task);
-            
-            showSuccess(`✅ ЗАКАЗ №${order.id} автоматически назначен ${masterName}`);
-            speak(`Заказ номер ${order.id} назначен ${masterName}`, false);
-            
-            if (currentRole === 'CASHBOX') {
-                await loadWindowsStatus();
-                await updateTimeSelect();
-                await loadQueueDisplay();
-            }
+            await saveTask({ id: order.id, code6: order.code6, items: order.items, total: order.total, time: order.time, appointmentTime: order.appointmentTime, status: "waiting", master: masterName, clientStatus: "waiting", createdAt: order.createdAt, windowNum: masterNum });
+            showSuccess(`✅ ЗАКАЗ №${order.id} назначен ${masterName}`);
+            if (currentRole === 'CASHBOX') { await loadWindowsStatus(); await updateTimeSelect(); await loadQueueDisplay(); }
         }
         
         async function loadQueueDisplay() {
             const container = document.getElementById('queueContainer');
             if (!container) return;
-            
-            const allItems = await getAllQueueItems();
-            const totalPages = Math.ceil(allItems.length / queueItemsPerPage);
-            const startIndex = (queueCurrentPage - 1) * queueItemsPerPage;
-            const pageItems = allItems.slice(startIndex, startIndex + queueItemsPerPage);
-            
-            if (allItems.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #555; padding: 15px;">✨ ОЧЕРЕДЬ ПУСТА ✨</div>';
-                return;
-            }
-            
+            const items = await getAllQueueItems();
+            const totalPages = Math.ceil(items.length / queueItemsPerPage);
+            const start = (queueCurrentPage-1)*queueItemsPerPage;
+            const page = items.slice(start, start+queueItemsPerPage);
+            if (items.length===0) { container.innerHTML='<div style="text-align:center;color:#555;padding:15px;">✨ ОЧЕРЕДЬ ПУСТА ✨</div>'; return; }
             let html = `<div class="queue-container-scroll">`;
-            for (const order of pageItems) {
-                const itemsText = order.items.map(item => `${item.service} x${item.count}`).join(', ');
-                const waitMinutes = Math.ceil((order.queuedAt + 5 * 60000 - Date.now()) / 60000);
-                html += `
-                    <div class="queue-item" onclick="showQueueItemDetails('${order.queueId}')">
-                        <div><strong>🎫 БИЛЕТ №${order.id}</strong> | ⏰ ${order.appointmentTime} | 💰 ${order.total} коп</div>
-                        <div style="font-size: 13px; color: #aaa;">📦 ${itemsText}</div>
-                        <div style="font-size: 12px; color: #05d9e8;">🔑 Код: ${order.code6}</div>
-                        <div class="queue-wait">⏳ В очереди: ${waitMinutes > 0 ? waitMinutes : 0} мин</div>
-                        <button onclick="event.stopPropagation(); removeQueueItem('${order.queueId}')" class="btn-sm btn-danger" style="margin-top: 5px;">🗑 Удалить из очереди</button>
-                    </div>
-                `;
+            for (const o of page) {
+                const wait = Math.ceil((o.queuedAt+5*60000-Date.now())/60000);
+                html += `<div class="queue-item" onclick="showQueueItemDetails('${o.queueId}')">
+                    <div><strong>🎫 БИЛЕТ №${o.id}</strong> | ⏰ ${o.appointmentTime} | 💰 ${o.total} коп</div>
+                    <div>📦 ${o.items.map(i=>`${i.service} x${i.count}`).join(', ')}</div>
+                    <div>🔑 Код: ${o.code6}</div>
+                    <div class="queue-wait">⏳ Ожидание: ${wait>0?wait:0} мин</div>
+                    <button onclick="event.stopPropagation(); removeQueueItem('${o.queueId}')" class="btn-sm btn-danger">🗑 Удалить</button>
+                </div>`;
             }
             html += `</div>`;
-            
-            if (totalPages > 1) {
-                html += `
-                    <div class="queue-nav">
-                        <button onclick="changeQueuePage(-1)" class="btn-sm" ${queueCurrentPage === 1 ? 'disabled' : ''}>◀ Назад</button>
-                        <span class="current-page">Страница ${queueCurrentPage} из ${totalPages}</span>
-                        <button onclick="changeQueuePage(1)" class="btn-sm" ${queueCurrentPage === totalPages ? 'disabled' : ''}>Вперед ▶</button>
-                    </div>
-                `;
-            }
-            
+            if (totalPages>1) html += `<div class="queue-nav"><button onclick="changeQueuePage(-1)" class="btn-sm">◀ Назад</button><span class="current-page">${queueCurrentPage}/${totalPages}</span><button onclick="changeQueuePage(1)" class="btn-sm">Вперед ▶</button></div>`;
             container.innerHTML = html;
         }
         
-        function changeQueuePage(delta) {
-            queueCurrentPage += delta;
-            if (queueCurrentPage < 1) queueCurrentPage = 1;
-            loadQueueDisplay();
-        }
-        
-        async function showQueueItemDetails(queueId) {
-            const snapshot = await database.ref(`queue/${queueId}`).once('value');
-            const order = snapshot.val();
-            if (order) {
-                const itemsText = order.items.map(item => `${item.service.toUpperCase()} x${item.count} = ${item.count * item.price} коп`).join('\n');
-                alert(`🎫 БИЛЕТ №${order.id}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📦 СОСТАВ:\n${itemsText}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n💰 ИТОГО: ${order.total} коп\n🔑 КОД: ${order.code6}\n⏰ ВРЕМЯ: ${order.appointmentTime}`);
-            }
-        }
-        
-        async function removeQueueItem(queueId) {
-            if (confirm("Удалить заказ из очереди?")) {
-                await removeFromQueue(queueId);
-                await loadQueueDisplay();
-                showSuccess("✅ Заказ удалён из очереди");
-            }
-        }
+        function changeQueuePage(delta) { queueCurrentPage += delta; if(queueCurrentPage<1) queueCurrentPage=1; loadQueueDisplay(); }
+        async function showQueueItemDetails(id) { const o=(await database.ref(`queue/${id}`).once('value')).val(); if(o) alert(`🎫 БИЛЕТ №${o.id}\n📦 ${o.items.map(i=>`${i.service} x${i.count}`).join(', ')}\n💰 ${o.total} коп\n🔑 ${o.code6}`); }
+        async function removeQueueItem(id) { if(confirm("Удалить заказ?")){ await removeFromQueue(id); await loadQueueDisplay(); showSuccess("✅ Удалено"); } }
         
         function startQueueListener() {
-            database.ref('users').on('child_changed', async (snapshot) => {
-                const user = snapshot.val();
-                if (user && user.role === "WORKER" && user.workStatus === "free") {
-                    const nextOrder = await getNextFromQueue();
-                    if (nextOrder) {
-                        await removeFromQueue(nextOrder.queueId);
-                        await assignOrderToMaster(nextOrder, snapshot.key);
-                        await loadQueueDisplay();
-                    }
+            database.ref('users').on('child_changed', async (s) => {
+                const u = s.val();
+                if(u && u.role==="WORKER" && u.workStatus==="free") {
+                    const next = await getNextFromQueue();
+                    if(next) { await removeFromQueue(next.queueId); await assignOrderToMaster(next, s.key); await loadQueueDisplay(); }
                 }
             });
-            
-            database.ref('queue').on('value', () => {
-                if (currentRole === 'CASHBOX') loadQueueDisplay();
-            });
+            database.ref('queue').on('value', () => { if(currentRole==='CASHBOX') loadQueueDisplay(); });
         }
         
-        // ============ СОХРАНЕНИЕ В БАЗУ ЧЕКОВ (ТОЛЬКО ВТОРАЯ БАЗА) ============
-        async function saveToCheckLog(checkData) {
-            const logId = `${Date.now()}_${checkData.id}`;
-            // ✅ ТОЛЬКО во вторую базу! Никакой записи в основную
-            await chekiDatabase.ref(`checkLogs/${logId}`).set({
-                ...checkData,
-                logId: logId,
-                timestamp: Date.now(),
-                date: new Date().toLocaleDateString('ru-RU'),
-                fullDateTime: new Date().toLocaleString('ru-RU')
-            });
-            console.log("✅ Чек сохранён во вторую базу (cheki-tatu-save):", logId);
-        }
+        async function saveToCheckLog(data) { await chekiDatabase.ref(`checkLogs/${Date.now()}_${data.id}`).set({ ...data, timestamp: Date.now(), date: new Date().toLocaleDateString('ru-RU') }); }
         
         async function getBestWindow() {
             const users = await loadUsers();
-            let freeWindows = Object.entries(users)
-                .filter(([_, u]) => u.role === "WORKER" && u.workStatus === "free")
-                .map(([num, data]) => ({ 
-                    num: parseInt(num), 
-                    name: data.name, 
-                    todayOrders: data.todayOrders || 0,
-                    priority: windowPriorities[num] || 1
-                }));
-            
-            if (freeWindows.length === 0) return null;
-            
-            if (distributionMode === "auto") {
-                freeWindows.sort((a, b) => a.todayOrders - b.todayOrders);
-                const minOrders = freeWindows[0].todayOrders;
-                const leastBusy = freeWindows.filter(w => w.todayOrders === minOrders);
-                if (leastBusy.length > 1) {
-                    const lastWindow = parseInt(localStorage.getItem('lastWindow') || "0");
-                    const sorted = leastBusy.sort((a, b) => a.num - b.num);
-                    let nextIndex = sorted.findIndex(w => w.num === lastWindow) + 1;
-                    if (nextIndex >= sorted.length) nextIndex = 0;
-                    const selected = sorted[nextIndex];
-                    localStorage.setItem('lastWindow', selected.num);
-                    return selected.num;
-                }
-                return leastBusy[0].num;
-            } else if (distributionMode === "priority") {
-                freeWindows.sort((a, b) => a.priority - b.priority);
-                return freeWindows[0].num;
-            } else {
-                return null;
-            }
+            let free = Object.entries(users).filter(([_,u])=>u.role==="WORKER" && u.workStatus==="free").map(([num,d])=>({ num: parseInt(num), todayOrders: d.todayOrders||0, priority: windowPriorities[num]||1 }));
+            if(free.length===0) return null;
+            if(distributionMode==="auto") return free.sort((a,b)=>a.todayOrders-b.todayOrders)[0].num;
+            if(distributionMode==="priority") return free.sort((a,b)=>a.priority-b.priority)[0].num;
+            return null;
         }
         
-        // ============ ПРОБЛЕМЫ (НЕ СОХРАНЯЮТСЯ В БАЗЕ) ============
-        async function sendProblemFromWorker() {
+        // ============ ПРОБЛЕМЫ ============
+        async function broadcastProblem(problemData) {
             const problemId = Date.now();
-            const problemData = {
-                id: problemId,
-                window: currentWindow,
-                windowNum: currentUser,
-                ticket: currentActiveTask?.id || null,
-                time: new Date().toLocaleTimeString(),
-                timestamp: problemId
-            };
-            
-            showCashierProblemNotification(problemData);
-            showSuccess(`🔴 Сигнал о проблеме отправлен кассиру`);
+            const fullProblem = { id: problemId, window: problemData.window, windowNum: problemData.windowNum, ticket: problemData.ticket, time: new Date().toLocaleTimeString(), timestamp: problemId, status: "new" };
+            await database.ref(`problems/${problemId}`).set(fullProblem);
+            showProblemNotificationUniversal(fullProblem, problemId);
+            announceProblem(problemData.windowNum);
+            if (currentRole === 'WORKER') showSuccess(`🔴 Сигнал отправлен кассиру и всем мастерам`);
+            else showSuccess(`🔴 Сигнал отправлен всем мастерам`);
         }
         
-        function showCashierProblemNotification(problem) {
-            const notificationHtml = `
-                <div id="problemNotify_${problem.id}" class="problem-notify">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                        <div>
-                            <div style="font-size: 24px; font-weight: bold;">🔴 ПРОБЛЕМА!</div>
-                            <div style="font-size: 18px; margin-top: 5px;">📌 Окно: ${problem.window} (№${problem.windowNum})</div>
-                            ${problem.ticket ? `<div style="font-size: 16px;">🎫 Билет: №${problem.ticket}</div>` : '<div style="font-size: 16px;">⚠️ Общая проблема</div>'}
-                            <div style="font-size: 14px;">⏰ Время: ${problem.time}</div>
-                        </div>
-                        <button onclick="resolveProblemLocally('${problem.id}', '${problem.windowNum}')" style="background: #00ff66; color: #0a0a0f; padding: 15px 30px; font-size: 18px; font-weight: bold; border: none; border-radius: 50px; cursor: pointer;">
-                            🚶‍♂️ ИДУ
-                        </button>
-                    </div>
-                </div>
-            `;
-            
+        function showProblemNotificationUniversal(problem, problemId) {
+            const notificationHtml = `<div id="problemNotify_${problem.id}" class="problem-notify"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;"><div><div style="font-size:24px;font-weight:bold;">🔴 ПРОБЛЕМА!</div><div>📌 Окно: ${problem.window} (№${problem.windowNum})</div>${problem.ticket ? `<div>🎫 Билет: №${problem.ticket}</div>` : '<div>⚠️ Общая проблема</div>'}<div>⏰ ${problem.time}</div></div><button onclick="resolveProblemUniversal('${problem.id}', '${problem.windowNum}')" style="background:#00ff66;padding:15px 30px;border-radius:50px;cursor:pointer;">🚶‍♂️ ИДУ</button></div></div>`;
             const app = document.getElementById('app');
-            const notifyDiv = document.createElement('div');
-            notifyDiv.id = `problemNotify_${problem.id}`;
-            notifyDiv.innerHTML = notificationHtml;
-            app.insertBefore(notifyDiv, app.firstChild);
-            
-            speak(`ВНИМАНИЕ! ПРОБЛЕМА НА ОКНЕ ${problem.windowNum}!`, true);
-            
-            setTimeout(() => {
-                const el = document.getElementById(`problemNotify_${problem.id}`);
-                if (el) el.remove();
-            }, 30000);
+            const div = document.createElement('div');
+            div.id = `problemNotify_${problem.id}`;
+            div.innerHTML = notificationHtml;
+            app.insertBefore(div, app.firstChild);
+            setTimeout(() => { const el = document.getElementById(`problemNotify_${problem.id}`); if(el) el.remove(); }, 30000);
         }
         
-        function resolveProblemLocally(problemId, windowNum) {
-            const notifyDiv = document.getElementById(`problemNotify_${problemId}`);
-            if (notifyDiv) {
-                notifyDiv.remove();
-                showSuccess(`✅ Проблема на окне ${windowNum} решена`);
-            }
+        async function resolveProblemUniversal(problemId, windowNum) {
+            await database.ref(`problems/${problemId}`).update({ status: "resolved", resolvedBy: currentWindow, resolvedAt: Date.now() });
+            const el = document.getElementById(`problemNotify_${problemId}`);
+            if(el) el.remove();
+            showSuccess(`✅ Проблема на окне ${windowNum} решена (${currentWindow})`);
+            announceProblemResolved(windowNum);
         }
         
-        async function sendProblemFromCashierToWindow(windowNum) {
-            const users = await loadUsers();
-            if (!users[windowNum]) { showError(`Окно ${windowNum} не найдено!`); return; }
-            
-            const problemId = Date.now();
-            const problemData = {
-                id: problemId,
-                window: users[windowNum].name,
-                windowNum: windowNum,
-                ticket: null,
-                time: new Date().toLocaleTimeString(),
-                timestamp: problemId
-            };
-            
-            showCashierProblemNotification(problemData);
-            showSuccess(`🔴 Сигнал о проблеме отправлен на окно ${windowNum}`);
+        function startProblemListener() {
+            if (problemListenerStarted) return;
+            problemListenerStarted = true;
+            database.ref('problems').orderByChild('status').equalTo('new').on('child_added', (snapshot) => {
+                const problem = snapshot.val();
+                if (problem && problem.status === 'new') showProblemNotificationUniversal(problem, snapshot.key);
+            });
         }
+        
+        async function sendProblemFromWorker() { await broadcastProblem({ window: currentWindow, windowNum: currentUser, ticket: currentActiveTask?.id || null }); }
+        async function sendProblemFromCashierToWindow(windowNum) { const users = await loadUsers(); if (!users[windowNum]) { showError(`Окно ${windowNum} не найдено!`); return; } await broadcastProblem({ window: users[windowNum].name, windowNum, ticket: null }); }
         
         // ============ УВЕДОМЛЕНИЯ ============
-        function showError(msg) {
-            const app = document.getElementById('app');
-            const div = document.createElement('div');
-            div.className = 'error';
-            div.innerText = msg;
-            app.insertBefore(div, app.firstChild);
-            setTimeout(() => div.remove(), 3000);
-        }
+        function showError(msg) { const app = document.getElementById('app'); const d=document.createElement('div'); d.className='error'; d.innerText=msg; app.insertBefore(d,app.firstChild); setTimeout(()=>d.remove(),3000); }
+        function showSuccess(msg) { const app = document.getElementById('app'); const d=document.createElement('div'); d.className='success'; d.innerText=msg; app.insertBefore(d,app.firstChild); setTimeout(()=>d.remove(),3000); }
+        function showFloatingCode(code, id) { const app = document.getElementById('app'); const div = document.createElement('div'); div.className='floating-code'; div.innerHTML=`<div style="font-size:12px;color:#888;">НОВЫЙ ЗАКАЗ</div><div style="font-size:28px;font-weight:bold;color:#00ff66;font-family:monospace;letter-spacing:5px;">${code}</div><div style="font-size:14px;color:#05d9e8;">БИЛЕТ №${id}</div><div style="font-size:10px;color:#555;">Скажите код клиенту</div>`; app.appendChild(div); setTimeout(()=>div.remove(),10000); }
         
-        function showSuccess(msg) {
-            const app = document.getElementById('app');
-            const div = document.createElement('div');
-            div.className = 'success';
-            div.innerText = msg;
-            app.insertBefore(div, app.firstChild);
-            setTimeout(() => div.remove(), 3000);
-        }
-        
-        // ============ ПЛАВАЮЩИЙ КОД ============
-        function showFloatingCode(code, ticketId) {
-            const app = document.getElementById('app');
-            const floatingDiv = document.createElement('div');
-            floatingDiv.className = 'floating-code';
-            floatingDiv.innerHTML = `
-                <div style="font-size: 12px; color: #888;">НОВЫЙ ЗАКАЗ</div>
-                <div style="font-size: 28px; font-weight: bold; color: #00ff66; font-family: monospace; letter-spacing: 5px;">${code}</div>
-                <div style="font-size: 14px; color: #05d9e8;">БИЛЕТ №${ticketId}</div>
-                <div style="font-size: 10px; color: #555; margin-top: 5px;">Скажите код клиенту</div>
-            `;
-            app.appendChild(floatingDiv);
-            setTimeout(() => { if (floatingDiv) floatingDiv.remove(); }, 10000);
-        }
-        
-        // ============ ЭКРАН ВХОДА ============
+        // ============ ЭКРАН ВХОДА (БЕЗ ПАРОЛЕЙ) ============
         function renderLoginScreen() {
             const app = document.getElementById('app');
             app.innerHTML = `
-                <div class="container" style="max-width: 450px; margin: 0 auto;">
+                <div class="container" style="max-width:450px;margin:0 auto;">
                     <h1>🦁 LION t.A.T.u.</h1>
                     <div class="tts-control">
                         <label>🔊 Озвучка</label>
                         <input type="checkbox" id="ttsToggle" checked>
                     </div>
-                    <input type="number" id="windowNumber" placeholder="Номер окна (0 - касса, 1-4 - мастера)" value="0">
+                    <input type="number" id="windowNumber" placeholder="Номер окна" value="0">
                     <input type="password" id="password" placeholder="Пароль">
-                    <div style="font-size: 12px; color: #555; text-align: center; margin-bottom: 15px;">
-                        📋 Пароли: Касса(0): admin123321 | Окна 1-4: okno1, okno2, okno3, okno4
-                    </div>
                     <button onclick="doLogin()">🔓 ВОЙТИ</button>
                 </div>
             `;
@@ -814,7 +570,6 @@
             const windowNumber = document.getElementById('windowNumber').value;
             const password = document.getElementById('password').value;
             ttsEnabled = document.getElementById('ttsToggle').checked;
-            
             const success = await login(windowNumber, password);
             if (success) {
                 await loadDistributionSettings();
@@ -847,13 +602,11 @@
                             <div class="card">
                                 <div class="ticket-number" id="ticketNumber">БИЛЕТ №1</div>
                             </div>
-                            
                             <h2>➕ ДОБАВИТЬ В ЧЕК</h2>
                             <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
                                 <button onclick="addToCart('ручка')" style="background: #05d9e8;">✍️ РУЧКА (4 коп)</button>
                                 <button onclick="addToCart('маркер')" style="background: #ff6600;">🖍️ МАРКЕР (6 коп)</button>
                             </div>
-                            
                             <div class="card">
                                 <h3>КОЛИЧЕСТВО</h3>
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -864,46 +617,35 @@
                                     <button onclick="setCount(5)" class="btn-sm">x5</button>
                                 </div>
                             </div>
-                            
                             <div class="card">
-                                <h3>⚙️ РАСПРЕДЕЛЕНИЕ ЗАКАЗОВ</h3>
+                                <h3>⚙️ РАСПРЕДЕЛЕНИЕ</h3>
                                 <div class="mode-selector">
                                     <button class="mode-btn ${distributionMode === 'auto' ? 'active' : ''}" onclick="saveDistributionMode('auto')">🔄 АВТО</button>
                                     <button class="mode-btn ${distributionMode === 'manual' ? 'active' : ''}" onclick="saveDistributionMode('manual')">✋ РУЧНОЙ</button>
                                     <button class="mode-btn ${distributionMode === 'priority' ? 'active' : ''}" onclick="saveDistributionMode('priority')">⭐ ПРИОРИТЕТ</button>
                                 </div>
                             </div>
-                            
                             <div class="card">
                                 <h3>⏰ ВРЕМЯ ЗАПИСИ</h3>
                                 <select id="timeSelect"></select>
                             </div>
                         </div>
-                        
                         <div class="flex-col">
                             <h2>🛒 КОРЗИНА</h2>
                             <div class="card" id="cartContainer"></div>
                             <div class="total" id="totalAmount">💰 ИТОГО: 0 коп</div>
-                            
-                            <button class="btn-success" onclick="confirmOrder()">✅ ПОДТВЕРДИТЬ ЗАКАЗ</button>
+                            <button class="btn-success" onclick="confirmOrder()">✅ ПОДТВЕРДИТЬ</button>
                             <button class="btn-danger" onclick="clearCart()">🗑 ОЧИСТИТЬ</button>
-                            
                             <h2>📋 ОКНА</h2>
                             <div id="windowsContainer"></div>
-                            
-                            <h2>⏳ ОЧЕРЕДЬ ЗАКАЗОВ</h2>
+                            <h2>⏳ ОЧЕРЕДЬ</h2>
                             <div id="queueContainer" class="card"></div>
                         </div>
                     </div>
                 </div>
             `;
-            
-            updateClock();
-            setInterval(updateClock, 1000);
-            loadCashierData();
-            startRealtimeUpdates();
-            updateTimeSelect();
-            loadQueueDisplay();
+            updateClock(); setInterval(updateClock, 1000);
+            loadCashierData(); startRealtimeUpdates(); updateTimeSelect(); loadQueueDisplay();
         }
         
         async function sendProblemFromCashier() {
@@ -915,27 +657,13 @@
         async function updateTimeSelect() {
             const timeSelect = document.getElementById('timeSelect');
             if (!timeSelect) return;
-            
-            const availableSlots = await getAvailableSlots();
+            const slots = await getAvailableSlots();
             timeSelect.innerHTML = '';
-            for (const slot of availableSlots) {
-                const option = document.createElement('option');
-                option.value = slot;
-                option.textContent = slot;
-                timeSelect.appendChild(option);
-            }
-            if (availableSlots.length === 0) {
-                const option = document.createElement('option');
-                option.value = "";
-                option.textContent = "Нет свободных слотов";
-                timeSelect.appendChild(option);
-            }
+            for (const slot of slots) { const opt = document.createElement('option'); opt.value = slot; opt.textContent = slot; timeSelect.appendChild(opt); }
+            if (slots.length === 0) timeSelect.innerHTML = '<option value="">Нет свободных слотов</option>';
         }
         
-        function updateClock() {
-            const clock = document.getElementById('clock');
-            if (clock) clock.innerText = new Date().toLocaleTimeString('ru-RU');
-        }
+        function updateClock() { const clock = document.getElementById('clock'); if (clock) clock.innerText = new Date().toLocaleTimeString('ru-RU'); }
         
         async function loadCashierData() {
             currentTicketNumber = await loadCounter();
@@ -945,11 +673,7 @@
         }
         
         function setCount(count) { currentCount = count; }
-        
-        function addToCart(service) {
-            cart.push({ service, count: currentCount, price: prices[service] });
-            updateCartDisplay();
-        }
+        function addToCart(service) { cart.push({ service, count: currentCount, price: prices[service] }); updateCartDisplay(); }
         
         function updateCartDisplay() {
             const container = document.getElementById('cartContainer');
@@ -959,13 +683,7 @@
             cart.forEach((item, idx) => {
                 const itemTotal = item.count * item.price;
                 total += itemTotal;
-                container.innerHTML += `
-                    <div class="cart-item">
-                        <span>${item.service.toUpperCase()} x${item.count}</span>
-                        <span>${itemTotal} коп</span>
-                        <button onclick="removeFromCart(${idx})" class="btn-sm">🗑</button>
-                    </div>
-                `;
+                container.innerHTML += `<div class="cart-item"><span>${item.service.toUpperCase()} x${item.count}</span><span>${itemTotal} коп</span><button onclick="removeFromCart(${idx})" class="btn-sm">🗑</button></div>`;
             });
             document.getElementById('totalAmount').innerHTML = `💰 ИТОГО: ${total} коп`;
         }
@@ -986,16 +704,10 @@
             
             if (distributionMode === "manual") {
                 const users = await loadUsers();
-                const freeWindows = Object.entries(users)
-                    .filter(([_, u]) => u.role === "WORKER" && u.workStatus === "free");
-                
+                const freeWindows = Object.entries(users).filter(([_, u]) => u.role === "WORKER" && u.workStatus === "free");
                 if (freeWindows.length > 0) {
-                    const windowList = freeWindows.map(([num, u]) => `${num}: ${u.name}`).join('\n');
-                    const selected = prompt(`Выберите окно:\n${windowList}\n\nВведите номер окна:`);
-                    if (!selected || !freeWindows.find(([num]) => num === selected)) {
-                        showError("Неверный выбор окна!");
-                        return;
-                    }
+                    const selected = prompt(`Выберите окно:\n${freeWindows.map(([num, u]) => `${num}: ${u.name}`).join('\n')}\n\nВведите номер окна:`);
+                    if (!selected || !freeWindows.find(([num]) => num === selected)) { showError("Неверный выбор!"); return; }
                     targetWindow = selected;
                 }
             } else {
@@ -1006,83 +718,25 @@
                 const users = await loadUsers();
                 const masterName = users[targetWindow]?.name || `Окно ${targetWindow}`;
                 const timeSelect = document.getElementById('timeSelect');
-                appointmentTime = timeSelect ? timeSelect.value : currentTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                
+                appointmentTime = timeSelect?.value || currentTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
                 await updateUserStatus(targetWindow, "busy");
-                
-                const task = {
-                    id: ticketId,
-                    code6: code6,
-                    items: [...cart],
-                    total: total,
-                    time: currentTime.toLocaleTimeString('ru-RU'),
-                    appointmentTime: appointmentTime,
-                    status: "waiting",
-                    master: masterName,
-                    clientStatus: "waiting",
-                    createdAt: Date.now(),
-                    windowNum: targetWindow
-                };
-                
-                await saveTask(task);
-                
-                // ✅ Сохраняем чек ТОЛЬКО во вторую базу
-                await saveToCheckLog({
-                    id: ticketId,
-                    code6: code6,
-                    items: [...cart],
-                    total: total,
-                    time: task.time,
-                    appointmentTime: appointmentTime,
-                    master: masterName,
-                    windowNum: targetWindow,
-                    status: "created"
-                });
-                
+                await saveTask({ id: ticketId, code6, items: [...cart], total, time: currentTime.toLocaleTimeString('ru-RU'), appointmentTime, status: "waiting", master: masterName, clientStatus: "waiting", createdAt: Date.now(), windowNum: targetWindow });
+                announceNewOrder(ticketId, code6);
                 showFloatingCode(code6, ticketId);
                 showSuccess(`✅ БИЛЕТ №${ticketId}\n🔑 КОД: ${code6}\n💰 ${total} коп\n🎯 ${masterName}\n⏰ ${appointmentTime}`);
                 await navigator.clipboard.writeText(code6);
-                
             } else {
                 const futureTime = new Date(currentTime.getTime() + 5 * 60000);
-                const hours = futureTime.getHours().toString().padStart(2, '0');
-                const minutes = futureTime.getMinutes().toString().padStart(2, '0');
-                appointmentTime = `${hours}:${minutes}`;
-                
-                const orderData = {
-                    id: ticketId,
-                    code6: code6,
-                    items: [...cart],
-                    total: total,
-                    time: currentTime.toLocaleTimeString('ru-RU'),
-                    appointmentTime: appointmentTime,
-                    status: "waiting",
-                    createdAt: Date.now()
-                };
-                
-                await addToQueue(orderData);
-                
-                // ✅ Сохраняем чек ТОЛЬКО во вторую базу
-                await saveToCheckLog({
-                    id: ticketId,
-                    code6: code6,
-                    items: [...cart],
-                    total: total,
-                    time: orderData.time,
-                    appointmentTime: appointmentTime,
-                    master: "В очереди",
-                    windowNum: null,
-                    status: "queued"
-                });
-                
+                appointmentTime = `${futureTime.getHours().toString().padStart(2,'0')}:${futureTime.getMinutes().toString().padStart(2,'0')}`;
+                await addToQueue({ id: ticketId, code6, items: [...cart], total, time: currentTime.toLocaleTimeString('ru-RU'), appointmentTime, status: "waiting", createdAt: Date.now() });
+                announceNewOrder(ticketId, code6);
                 showFloatingCode(code6, ticketId);
-                showSuccess(`⏰ БИЛЕТ №${ticketId} поставлен в ОЧЕРЕДЬ\n🔑 КОД: ${code6}\n💰 ${total} коп\n⏰ Примерное время: ${appointmentTime}\n\nМастер подойдёт автоматически!`);
+                showSuccess(`⏰ БИЛЕТ №${ticketId} в ОЧЕРЕДЬ\n🔑 КОД: ${code6}\n💰 ${total} коп\n⏰ Примерное время: ${appointmentTime}`);
                 await navigator.clipboard.writeText(code6);
             }
             
             await updateCounter(ticketId + 1);
             if (targetWindow) await updateUserTodayOrders(targetWindow, true);
-            
             cart = [];
             currentTicketNumber = ticketId + 1;
             document.getElementById('ticketNumber').innerText = `БИЛЕТ №${currentTicketNumber}`;
@@ -1095,10 +749,8 @@
         async function loadWindowsStatus() {
             const container = document.getElementById('windowsContainer');
             if (!container) return;
-            
             const users = await loadUsers();
             container.innerHTML = '';
-            
             for (const [num, user] of Object.entries(users)) {
                 if (user.role === "WORKER") {
                     const status = user.workStatus || "free";
@@ -1106,42 +758,14 @@
                     if (status === "free") { statusText = "🟢 СВОБОДЕН"; color = "#00ff66"; }
                     else if (status === "busy") { statusText = "🔴 ЗАНЯТ"; color = "#ff0000"; }
                     else if (status === "break") { statusText = "🟡 ПЕРЕРЫВ"; color = "#ffcc00"; }
-                    
-                    container.innerHTML += `
-                        <div class="window-row">
-                            <span><strong>${user.name}</strong></span>
-                            <span style="color: ${color}">${statusText}</span>
-                            <span>📊 заказов: ${user.todayOrders || 0}</span>
-                            <span title="📱 ${user.deviceModel || 'Unknown'}">📱 ${(user.deviceModel || 'Unknown').substring(0, 15)}</span>
-                            <div style="display: flex; gap: 5px;">
-                                ${status === "busy" ? `<button onclick="freeWindow(${num})" class="btn-sm">🔓 Освободить</button>` : ''}
-                                ${status === "free" ? `<button onclick="setBreakByCashier(${num})" class="btn-sm btn-warning">🟡 Перерыв</button>` : ''}
-                                ${status === "break" ? `<button onclick="removeBreakByCashier(${num})" class="btn-sm btn-success">✅ Снять перерыв</button>` : ''}
-                                <button onclick="sendProblemFromCashierToWindow(${num})" class="btn-sm btn-danger">🔴</button>
-                            </div>
-                        </div>
-                    `;
+                    container.innerHTML += `<div class="window-row"><span><strong>${user.name}</strong></span><span style="color:${color}">${statusText}</span><span>📊 ${user.todayOrders || 0}</span><span title="📱 ${user.deviceModel || 'Unknown'}">📱 ${(user.deviceModel || 'Unknown').substring(0,15)}</span><div style="display:flex;gap:5px;">${status === "busy" ? `<button onclick="freeWindow(${num})" class="btn-sm">🔓 Освободить</button>` : ''}${status === "free" ? `<button onclick="setBreakByCashier(${num})" class="btn-sm btn-warning">🟡 Перерыв</button>` : ''}${status === "break" ? `<button onclick="removeBreakByCashier(${num})" class="btn-sm btn-success">✅ Снять перерыв</button>` : ''}<button onclick="sendProblemFromCashierToWindow(${num})" class="btn-sm btn-danger">🔴</button></div></div>`;
                 }
             }
         }
         
-        async function freeWindow(windowNum) {
-            await updateUserStatus(windowNum, "free");
-            await loadWindowsStatus();
-            showSuccess(`🔓 Окно ${windowNum} освобождено`);
-        }
-        
-        async function setBreakByCashier(windowNum) {
-            await updateUserStatus(windowNum, "break");
-            showSuccess(`🟡 Окно ${windowNum} на перерыве`);
-            await loadWindowsStatus();
-        }
-        
-        async function removeBreakByCashier(windowNum) {
-            await updateUserStatus(windowNum, "free");
-            showSuccess(`✅ Окно ${windowNum} возвращено к работе`);
-            await loadWindowsStatus();
-        }
+        async function freeWindow(num) { await updateUserStatus(num, "free"); await loadWindowsStatus(); announceWindowFree(num); showSuccess(`🔓 Окно ${num} освобождено`); }
+        async function setBreakByCashier(num) { await updateUserStatus(num, "break"); showSuccess(`🟡 Окно ${num} на перерыве`); await loadWindowsStatus(); }
+        async function removeBreakByCashier(num) { await updateUserStatus(num, "free"); showSuccess(`✅ Окно ${num} возвращено к работе`); await loadWindowsStatus(); }
         
         // ============ ЭКРАН МАСТЕРА ============
         function renderWorkerScreen() {
@@ -1152,7 +776,6 @@
                         <h1>🦁 ${currentWindow}</h1>
                         <div class="clock" id="clock"></div>
                     </div>
-                    
                     <div class="flex-row">
                         <div class="flex-col">
                             <h2>📋 ДОСТУПНЫЕ ЗАКАЗЫ</h2>
@@ -1160,100 +783,80 @@
                         </div>
                         <div class="flex-col">
                             <h2>🔍 ПОИСК ПО КОДУ</h2>
-                            <input type="text" id="codeInput" placeholder="Введите 6-значный код" maxlength="6">
-                            <button onclick="searchByCode()">🔍 НАЙТИ ЗАКАЗ</button>
-                            
+                            <input type="text" id="codeInput" placeholder="6-значный код" maxlength="6">
+                            <button onclick="searchByCode()">🔍 НАЙТИ</button>
                             <h2>📌 ТЕКУЩИЙ ЗАКАЗ</h2>
-                            <div class="card" id="currentOrderCard">
-                                <div style="text-align: center; color: #555;">Нет активного заказа</div>
-                            </div>
-                            
-                            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
-                                <button class="btn-warning" onclick="clientArrived()" style="flex:1;">👋 КЛИЕНТ ПРИШЁЛ</button>
-                                <button class="btn-danger" onclick="sendProblemFromWorker()" style="flex:1;">🔴 ПРОБЛЕМА</button>
-                            </div>
+                            <div class="card" id="currentOrderCard"><div style="text-align:center;color:#555;">Нет активного заказа</div></div>
+                            <div style="display:flex;gap:10px;margin-top:15px;"><button class="btn-warning" onclick="clientArrived()" style="flex:1;">👋 КЛИЕНТ ПРИШЁЛ</button><button class="btn-danger" onclick="sendProblemFromWorker()" style="flex:1;">🔴 ПРОБЛЕМА</button></div>
                             <button class="btn-success" onclick="completeOrder()">✅ ЗАВЕРШИТЬ</button>
-                            
-                            <div style="margin-top: 15px; font-size: 12px; color: #555; text-align: center;">
-                                🔒 Для выхода обратитесь к кассиру
-                            </div>
+                            <div style="margin-top:15px;font-size:12px;color:#555;text-align:center;">🔒 Для выхода обратитесь к кассиру</div>
                         </div>
                     </div>
                 </div>
             `;
-            
-            updateClock();
-            setInterval(updateClock, 1000);
-            loadWorkerTasks();
-            startRealtimeUpdates();
-            document.getElementById('codeInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') searchByCode();
-            });
+            updateClock(); setInterval(updateClock, 1000);
+            loadWorkerTasks(); startRealtimeUpdates();
+            document.getElementById('codeInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchByCode(); });
+        }
+        
+        function showFullscreenClock() {
+            const container = document.getElementById('tasksContainer');
+            if (container && container.innerHTML.includes('НЕТ ЗАКАЗОВ')) {
+                if (!document.getElementById('fullscreenClock')) {
+                    const clockDiv = document.createElement('div');
+                    clockDiv.className = 'fullscreen-clock';
+                    clockDiv.id = 'fullscreenClock';
+                    clockDiv.innerHTML = `<div style="text-align:center;"><div style="font-size:5vw;">🕐</div><div id="bigClock" style="font-size:8vw;font-family:monospace;">--:--:--</div><div style="font-size:2vw;">Ожидание заказов...</div></div>`;
+                    const parent = container.parentNode;
+                    parent.appendChild(clockDiv);
+                    setInterval(() => { const c = document.getElementById('bigClock'); if (c) c.innerText = new Date().toLocaleTimeString('ru-RU'); }, 1000);
+                }
+            } else {
+                const existing = document.getElementById('fullscreenClock');
+                if (existing) existing.remove();
+            }
         }
         
         async function loadWorkerTasks() {
             const container = document.getElementById('tasksContainer');
             if (!container) return;
-            
             const tasks = await loadTasks();
-            const waitingTasks = Object.values(tasks).filter(t => t.status === "waiting");
-            
-            if (waitingTasks.length === 0) {
-                container.innerHTML = '<div class="card" style="text-align: center; color: #555;">✨ НЕТ ЗАКАЗОВ ✨</div>';
+            const waiting = Object.values(tasks).filter(t => t.status === "waiting");
+            if (waiting.length === 0) {
+                container.innerHTML = '<div class="card" style="text-align:center;color:#555;">✨ НЕТ ЗАКАЗОВ ✨</div>';
+                showFullscreenClock();
                 return;
             }
-            
+            const existing = document.getElementById('fullscreenClock');
+            if (existing) existing.remove();
             container.innerHTML = '';
-            for (const task of waitingTasks) {
-                const itemsText = task.items.map(i => `${i.service.toUpperCase()} x${i.count}`).join(', ');
-                container.innerHTML += `
-                    <div class="card ticket-card" onclick="takeOrder(${task.id})">
-                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                            <span class="ticket-number">🎫 БИЛЕТ №${task.id}</span>
-                            <span class="status-badge status-waiting">ОЖИДАЕТ</span>
-                        </div>
-                        <div>📦 ${itemsText}</div>
-                        <div>💰 ${task.total} коп</div>
-                        <div>🔑 Код: ${task.code6}</div>
-                        <div>⏰ Запись: ${task.appointmentTime || 'Сейчас'}</div>
-                    </div>
-                `;
+            for (const task of waiting) {
+                container.innerHTML += `<div class="card ticket-card" onclick="takeOrder(${task.id})"><div style="display:flex;justify-content:space-between;"><span class="ticket-number">🎫 БИЛЕТ №${task.id}</span><span class="status-badge status-waiting">ОЖИДАЕТ</span></div><div>📦 ${task.items.map(i=>`${i.service.toUpperCase()} x${i.count}`).join(', ')}</div><div>💰 ${task.total} коп</div><div>🔑 ${task.code6}</div><div>⏰ ${task.appointmentTime || 'Сейчас'}</div></div>`;
             }
         }
         
         async function takeOrder(taskId) {
             const tasks = await loadTasks();
             const task = tasks[taskId];
-            if (!task || task.status !== "waiting") { 
-                showError("Заказ уже взят!"); 
-                return; 
-            }
-            
+            if (!task || task.status !== "waiting") { showError("Заказ уже взят!"); return; }
             await updateTaskStatus(taskId, "active", currentWindow);
             await updateUserStatus(currentUser, "busy");
-            
             currentActiveTask = task;
             displayCurrentOrder(task);
             await loadWorkerTasks();
-            showSuccess(`✅ Заказ №${task.id} взят в работу`);
+            showSuccess(`✅ Заказ №${task.id} взят`);
         }
         
         async function searchByCode() {
             const code = document.getElementById('codeInput').value.trim();
             if (code.length !== 6) { showError("Введите 6-значный код!"); return; }
-            
             const tasks = await loadTasks();
             const task = Object.values(tasks).find(t => t.code6 === code);
-            
-            if (!task) { 
-                showError("Заказ не найден!"); 
-                return; 
-            }
-            
+            if (!task) { showError("Заказ не найден!"); return; }
             if (task.status === "active" && task.master === currentWindow) {
                 currentActiveTask = task;
                 displayCurrentOrder(task);
-                showSuccess(`Заказ найден! Билет №${task.id}`);
+                showSuccess(`Заказ найден! №${task.id}`);
             } else if (task.status === "waiting") {
                 await takeOrder(task.id);
             } else {
@@ -1263,39 +866,28 @@
         
         function displayCurrentOrder(task) {
             const container = document.getElementById('currentOrderCard');
-            const itemsText = task.items.map(i => `• ${i.service.toUpperCase()} x${i.count} = ${i.count * i.price} коп`).join('<br>');
-            container.innerHTML = `
-                <div class="ticket-number">🎫 БИЛЕТ №${task.id}</div>
-                <div style="margin: 10px 0;">${itemsText}</div>
-                <div><strong>💰 ИТОГО: ${task.total} коп</strong></div>
-                <div>🔑 Код: ${task.code6}</div>
-                <div>⏰ Заказано: ${task.time}</div>
-                <div>⏰ Запись на: <strong style="color: #00ff66;">${task.appointmentTime || 'Сейчас'}</strong></div>
-                <div style="margin-top: 10px;"><span class="status-badge status-session">🟣 СТАТУС: ${task.clientStatus === 'session' ? 'НА СЕАНСЕ' : 'ОЖИДАЕТ'}</span></div>
-            `;
+            container.innerHTML = `<div class="ticket-number">🎫 БИЛЕТ №${task.id}</div><div>${task.items.map(i=>`• ${i.service.toUpperCase()} x${i.count} = ${i.count*i.price} коп`).join('<br>')}</div><div><strong>💰 ИТОГО: ${task.total} коп</strong></div><div>🔑 ${task.code6}</div><div>⏰ ${task.time}</div><div>📅 ${task.appointmentTime || 'Сейчас'}</div><div><span class="status-badge status-session">🟣 СТАТУС: ${task.clientStatus === 'session' ? 'НА СЕАНСЕ' : 'ОЖИДАЕТ'}</span></div>`;
         }
         
         async function clientArrived() {
             if (!currentActiveTask) { showError("Нет активного заказа!"); return; }
             await updateTaskStatus(currentActiveTask.id, "active", currentWindow);
             await database.ref(`tasks/${currentActiveTask.id}`).update({ clientStatus: "session" });
-            speak("Здравствуйте, присаживайтесь! Выберите татуировку");
-            showSuccess(`👋 Клиент пришёл на сеанс (билет №${currentActiveTask.id})`);
+            announceClientArrived();
+            showSuccess(`👋 Клиент пришёл (билет №${currentActiveTask.id})`);
             displayCurrentOrder(currentActiveTask);
         }
         
+        // ============ ЗАВЕРШЕНИЕ ЗАКАЗА (УДАЛЕНИЕ ИЗ БАЗЫ) ============
         async function completeOrder() {
             if (!currentActiveTask) { showError("Нет активного заказа!"); return; }
-            
-            await updateTaskStatus(currentActiveTask.id, "completed");
+            await saveToCheckLog({ id: currentActiveTask.id, code6: currentActiveTask.code6, items: currentActiveTask.items, total: currentActiveTask.total, time: currentActiveTask.time, appointmentTime: currentActiveTask.appointmentTime, master: currentWindow, windowNum: currentUser, status: "completed", completedAt: new Date().toLocaleString('ru-RU') });
+            await database.ref(`tasks/${currentActiveTask.id}`).remove();
             await updateUserStatus(currentUser, "free");
-            await deleteTask(currentActiveTask.id);
-            
-            speak("Хорошего дня, будем ждать вас снова");
-            showSuccess(`✅ Заказ №${currentActiveTask.id} завершён!`);
-            
+            announceComplete();
+            showSuccess(`✅ Заказ №${currentActiveTask.id} завершён и удалён из базы!`);
             currentActiveTask = null;
-            document.getElementById('currentOrderCard').innerHTML = '<div style="text-align: center; color: #555;">Нет активного заказа</div>';
+            document.getElementById('currentOrderCard').innerHTML = '<div style="text-align:center;color:#555;">Нет активного заказа</div>';
             document.getElementById('codeInput').value = '';
             await loadWorkerTasks();
         }
@@ -1304,274 +896,72 @@
         async function showAdminPanel() {
             const users = await loadUsers();
             let windowsHtml = '';
-            
             for (const [num, user] of Object.entries(users)) {
                 if (user.role === "WORKER") {
-                    windowsHtml += `
-                        <div class="window-row">
-                            <span><strong>${user.name}</strong></span>
-                            <span>${user.online ? '🟢 Онлайн' : '⚫ Оффлайн'}</span>
-                            <span title="${user.deviceUserAgent || ''}">📱 ${user.deviceModel || 'Unknown'}</span>
-                            <span>📊 заказов: <strong style="color: #00ff66;">${user.todayOrders || 0}</strong></span>
-                            <span>${user.workStatus === 'free' ? '🟢 Свободен' : user.workStatus === 'busy' ? '🔴 Занят' : '🟡 Перерыв'}</span>
-                            <div style="display: flex; gap: 5px;">
-                                <button onclick="kickWorker(${num})" class="btn-danger btn-sm">🚪 ВЫГНАТЬ</button>
-                                <button onclick="forceFreeWindow(${num})" class="btn-success btn-sm">🔓 Освободить</button>
-                                <button onclick="setBreakByCashier(${num})" class="btn-warning btn-sm">🟡 Перерыв</button>
-                                <button onclick="removeBreakByCashier(${num})" class="btn-success btn-sm">✅ Снять перерыв</button>
-                            </div>
-                        </div>
-                    `;
+                    windowsHtml += `<div class="window-row"><span><strong>${user.name}</strong></span><span>${user.online ? '🟢 Онлайн' : '⚫ Оффлайн'}</span><span title="${user.deviceUserAgent || ''}">📱 ${(user.deviceModel || 'Unknown').substring(0,20)}</span><span>📊 ${user.todayOrders || 0}</span><span>${user.workStatus === 'free' ? '🟢 Свободен' : user.workStatus === 'busy' ? '🔴 Занят' : '🟡 Перерыв'}</span><div style="display:flex;gap:5px;"><button onclick="showDeviceDetails(${num})" class="btn-sm" style="background:#00aaff;">📱</button><button onclick="kickWorker(${num})" class="btn-danger btn-sm">🚪</button><button onclick="forceFreeWindow(${num})" class="btn-success btn-sm">🔓</button><button onclick="setBreakByCashier(${num})" class="btn-warning btn-sm">🟡</button><button onclick="removeBreakByCashier(${num})" class="btn-success btn-sm">✅</button></div></div>`;
                 }
             }
-            
             const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="container" style="max-width: 1000px; margin: 0 auto;">
-                    <h1>👑 АДМИН-ПАНЕЛЬ</h1>
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-                        <button onclick="addNewWindow()" class="btn-success">➕ ДОБАВИТЬ ОКНО</button>
-                        <button onclick="renderCashierScreen()" class="btn-purple">◀ НАЗАД</button>
-                        <button onclick="forceLogoutAll()" class="btn-danger">🚪 ВЫГНАТЬ ВСЕХ</button>
-                        <button onclick="clearAllTasks()" class="btn-warning">🗑 ОЧИСТИТЬ ВСЕ</button>
-                        <button onclick="showSchedulePanel()" class="btn-warning">⏰ РАСПИСАНИЕ</button>
-                        <button onclick="showCheckLogs()" class="btn-success">📊 ЛОГ ЧЕКОВ</button>
-                    </div>
-                    
-                    <h2>🪟 УПРАВЛЕНИЕ ОКНАМИ</h2>
-                    <div class="card">
-                        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; font-weight: bold; padding: 10px; border-bottom: 1px solid #333;">
-                            <div>Окно</div><div>Статус</div><div>Устройство</div><div>Заказов</div><div>Работа</div><div>Действия</div>
-                        </div>
-                        ${windowsHtml}
-                    </div>
-                    
-                    <h2>⚙️ НАСТРОЙКИ РАСПРЕДЕЛЕНИЯ</h2>
-                    <div class="card">
-                        <div class="mode-selector">
-                            <button class="mode-btn ${distributionMode === 'auto' ? 'active' : ''}" onclick="saveDistributionMode('auto')">🔄 АВТО</button>
-                            <button class="mode-btn ${distributionMode === 'manual' ? 'active' : ''}" onclick="saveDistributionMode('manual')">✋ РУЧНОЙ</button>
-                            <button class="mode-btn ${distributionMode === 'priority' ? 'active' : ''}" onclick="saveDistributionMode('priority')">⭐ ПРИОРИТЕТ</button>
-                        </div>
-                        <div id="prioritySettings"></div>
-                    </div>
-                </div>
-            `;
-            
+            app.innerHTML = `<div class="container" style="max-width:1200px;"><h1>👑 АДМИН-ПАНЕЛЬ</h1><div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;"><button onclick="addNewWindow()" class="btn-success">➕ ДОБАВИТЬ ОКНО</button><button onclick="renderCashierScreen()" class="btn-purple">◀ НАЗАД</button><button onclick="forceLogoutAll()" class="btn-danger">🚪 ВЫГНАТЬ ВСЕХ</button><button onclick="clearAllTasks()" class="btn-warning">🗑 ОЧИСТИТЬ ВСЕ</button><button onclick="showSchedulePanel()" class="btn-warning">⏰ РАСПИСАНИЕ</button><button onclick="showCheckLogs()" class="btn-success">📊 ЛОГ ЧЕКОВ</button><button onclick="globalSync()" class="btn-purple">🔄 СИНХР</button></div><h2>🪟 УПРАВЛЕНИЕ ОКНАМИ</h2><div class="card"><div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;font-weight:bold;padding:10px;border-bottom:1px solid #333;"><div>Окно</div><div>Статус</div><div>Устройство</div><div>Заказов</div><div>Работа</div><div>Действия</div></div>${windowsHtml}</div><h2>⚙️ НАСТРОЙКИ РАСПРЕДЕЛЕНИЯ</h2><div class="card"><div class="mode-selector"><button class="mode-btn ${distributionMode === 'auto' ? 'active' : ''}" onclick="saveDistributionMode('auto')">🔄 АВТО</button><button class="mode-btn ${distributionMode === 'manual' ? 'active' : ''}" onclick="saveDistributionMode('manual')">✋ РУЧНОЙ</button><button class="mode-btn ${distributionMode === 'priority' ? 'active' : ''}" onclick="saveDistributionMode('priority')">⭐ ПРИОРИТЕТ</button></div><div id="prioritySettings"></div></div></div>`;
             if (distributionMode === 'priority') {
                 const priorityDiv = document.getElementById('prioritySettings');
-                priorityDiv.innerHTML = '<h3>Приоритет окон (меньше = выше)</h3><div style="display: flex; gap: 10px; flex-wrap: wrap;">';
+                priorityDiv.innerHTML = '<h3>Приоритет (меньше = выше)</h3><div style="display:flex;gap:10px;flex-wrap:wrap;">';
                 for (const [num, user] of Object.entries(users)) {
-                    if (user.role === "WORKER") {
-                        priorityDiv.innerHTML += `
-                            <div style="background: #252540; border-radius: 20px; padding: 10px; text-align: center;">
-                                <div>${user.name}</div>
-                                <input type="number" id="priority_${num}" value="${windowPriorities[num] || 1}" min="1" max="10" style="width: 60px; text-align: center;">
-                                <button onclick="setPriority(${num})" class="btn-sm btn-success">💾</button>
-                            </div>
-                        `;
-                    }
+                    if (user.role === "WORKER") priorityDiv.innerHTML += `<div style="background:#252540;border-radius:20px;padding:10px;"><div>${user.name}</div><input type="number" id="priority_${num}" value="${windowPriorities[num] || 1}" min="1" max="10" style="width:60px;"><button onclick="setPriority(${num})" class="btn-sm btn-success">💾</button></div>`;
                 }
                 priorityDiv.innerHTML += '</div>';
             }
         }
         
-        async function setPriority(windowNum) {
-            const input = document.getElementById(`priority_${windowNum}`);
-            const priority = parseInt(input.value);
-            await saveWindowPriority(windowNum, priority);
-            showAdminPanel();
+        async function showDeviceDetails(num) {
+            const snap = await database.ref(`users/${num}`).once('value');
+            const d = snap.val();
+            if (!d) { showError("Устройство не найдено"); return; }
+            const detailsHtml = `<div class="card"><h3>📱 ${d.name}</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><strong>Модель:</strong></div><div>${d.deviceModel || 'Unknown'}</div><div><strong>Экран:</strong></div><div>${d.deviceScreen || 'Unknown'}</div><div><strong>Язык:</strong></div><div>${d.deviceLanguage || 'ru-RU'}</div><div><strong>Таймзона:</strong></div><div>${d.deviceTimezone || 'Europe/Moscow'}</div><div><strong>Онлайн:</strong></div><div>${d.online ? '🟢 Да' : '⚫ Нет'}</div><div><strong>Последний вход:</strong></div><div>${new Date(d.lastSeen).toLocaleString()}</div><div><strong>Статус:</strong></div><div>${d.workStatus === 'free' ? '🟢 Свободен' : d.workStatus === 'busy' ? '🔴 Занят' : '🟡 Перерыв'}</div><div><strong>Заказов сегодня:</strong></div><div>${d.todayOrders || 0}</div></div></div><div class="card"><h3>⚙️ УПРАВЛЕНИЕ</h3><div style="display:flex;gap:10px;"><button onclick="remoteCommand(${num}, 'clear_screen')" class="btn-warning">🗑 Очистить</button><button onclick="remoteCommand(${num}, 'refresh')" class="btn-purple">🔄 Обновить</button><button onclick="remoteCommand(${num}, 'logout')" class="btn-danger">🚪 Выгнать</button></div></div><button onclick="showAdminPanel()" class="btn-purple">◀ НАЗАД</button>`;
+            document.getElementById('app').innerHTML = `<div class="container">${detailsHtml}</div>`;
         }
         
-        async function kickWorker(windowNum) {
-            await database.ref(`users/${windowNum}`).update({ online: false, workStatus: "free" });
-            await database.ref(`commands/${windowNum}`).set({ action: "logout", timestamp: Date.now() });
-            showSuccess(`✅ Мастер окна ${windowNum} выгнан`);
-            showAdminPanel();
-        }
-        
-        async function forceFreeWindow(windowNum) {
-            await updateUserStatus(windowNum, "free");
-            showSuccess(`🔓 Окно ${windowNum} освобождено`);
-            showAdminPanel();
-        }
-        
-        async function forceLogoutAll() {
-            const users = await loadUsers();
-            for (const [num, user] of Object.entries(users)) {
-                if (user.role === "WORKER") {
-                    await database.ref(`users/${num}`).update({ online: false, workStatus: "free" });
-                    await database.ref(`commands/${num}`).set({ action: "logout", timestamp: Date.now() });
-                }
-            }
-            showSuccess(`✅ Все мастера выгнаны`);
-            showAdminPanel();
-        }
-        
-        async function clearAllTasks() {
-            if (confirm("⚠️ Удалить ВСЕ заказы?")) {
-                await database.ref('tasks').remove();
-                showSuccess("✅ Все заказы удалены");
-                showAdminPanel();
-            }
-        }
-        
+        async function remoteCommand(num, cmd) { await database.ref(`commands/${num}`).set({ action: cmd, timestamp: Date.now(), from: currentWindow }); showSuccess(`✅ Команда "${cmd}" отправлена`); }
+        async function globalSync() { const users = await loadUsers(); for (const [num] of Object.entries(users)) if (num !== "0") await database.ref(`commands/${num}`).set({ action: 'sync', timestamp: Date.now() }); showSuccess("🔄 Синхронизация запущена"); }
+        async function setPriority(num) { const p = parseInt(document.getElementById(`priority_${num}`).value); await saveWindowPriority(num, p); showAdminPanel(); }
+        async function kickWorker(num) { await database.ref(`users/${num}`).update({ online: false, workStatus: "free" }); await database.ref(`commands/${num}`).set({ action: "logout", timestamp: Date.now() }); showSuccess(`✅ Мастер ${num} выгнан`); showAdminPanel(); }
+        async function forceFreeWindow(num) { await updateUserStatus(num, "free"); showSuccess(`🔓 Окно ${num} освобождено`); showAdminPanel(); }
+        async function forceLogoutAll() { const users = await loadUsers(); for (const [num] of Object.entries(users)) if (num !== "0") { await database.ref(`users/${num}`).update({ online: false, workStatus: "free" }); await database.ref(`commands/${num}`).set({ action: "logout", timestamp: Date.now() }); } showSuccess(`✅ Все мастера выгнаны`); showAdminPanel(); }
+        async function clearAllTasks() { if (confirm("Удалить ВСЕ заказы?")) { await database.ref('tasks').remove(); await database.ref('queue').remove(); showSuccess("✅ Все заказы удалены"); showAdminPanel(); } }
         async function showSchedulePanel() {
-            const schedule = await database.ref('schedule').once('value');
-            const scheduleData = schedule.val() || {};
+            const schedule = (await database.ref('schedule').once('value')).val() || {};
             const tasks = await loadTasks();
-            const bookedTimes = Object.values(tasks).map(t => t.appointmentTime).filter(t => t);
-            
-            let html = `<div class="card"><h3>📅 РАСПИСАНИЕ</h3><div style="display: flex; flex-wrap: wrap; gap: 10px;">`;
-            for (const [time, data] of Object.entries(scheduleData).sort()) {
-                const isBooked = bookedTimes.includes(time);
-                html += `
-                    <div style="background: #252540; border-radius: 20px; padding: 10px; text-align: center; min-width: 100px;">
-                        <div style="font-size: 1.2em; font-weight: bold; color: #05d9e8;">${time}</div>
-                        <div style="color: ${isBooked ? '#ff0000' : (data.available ? '#00ff66' : '#ff6600')};">${isBooked ? 'ЗАНЯТ' : (data.available ? 'СВОБОДЕН' : 'БЛОК')}</div>
-                        <button onclick="toggleSlot('${time}')" class="btn-sm">${data.available ? '🔒' : '🔓'}</button>
-                        <button onclick="removeSlot('${time}')" class="btn-sm btn-danger">🗑</button>
-                    </div>
-                `;
+            const booked = Object.values(tasks).map(t => t.appointmentTime);
+            let html = `<div class="card"><h3>📅 РАСПИСАНИЕ</h3><div style="display:flex;flex-wrap:wrap;gap:10px;">`;
+            for (const [time, data] of Object.entries(schedule).sort()) {
+                const isBooked = booked.includes(time);
+                html += `<div style="background:#252540;border-radius:20px;padding:10px;text-align:center;min-width:100px;"><div style="font-size:1.2em;color:#05d9e8;">${time}</div><div style="color:${isBooked ? '#ff0000' : (data.available ? '#00ff66' : '#ff6600')};">${isBooked ? 'ЗАНЯТ' : (data.available ? 'СВОБОДЕН' : 'БЛОК')}</div><button onclick="toggleSlot('${time}')" class="btn-sm">${data.available ? '🔒' : '🔓'}</button><button onclick="removeSlot('${time}')" class="btn-sm btn-danger">🗑</button></div>`;
             }
-            html += `</div></div>
-            <div class="card"><h3>➕ ДОБАВИТЬ СЛОТ</h3>
-            <select id="newHour"><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option></select>
-            <select id="newMinute"><option>00</option><option>15</option><option>30</option><option>45</option></select>
-            <button onclick="addTimeSlot()" class="btn-success">➕ ДОБАВИТЬ</button></div>`;
-            
+            html += `</div></div><div class="card"><h3>➕ ДОБАВИТЬ СЛОТ</h3><select id="newHour">${[12,13,14,15,16,17,18,19,20].map(h=>`<option>${h}</option>`).join('')}</select><select id="newMinute"><option>00</option><option>15</option><option>30</option><option>45</option></select><button onclick="addTimeSlot()" class="btn-success">➕</button></div>`;
             const app = document.getElementById('app');
-            app.innerHTML += `<div id="schedulePanel" style="margin-top: 20px;">${html}</div>`;
+            app.innerHTML += `<div id="schedulePanel" style="margin-top:20px;">${html}</div>`;
         }
-        
-        async function toggleSlot(time) {
-            const schedule = await database.ref('schedule').once('value');
-            const scheduleData = schedule.val() || {};
-            if (scheduleData[time]) {
-                scheduleData[time].available = !scheduleData[time].available;
-                await database.ref('schedule').set(scheduleData);
-                showSuccess(`Слот ${time} ${scheduleData[time].available ? 'доступен' : 'заблокирован'}`);
-                showSchedulePanel();
-            }
-        }
-        
-        async function removeSlot(time) {
-            const schedule = await database.ref('schedule').once('value');
-            const scheduleData = schedule.val() || {};
-            delete scheduleData[time];
-            await database.ref('schedule').set(scheduleData);
-            showSuccess(`Слот ${time} удалён`);
-            showSchedulePanel();
-        }
-        
-        async function addTimeSlot() {
-            const hour = document.getElementById('newHour').value;
-            const minute = document.getElementById('newMinute').value;
-            const time = `${hour}:${minute}`;
-            const schedule = await database.ref('schedule').once('value');
-            const scheduleData = schedule.val() || {};
-            if (!scheduleData[time]) {
-                scheduleData[time] = { available: true, bookedBy: null };
-                await database.ref('schedule').set(scheduleData);
-                showSuccess(`Слот ${time} добавлен`);
-                showSchedulePanel();
-            } else {
-                showError(`Слот ${time} уже существует`);
-            }
-        }
-        
+        async function toggleSlot(t) { const s = (await database.ref('schedule').once('value')).val() || {}; if (s[t]) { s[t].available = !s[t].available; await database.ref('schedule').set(s); showSuccess(`Слот ${t} ${s[t].available ? 'доступен' : 'заблокирован'}`); showSchedulePanel(); } }
+        async function removeSlot(t) { const s = (await database.ref('schedule').once('value')).val() || {}; delete s[t]; await database.ref('schedule').set(s); showSuccess(`Слот ${t} удалён`); showSchedulePanel(); }
+        async function addTimeSlot() { const h = document.getElementById('newHour').value, m = document.getElementById('newMinute').value, t = `${h}:${m}`; const s = (await database.ref('schedule').once('value')).val() || {}; if (!s[t]) { s[t] = { available: true, bookedBy: null }; await database.ref('schedule').set(s); showSuccess(`Слот ${t} добавлен`); showSchedulePanel(); } else showError(`Слот ${t} уже есть`); }
         async function showCheckLogs() {
-            const snapshot = await chekiDatabase.ref('checkLogs').once('value');
-            const logs = snapshot.val() || {};
-            let logsHtml = '<div class="card"><h3>📊 ЛОГ ЧЕКОВ (ВТОРАЯ БАЗА)</h3><div style="max-height: 400px; overflow-y: auto;">';
-            
-            const sorted = Object.values(logs).sort((a, b) => b.timestamp - a.timestamp);
-            let totalSum = 0;
-            let totalOrders = 0;
-            
-            for (const log of sorted.slice(0, 100)) {
-                totalSum += log.total;
-                totalOrders++;
-                const itemsText = log.items.map(i => `${i.service} x${i.count}`).join(', ');
-                logsHtml += `
-                    <div style="border-bottom: 1px solid #333; padding: 10px;">
-                        <div><strong>🎫 БИЛЕТ №${log.id}</strong> | ${log.date} | ${log.time}</div>
-                        <div>📦 ${itemsText} = <span style="color: #00ff66;">${log.total} коп</span></div>
-                        <div>🎨 ${log.master} | ⏰ ${log.appointmentTime}</div>
-                        <div>🔑 Код: ${log.code6}</div>
-                    </div>
-                `;
-            }
-            
-            logsHtml += `
-                </div></div>
-                <div class="card" style="text-align: center;">
-                    <div>📊 ВСЕГО ЗАКАЗОВ: <strong style="color: #00ff66;">${totalOrders}</strong></div>
-                    <div>💰 ОБЩАЯ ВЫРУЧКА: <strong style="color: #ffcc00;">${totalSum} коп (${(totalSum/100).toFixed(2)} руб)</strong></div>
-                </div>
-                <button onclick="renderCashierScreen()" class="btn-purple">◀ НАЗАД</button>
-            `;
-            
-            const app = document.getElementById('app');
-            app.innerHTML = `<div class="container">${logsHtml}</div>`;
+            const logs = (await chekiDatabase.ref('checkLogs').once('value')).val() || {};
+            let html = '<div class="card"><h3>📊 ЛОГ ЧЕКОВ</h3><div style="max-height:400px;overflow-y:auto;">';
+            const sorted = Object.values(logs).sort((a,b)=>b.timestamp-a.timestamp);
+            let total = 0, cnt = 0;
+            for (const log of sorted.slice(0,100)) { total += log.total; cnt++; html += `<div style="border-bottom:1px solid #333;padding:10px;"><div><strong>🎫 №${log.id}</strong> | ${log.date} | ${log.time}</div><div>📦 ${log.items.map(i=>`${i.service} x${i.count}`).join(', ')} = ${log.total} коп</div><div>🎨 ${log.master} | ⏰ ${log.appointmentTime}</div><div>🔑 ${log.code6}</div></div>`; }
+            html += `</div></div><div class="card"><div>📊 ВСЕГО: ${cnt} заказов</div><div>💰 ВЫРУЧКА: ${total} коп (${(total/100).toFixed(2)} руб)</div></div><button onclick="renderCashierScreen()" class="btn-purple">◀ НАЗАД</button>`;
+            document.getElementById('app').innerHTML = `<div class="container">${html}</div>`;
         }
+        function addNewWindow() { const n = prompt("Номер окна:"); if(!n) return; const p = prompt("Пароль:"); if(!p) return; const nm = prompt("Название:"); if(!nm) return; database.ref(`users/${n}`).set({ password: p, role: "WORKER", name: nm, workStatus: "free", online: false, priority: 5, todayOrders: 0 }).then(()=>{ showSuccess(`Окно ${nm} добавлено`); showAdminPanel(); }); }
         
-        function addNewWindow() {
-            const newNum = prompt("Номер окна (1-10):");
-            if (!newNum) return;
-            const newPass = prompt("Пароль:");
-            if (!newPass) return;
-            const newName = prompt("Название окна:");
-            if (!newName) return;
-            
-            database.ref(`users/${newNum}`).set({
-                password: newPass, role: "WORKER", name: newName,
-                workStatus: "free", online: false, priority: 5, todayOrders: 0
-            }).then(() => { showSuccess(`Окно ${newName} добавлено`); showAdminPanel(); });
-        }
-        
-        // ============ РЕАЛЬНОЕ ВРЕМЯ ============
         function startRealtimeUpdates() {
-            database.ref('tasks').on('value', () => {
-                if (currentRole === 'CASHBOX') {
-                    loadWindowsStatus();
-                } else {
-                    loadWorkerTasks();
-                }
-            });
-            database.ref('users').on('value', () => {
-                if (currentRole === 'CASHBOX') loadWindowsStatus();
-            });
-            if (currentRole === 'WORKER') {
-                database.ref(`commands/${currentUser}`).on('value', (snapshot) => {
-                    const command = snapshot.val();
-                    if (command && command.action === 'logout') {
-                        showError("🔒 Администратор вышел из вашего аккаунта!");
-                        setTimeout(() => logout(), 2000);
-                    }
-                });
-            }
+            database.ref('tasks').on('value', () => { if (currentRole === 'CASHBOX') loadWindowsStatus(); else { loadWorkerTasks(); } });
+            database.ref('users').on('value', () => { if (currentRole === 'CASHBOX') loadWindowsStatus(); });
+            if (currentRole === 'WORKER') database.ref(`commands/${currentUser}`).on('value', (s) => { if (s.val()?.action === 'logout') { showError("🔒 Админ вышел!"); setTimeout(()=>logout(),2000); } });
         }
         
-        // ============ ЗАПУСК ============
-        initTTS();
-        initDefaultUsers().then(() => {
-            const savedUser = localStorage.getItem('user');
-            if (savedUser) {
-                const user = JSON.parse(savedUser);
-                currentUser = user.windowNumber;
-                currentRole = user.role;
-                currentWindow = user.name;
-                if (currentRole === 'CASHBOX') {
-                    startQueueListener();
-                    renderCashierScreen();
-                } else {
-                    renderWorkerScreen();
-                }
-            } else {
-                renderLoginScreen();
-            }
-        });
+        loadRussianVoice().then(() => initDefaultUsers().then(() => { const saved = localStorage.getItem('user'); if (saved) { const u = JSON.parse(saved); currentUser = u.windowNumber; currentRole = u.role; currentWindow = u.name; if (currentRole === 'CASHBOX') { startQueueListener(); renderCashierScreen(); } else { renderWorkerScreen(); } startProblemListener(); } else renderLoginScreen(); }));
     </script>
 </body>
 </html>
