@@ -1,0 +1,15 @@
+{
+  "adminPassword": "adminchik",
+  "prices": {"ручка": 4, "маркер": 6},
+  "ttsVoice": "Microsoft Elena",
+  "ttsRate": 0.85,
+  "ttsVolume": 1.0,
+  "distributionMode": "auto",
+  "queueMinutes": 5,
+  "scheduleStart": 12,
+  "scheduleEnd": 20,
+  "scheduleInterval": 15,
+  "notificationsEnabled": true,
+  "theme": "dark",
+  "language": "ru"
+}
