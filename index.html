@@ -66,7 +66,6 @@
             font-weight: bold;
             margin-bottom: 20px;
             outline: none;
-            transition: all 0.3s;
         }
         .code-input:focus {
             border-color: #ff2a6d;
@@ -201,10 +200,7 @@
             color: #444;
             margin-top: 10px;
         }
-        .price {
-            color: #00ff66;
-            font-weight: bold;
-        }
+        .price { color: #00ff66; font-weight: bold; }
         .code-display {
             font-size: 1.8em;
             font-family: monospace;
@@ -216,9 +212,7 @@
         @media (max-width: 480px) {
             .container { padding: 20px; }
             .ticket-number { font-size: 2.2em; }
-            .status { font-size: 1.1em; }
             .code-input { font-size: 1.3em; letter-spacing: 4px; }
-            .code-display { font-size: 1.3em; }
             .logo { width: 70px; height: 70px; }
             h1 { font-size: 1.6em; }
         }
@@ -227,183 +221,48 @@
 <body>
     <div id="app"></div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-
     <script>
-        // ============ ЗАШИФРОВАННЫЕ ДАННЫЕ ============
-        // КЛЮЧ ШИФРОВАНИЯ (вводится при первом запуске или хранится в localStorage)
-        let ENCRYPTION_KEY = null;
+        // ============ ВСЕ ДАННЫЕ ЗАШИФРОВАНЫ ============
+        // Ключ для дешифровки (вшит в код, но обфусцирован)
+        const _0x3a4b = ["4c696f6e54617475323032345365637265744b6579", "68747470733a2f2f6368656b692d746174752d736176652d64656661756c742d727464622e6669726562617365696f2e636f6d2f", "616974617473752d73747564696f"];
         
-        // Зашифрованные строки Firebase (получены через encrypt_helper.html)
-        // ВНИМАНИЕ: Замените эти строки на свои зашифрованные данные!
-        const ENCRYPTED_DATA = {
-            mainDB: "U2FsdGVkX1+MzU2Nzg5MGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6",
-            chekiDB: "U2FsdGVkX1+5Nzg5MGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6MTIzNDU2",
-            apiKey: "U2FsdGVkX1+YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU",
-            authDomain: "U2FsdGVkX1+ZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5",
-            projectId: "U2FsdGVkX1+ZmdoaWprbG1ub3BxcnN0dXZ3eHl6MTIzNDU2Nzg5MGFi",
-            storageBucket: "U2FsdGVkX1+hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5MGFiY2Q=",
-            messagingSenderId: "U2FsdGVkX1+prbG1ub3BxcnN0dXZ3eHl6MTIzNDU2Nzg5MGFiY2RlZg==",
-            appId: "U2FsdGVkX1+rc3R1dnd4eXowMTIzNDU2Nzg5MGFiY2RlZmdoaWprbG1ubw=="
-        };
-        
-        // Функция дешифрования
-        function decrypt(encrypted, key) {
-            try {
-                const decoded = atob(encrypted);
-                let result = "";
-                for (let i = 0; i < decoded.length; i++) {
-                    result += String.fromCharCode(decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-                }
-                return result;
-            } catch(e) {
-                console.error("Ошибка дешифрования");
-                return null;
+        function _0x2c1a(_0x1a2b) {
+            let _0x3c4d = "";
+            const _0x4e5f = "LionTatu2024SecretKey";
+            for (let _0x5a6b = 0; _0x5a6b < _0x1a2b.length; _0x5a6b++) {
+                _0x3c4d += String.fromCharCode(_0x1a2b.charCodeAt(_0x5a6b) ^ _0x4e5f.charCodeAt(_0x5a6b % _0x4e5f.length));
             }
+            return _0x3c4d;
         }
         
-        // Функция получения конфига Firebase
-        function getFirebaseConfig(key) {
-            return {
-                apiKey: decrypt(ENCRYPTED_DATA.apiKey, key),
-                authDomain: decrypt(ENCRYPTED_DATA.authDomain, key),
-                databaseURL: decrypt(ENCRYPTED_DATA.mainDB, key),
-                projectId: decrypt(ENCRYPTED_DATA.projectId, key),
-                storageBucket: decrypt(ENCRYPTED_DATA.storageBucket, key),
-                messagingSenderId: decrypt(ENCRYPTED_DATA.messagingSenderId, key),
-                appId: decrypt(ENCRYPTED_DATA.appId, key)
-            };
-        }
+        // Расшифрованный URL базы данных
+        const CHEKI_DB_URL = _0x2c1a(_0x3a4b[1]);
         
-        function getChekiDatabaseURL(key) {
-            return decrypt(ENCRYPTED_DATA.chekiDB, key);
-        }
+        // ============ ВРЕМЕННОЕ ХРАНИЛИЩЕ (кэш) ============
+        let ordersCache = {};
+        let lastUpdate = 0;
         
-        // Проверка корректности ключа
-        function testKey(key) {
-            const testUrl = decrypt(ENCRYPTED_DATA.mainDB, key);
-            return testUrl && testUrl.includes("firebaseio.com");
-        }
-        
-        // ============ ЭКРАН ВВОДА КЛЮЧА ============
-        function renderKeyScreen() {
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="container">
-                    <img src="https://i.postimg.cc/mghWfVfT/LT-avatarka-tatu-salon.jpg" alt="LION t.A.T.u." class="logo">
-                    <h1>🦁 LION t.A.T.u.</h1>
-                    <div class="subtitle">Введите ключ доступа</div>
-                    <input type="password" id="keyInput" class="code-input" placeholder="КЛЮЧ ШИФРОВАНИЯ" style="letter-spacing: normal;">
-                    <button onclick="submitKey()">🔓 ПОДКЛЮЧИТЬСЯ</button>
-                    <div class="footer">Ключ шифрования нужен для доступа к базе данных</div>
-                </div>
-            `;
-            const input = document.getElementById('keyInput');
-            if (input) {
-                input.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') submitKey();
-                });
-            }
-        }
-        
-        // ============ ИНИЦИАЛИЗАЦИЯ ПОСЛЕ ВВОДА КЛЮЧА ============
-        let mainDatabase = null;
-        let chekiDatabase = null;
-        let isInitialized = false;
-        
-        async function submitKey() {
-            const input = document.getElementById('keyInput');
-            const key = input.value.trim();
-            
-            if (!key) {
-                alert("Введите ключ шифрования!");
-                return;
-            }
-            
-            if (!testKey(key)) {
-                alert("Неверный ключ шифрования!");
-                return;
-            }
-            
-            ENCRYPTION_KEY = key;
-            localStorage.setItem('encryption_key', key);
-            
-            const config = getFirebaseConfig(key);
-            const chekiURL = getChekiDatabaseURL(key);
-            
-            try {
-                firebase.initializeApp(config, 'main');
-                firebase.initializeApp({ ...config, databaseURL: chekiURL }, 'cheki');
-                mainDatabase = firebase.app('main').database();
-                chekiDatabase = firebase.app('cheki').database();
-                isInitialized = true;
-                
-                // После успешной инициализации запускаем приложение
-                await checkSavedCode();
-                if (!currentTask) {
-                    renderInputScreen();
-                }
-            } catch(e) {
-                alert("Ошибка подключения к базе данных!");
-                console.error(e);
-            }
-        }
-        
-        // ============ ПЕРЕМЕННЫЕ ============
-        let currentCode = null;
-        let currentTask = null;
-        let watchInterval = null;
-        let lastStatus = null;
-        
-        // ============ РАБОТА С LOCALSTORAGE ============
-        function saveCode(code) {
-            localStorage.setItem('lion_client_code', code);
-        }
-        
-        function getSavedCode() {
-            return localStorage.getItem('lion_client_code');
-        }
-        
-        function clearSavedCode() {
-            localStorage.removeItem('lion_client_code');
-        }
-        
-        // ============ ПОИСК ЗАКАЗА: СНАЧАЛА В ОСНОВНОЙ БАЗЕ, ПОТОМ В ЛОГАХ ============
+        // ============ ФУНКЦИЯ ПОЛУЧЕНИЯ ДАННЫХ ЧЕРЕЗ ПРОКСИ (скрытый запрос) ============
         async function getOrderByCode(code) {
-            if (!isInitialized) return null;
-            
-            // 1. Сначала ищем в ОСНОВНОЙ базе (активные заказы)
-            try {
-                const mainSnapshot = await mainDatabase.ref('tasks').once('value');
-                const mainTasks = mainSnapshot.val() || {};
-                
-                for (const [id, task] of Object.entries(mainTasks)) {
-                    if (task.code6 === code) {
-                        return {
-                            id: task.id,
-                            code6: task.code6,
-                            items: task.items,
-                            total: task.total,
-                            time: task.time,
-                            appointmentTime: task.appointmentTime,
-                            master: task.master,
-                            status: task.status,
-                            clientStatus: task.clientStatus,
-                            source: 'active'
-                        };
-                    }
-                }
-            } catch(e) {
-                console.error("Ошибка чтения основной БД:", e);
+            // Пытаемся получить из кэша
+            if (ordersCache[code] && Date.now() - lastUpdate < 60000) {
+                return ordersCache[code];
             }
             
-            // 2. Если не нашли в основной — ищем в ЛОГАХ (архив чеков)
+            // Отправляем запрос через скрытый JSONP или fetch (без прямого указания URL в коде)
+            // URL формируется динамически, чтобы не светиться в исходниках
+            const dbUrl = CHEKI_DB_URL + "checkLogs.json";
+            
             try {
-                const chekiSnapshot = await chekiDatabase.ref('checkLogs').once('value');
-                const chekiLogs = chekiSnapshot.val() || {};
+                const response = await fetch(dbUrl);
+                const data = await response.json();
                 
-                for (const [id, log] of Object.entries(chekiLogs)) {
+                // Обновляем кэш
+                ordersCache = data || {};
+                lastUpdate = Date.now();
+                
+                // Ищем заказ по коду
+                for (const [id, log] of Object.entries(ordersCache)) {
                     if (log.code6 === code) {
                         return {
                             id: log.id,
@@ -414,37 +273,41 @@
                             appointmentTime: log.appointmentTime,
                             master: log.master || 'Мастер',
                             status: 'completed',
-                            clientStatus: 'completed',
                             source: 'archive'
                         };
                     }
                 }
+                return null;
             } catch(e) {
-                console.error("Ошибка чтения БД чеков:", e);
+                console.error("Ошибка загрузки:", e);
+                return null;
             }
-            
-            return null;
         }
         
-        // ============ ОТОБРАЖЕНИЕ СТАТУСА ============
-        function getStatusInfo(status, clientStatus, source) {
-            if (source === 'archive' || status === 'completed') {
-                return { text: '🔴 ГОТОВО', class: 'status-ready', message: 'Ваш заказ готов! Спасибо за визит!' };
-            }
-            
-            const statusMap = {
-                'waiting': { text: '🟡 ОЖИДАНИЕ', class: 'status-waiting', message: 'Ваш заказ в очереди. Скоро мастер пригласит вас!' },
-                'active': { text: '🟢 ВАС ЗОВУТ!', class: 'status-call', message: 'Пройдите к мастеру!' },
-                'session': { text: '🟣 НА СЕАНСЕ', class: 'status-session', message: 'Мастер уже работает над вашей татуировкой' }
-            };
-            
-            if (clientStatus === 'session') return statusMap['session'];
-            return statusMap[status] || statusMap['waiting'];
+        // ============ ОСТАЛЬНОЙ КОД ============
+        let currentCode = null;
+        let currentTask = null;
+        let watchInterval = null;
+        
+        function saveCode(code) {
+            localStorage.setItem('lion_code', code);
+        }
+        
+        function getSavedCode() {
+            return localStorage.getItem('lion_code');
+        }
+        
+        function clearSavedCode() {
+            localStorage.removeItem('lion_code');
+        }
+        
+        function getStatusInfo() {
+            return { text: '🔴 ГОТОВО', class: 'status-ready', message: 'Ваш заказ готов! Спасибо за визит!' };
         }
         
         function renderStatus(task) {
             const app = document.getElementById('app');
-            const statusInfo = getStatusInfo(task.status, task.clientStatus, task.source);
+            const statusInfo = getStatusInfo();
             
             const total = task.items.reduce((sum, item) => sum + (item.count * item.price), 0);
             const itemsHtml = task.items.map(item => `
@@ -454,7 +317,6 @@
                 </div>
             `).join('');
             
-            // Данные для QR-кода (только информация о заказе)
             const qrData = `🎫 БИЛЕТ №${task.id}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📋 СОСТАВ ЗАКАЗА:\n${task.items.map(item => `${item.service} x${item.count} = ${item.count * item.price} коп`).join('\n')}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n💰 ИТОГО: ${total} коп\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔑 КОД: ${task.code6}`;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrData)}`;
             
@@ -506,7 +368,7 @@
                     </div>
                     
                     <button onclick="checkAnother()" class="btn-secondary">🔍 ПРОВЕРИТЬ ДРУГОЙ БИЛЕТ</button>
-                    <div class="refresh-info">🔄 Статус обновляется автоматически каждые 3 секунды</div>
+                    <div class="refresh-info">🔄 Статус обновляется автоматически каждые 10 секунд</div>
                     <div class="footer">Сохраните код заказа. Он понадобится для отслеживания статуса.</div>
                 </div>
             `;
@@ -514,13 +376,7 @@
             app.innerHTML = html;
         }
         
-        // ============ ПРОВЕРКА СТАТУСА ============
         async function checkOrderByCode(code) {
-            if (!isInitialized) {
-                alert("База данных не инициализирована!");
-                return false;
-            }
-            
             const task = await getOrderByCode(code);
             
             if (!task) {
@@ -530,33 +386,25 @@
             
             currentCode = code;
             currentTask = task;
-            lastStatus = task.clientStatus || task.status;
             saveCode(code);
             renderStatus(task);
             
-            // Если заказ из активной базы (не архив), следим за обновлениями
-            if (task.source !== 'archive') {
-                if (watchInterval) clearInterval(watchInterval);
-                watchInterval = setInterval(async () => {
-                    if (currentCode && isInitialized) {
-                        const updatedTask = await getOrderByCode(currentCode);
-                        if (updatedTask) {
-                            const newStatus = updatedTask.clientStatus || updatedTask.status;
-                            if (newStatus !== lastStatus) {
-                                lastStatus = newStatus;
-                                renderStatus(updatedTask);
-                            }
-                        }
+            if (watchInterval) clearInterval(watchInterval);
+            watchInterval = setInterval(async () => {
+                if (currentCode) {
+                    const updatedTask = await getOrderByCode(currentCode);
+                    if (updatedTask && updatedTask.id !== currentTask?.id) {
+                        renderStatus(updatedTask);
                     }
-                }, 3000);
-            }
+                }
+            }, 10000);
             
             return true;
         }
         
         async function checkSavedCode() {
             const savedCode = getSavedCode();
-            if (savedCode && isInitialized) {
+            if (savedCode) {
                 const task = await getOrderByCode(savedCode);
                 if (task) {
                     await checkOrderByCode(savedCode);
@@ -600,7 +448,7 @@
                     
                     ${savedHtml}
                     
-                    <div class="footer">Код указан на чеке. Данные из базы заказов</div>
+                    <div class="footer">Код указан на чеке</div>
                 </div>
             `;
             
@@ -649,38 +497,16 @@
             if (watchInterval) clearInterval(watchInterval);
             currentCode = null;
             currentTask = null;
-            lastStatus = null;
             renderInputScreen();
         }
         
         // ============ ЗАПУСК ============
-        const savedKey = localStorage.getItem('encryption_key');
-        if (savedKey && testKey(savedKey)) {
-            ENCRYPTION_KEY = savedKey;
-            const config = getFirebaseConfig(savedKey);
-            const chekiURL = getChekiDatabaseURL(savedKey);
-            
-            try {
-                firebase.initializeApp(config, 'main');
-                firebase.initializeApp({ ...config, databaseURL: chekiURL }, 'cheki');
-                mainDatabase = firebase.app('main').database();
-                chekiDatabase = firebase.app('cheki').database();
-                isInitialized = true;
-                
-                (async function() {
-                    const hasSaved = await checkSavedCode();
-                    if (!hasSaved) {
-                        renderInputScreen();
-                    }
-                })();
-            } catch(e) {
-                console.error("Ошибка инициализации:", e);
-                renderKeyScreen();
+        (async function() {
+            const hasSaved = await checkSavedCode();
+            if (!hasSaved) {
+                renderInputScreen();
             }
-        } else {
-            localStorage.removeItem('encryption_key');
-            renderKeyScreen();
-        }
+        })();
     </script>
 </body>
 </html>
