@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>LION t.A.T.u. — Админ панель</title>
-    <link rel="icon" type="image/x-icon" href="logo.ico">
+    <title>LION t.A.T.u. — Полная система</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: linear-gradient(135deg, #0a0a0f 0%, #1a0b2e 100%);
-            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             min-height: 100vh;
             padding: 20px;
         }
+        /* Общие контейнеры */
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -22,56 +22,73 @@
             box-shadow: 0 0 50px rgba(255, 42, 109, 0.3);
             border: 1px solid rgba(5, 217, 232, 0.3);
         }
-        /* Табы */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: rgba(26, 26, 46, 0.95);
+            border-radius: 35px;
+            padding: 40px;
+            text-align: center;
+        }
+        /* Формы */
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: #252540;
+            border: 1px solid #05d9e8;
+            border-radius: 25px;
+            color: white;
+            font-size: 14px;
+        }
+        button {
+            background: #05d9e8;
+            color: #0a0a0f;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:active { transform: scale(0.97); }
+        h1, h2, h3 { color: #ff2a6d; margin-bottom: 15px; }
+        /* Табы админки */
         .admin-tabs {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 25px;
             flex-wrap: wrap;
             border-bottom: 1px solid rgba(5, 217, 232, 0.3);
             padding-bottom: 15px;
         }
         .tab-btn {
-            padding: 12px 24px;
+            padding: 10px 18px;
             background: #1a1a2e;
             border: 1px solid rgba(5, 217, 232, 0.3);
             border-radius: 30px;
             color: #05d9e8;
             cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-        .tab-btn:hover {
-            background: #252540;
-            transform: translateY(-2px);
+            font-size: 13px;
         }
         .tab-btn.active {
             background: #05d9e8;
             color: #0a0a0f;
-            border-color: #05d9e8;
         }
         /* Карточки статистики */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 15px;
             margin-bottom: 25px;
         }
         .stat-card {
             background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
             border-radius: 20px;
-            padding: 20px;
+            padding: 15px;
             text-align: center;
-            border: 1px solid rgba(5, 217, 232, 0.2);
         }
         .stat-value {
-            font-size: 2.5em;
+            font-size: 2em;
             font-weight: bold;
             color: #00ff66;
-        }
-        .stat-label {
-            color: #888;
-            margin-top: 5px;
         }
         /* Пользователи */
         .user-card {
@@ -86,931 +103,759 @@
             gap: 10px;
             border-left: 4px solid #05d9e8;
         }
-        .user-online { border-left-color: #00ff66; }
-        .user-offline { border-left-color: #ff2a6d; }
-        .user-name { font-size: 1.2em; font-weight: bold; }
-        .user-status {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-        }
-        .status-online { background: #00ff66; color: #0a0a0f; }
-        .status-offline { background: #555; color: white; }
-        .status-busy { background: #ff2a6d; color: white; }
-        .status-break { background: #ffcc00; color: #0a0a0f; }
         /* Кнопки */
         .btn-icon {
-            padding: 8px 12px;
+            padding: 6px 12px;
             border-radius: 20px;
             border: none;
             cursor: pointer;
-            font-size: 14px;
-            transition: 0.2s;
+            font-size: 12px;
         }
-        .btn-icon:hover { transform: scale(1.05); }
         .btn-success { background: #00ff66; color: #0a0a0f; }
         .btn-danger { background: #ff2a6d; color: white; }
         .btn-warning { background: #ff6600; color: white; }
         .btn-info { background: #05d9e8; color: #0a0a0f; }
         .btn-purple { background: #b300ff; color: white; }
-        /* Лог ошибок */
-        .error-log {
+        /* Логи и ошибки */
+        .error-log, .log-container {
             background: #1a1a2e;
             border-radius: 20px;
             padding: 15px;
-            margin-top: 15px;
-            font-family: monospace;
-            font-size: 12px;
             max-height: 300px;
             overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
         }
         .error-item {
             padding: 8px;
             border-bottom: 1px solid #333;
             cursor: pointer;
         }
-        .error-item:hover { background: #252540; }
-        .error-time { color: #888; font-size: 11px; }
         .error-text { color: #ff2a6d; }
-        /* Системные логи */
-        .log-container {
-            background: #0a0a0f;
-            border-radius: 20px;
-            padding: 15px;
-            max-height: 400px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 12px;
-        }
-        .log-entry {
-            padding: 5px;
-            border-bottom: 1px solid #222;
-            color: #0f0;
-        }
-        .log-time { color: #888; }
-        /* Модальное окно */
-        .modal {
-            display: none;
+        .log-entry { padding: 5px; border-bottom: 1px solid #222; color: #0f0; }
+        /* Часы на весь экран */
+        .fullscreen-clock {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(15px);
+            z-index: 2000;
+            display: flex;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
         }
-        .modal-content {
-            background: #1a1a2e;
-            border-radius: 30px;
-            padding: 30px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80%;
-            overflow-y: auto;
+        .clock-time {
+            font-size: 12vw;
+            font-family: monospace;
+            color: #05d9e8;
+            text-shadow: 0 0 30px #05d9e8;
+            letter-spacing: 10px;
         }
-        .modal-header {
+        .clock-date {
+            font-size: 2vw;
+            color: #ffcc00;
+            margin-top: 20px;
+        }
+        /* Касса */
+        .cashier-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+        .cashier-left, .cashier-right { flex: 1; min-width: 280px; }
+        .cart-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
+            padding: 8px;
+            border-bottom: 1px solid #333;
         }
-        .close-modal {
+        .total { font-size: 1.5em; color: #00ff66; text-align: right; padding: 10px; }
+        /* Мастер */
+        .worker-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+        .worker-tasks { flex: 1; min-width: 280px; }
+        .task-card {
+            background: #1a1a2e;
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 10px;
             cursor: pointer;
-            font-size: 24px;
-            color: #ff2a6d;
         }
         @media (max-width: 768px) {
-            .container { padding: 15px; }
+            .cashier-layout, .worker-layout { flex-direction: column; }
             .user-card { flex-direction: column; align-items: stretch; }
-            .admin-tabs { gap: 5px; }
-            .tab-btn { padding: 8px 12px; font-size: 12px; }
+            .clock-time { font-size: 15vw; letter-spacing: 5px; }
+            .clock-date { font-size: 5vw; }
         }
     </style>
 </head>
 <body>
     <div id="app"></div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-
     <script>
-        // ============ FIREBASE КОНФИГ ============
-        const MAIN_FIREBASE_CONFIG = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "https://pvz-database-default-rtdb.firebaseio.com/",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-        
-        const CHEKI_FIREBASE_CONFIG = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "https://cheki-tatu-save-default-rtdb.firebaseio.com/",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-        
-        firebase.initializeApp(MAIN_FIREBASE_CONFIG, 'main');
-        firebase.initializeApp(CHEKI_FIREBASE_CONFIG, 'cheki');
-        
-        const database = firebase.app('main').database();
-        const chekiDatabase = firebase.app('cheki').database();
-        
-        // ============ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ============
+        // ============ ДЕМО-ДАННЫЕ ============
         let currentUser = null;
         let currentRole = null;
         let currentWindow = null;
+        let cart = [];
+        let currentCount = 1;
+        let ttsEnabled = true;
+        let selectedVoice = null;
+        let currentTicket = 1;
+        let currentTask = null;
         let errorLog = [];
         let systemLogs = [];
+        let fullscreenClockActive = false;
         
-        // ============ ЛОГИРОВАНИЕ ОШИБОК ============
-        function logError(error, source = "unknown") {
-            const errorEntry = {
-                id: Date.now(),
-                time: new Date().toLocaleString('ru-RU'),
-                message: error.message || String(error),
-                stack: error.stack || "",
-                source: source,
-                resolved: false
-            };
-            errorLog.unshift(errorEntry);
-            systemLogs.unshift({
-                time: new Date().toLocaleString('ru-RU'),
-                type: "ERROR",
-                message: error.message || String(error)
-            });
-            saveErrorsToStorage();
-            updateErrorDisplay();
-        }
+        const prices = { "ручка": 4, "маркер": 6 };
         
-        function logSystem(message, type = "INFO") {
-            systemLogs.unshift({
-                time: new Date().toLocaleString('ru-RU'),
-                type: type,
-                message: message
-            });
-            saveSystemLogsToStorage();
+        // Демо-пользователи
+        let users = {
+            "0": { password: "admin123", role: "CASHBOX", name: "Касса", workStatus: "free", online: true, todayOrders: 0, deviceModel: "Admin PC" },
+            "1": { password: "master1", role: "WORKER", name: "Александр", workStatus: "free", online: true, todayOrders: 0, deviceModel: "iPhone" },
+            "2": { password: "master2", role: "WORKER", name: "Мария", workStatus: "free", online: false, todayOrders: 0, deviceModel: "Android" },
+            "3": { password: "master3", role: "WORKER", name: "Иван", workStatus: "break", online: true, todayOrders: 0, deviceModel: "Windows" },
+            "4": { password: "master4", role: "WORKER", name: "Екатерина", workStatus: "free", online: true, todayOrders: 0, deviceModel: "Mac" }
+        };
+        
+        let tasks = [];
+        let queue = [];
+        let counter = 5;
+        
+        // ============ ЛОГИРОВАНИЕ ============
+        function logSystem(msg, type = "INFO") {
+            systemLogs.unshift({ time: new Date().toLocaleString(), type, message: msg });
+            if(systemLogs.length > 500) systemLogs.pop();
             updateSystemLogsDisplay();
         }
         
-        function saveErrorsToStorage() {
-            localStorage.setItem('lion_errors', JSON.stringify(errorLog.slice(0, 100)));
-        }
-        
-        function loadErrorsFromStorage() {
-            try {
-                const saved = localStorage.getItem('lion_errors');
-                if (saved) errorLog = JSON.parse(saved);
-            } catch(e) {}
-        }
-        
-        function saveSystemLogsToStorage() {
-            localStorage.setItem('lion_system_logs', JSON.stringify(systemLogs.slice(0, 500)));
-        }
-        
-        function loadSystemLogsFromStorage() {
-            try {
-                const saved = localStorage.getItem('lion_system_logs');
-                if (saved) systemLogs = JSON.parse(saved);
-            } catch(e) {}
-        }
-        
-        // ============ АДМИН-ПАНЕЛЬ ============
-        function renderAdminPanel() {
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="container">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h1>👑 АДМИН-ПАНЕЛЬ</h1>
-                        <button class="btn-icon btn-info" onclick="renderCashierScreen()">◀ НАЗАД</button>
-                    </div>
-                    
-                    <div class="admin-tabs">
-                        <button class="tab-btn active" onclick="showAdminTab('dashboard')">📊 ДАШБОРД</button>
-                        <button class="tab-btn" onclick="showAdminTab('users')">👥 ПОЛЬЗОВАТЕЛИ</button>
-                        <button class="tab-btn" onclick="showAdminTab('errors')">⚠️ ОШИБКИ</button>
-                        <button class="tab-btn" onclick="showAdminTab('logs')">📋 ЛОГИ</button>
-                        <button class="tab-btn" onclick="showAdminTab('settings')">⚙️ НАСТРОЙКИ</button>
-                        <button class="tab-btn" onclick="showAdminTab('backup')">💾 БЭКАП</button>
-                        <button class="tab-btn" onclick="showAdminTab('commands')">📡 КОМАНДЫ</button>
-                    </div>
-                    
-                    <div id="adminContent"></div>
-                </div>
-            `;
-            showAdminTab('dashboard');
-        }
-        
-        async function showAdminTab(tabName) {
-            // Обновляем активные кнопки
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            const content = document.getElementById('adminContent');
-            
-            switch(tabName) {
-                case 'dashboard':
-                    content.innerHTML = await renderDashboard();
-                    break;
-                case 'users':
-                    content.innerHTML = await renderUsersPanel();
-                    break;
-                case 'errors':
-                    content.innerHTML = renderErrorsPanel();
-                    break;
-                case 'logs':
-                    content.innerHTML = renderSystemLogsPanel();
-                    break;
-                case 'settings':
-                    content.innerHTML = renderSettingsPanel();
-                    break;
-                case 'backup':
-                    content.innerHTML = renderBackupPanel();
-                    break;
-                case 'commands':
-                    content.innerHTML = renderCommandsPanel();
-                    break;
-            }
-        }
-        
-        async function renderDashboard() {
-            const users = await loadUsers();
-            const tasks = await loadTasks();
-            const queue = await getAllQueueItems();
-            const logs = await chekiDatabase.ref('checkLogs').once('value');
-            const logsCount = logs.val() ? Object.keys(logs.val()).length : 0;
-            
-            const onlineCount = Object.values(users).filter(u => u.online === true).length;
-            const busyCount = Object.values(users).filter(u => u.workStatus === 'busy').length;
-            const activeTasksCount = Object.values(tasks).filter(t => t.status === 'active').length;
-            const waitingTasksCount = Object.values(tasks).filter(t => t.status === 'waiting').length;
-            
-            return `
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-value">${Object.keys(users).length}</div><div class="stat-label">Всего пользователей</div></div>
-                    <div class="stat-card"><div class="stat-value">${onlineCount}</div><div class="stat-label">Онлайн</div></div>
-                    <div class="stat-card"><div class="stat-value">${busyCount}</div><div class="stat-label">Заняты</div></div>
-                    <div class="stat-card"><div class="stat-value">${activeTasksCount}</div><div class="stat-label">Активных заказов</div></div>
-                    <div class="stat-card"><div class="stat-value">${waitingTasksCount}</div><div class="stat-label">В очереди</div></div>
-                    <div class="stat-card"><div class="stat-value">${queue.length}</div><div class="stat-label">Ожидают мастера</div></div>
-                    <div class="stat-card"><div class="stat-value">${logsCount}</div><div class="stat-label">Всего чеков</div></div>
-                    <div class="stat-card"><div class="stat-value">${errorLog.length}</div><div class="stat-label">Ошибок</div></div>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-card"><button class="btn-icon btn-success" onclick="refreshAllData()">🔄 ОБНОВИТЬ ВСЁ</button></div>
-                    <div class="stat-card"><button class="btn-icon btn-warning" onclick="clearAllCache()">🗑 ОЧИСТИТЬ КЭШ</button></div>
-                    <div class="stat-card"><button class="btn-icon btn-info" onclick="exportReport()">📄 ЭКСПОРТ ОТЧЁТА</button></div>
-                    <div class="stat-card"><button class="btn-icon btn-purple" onclick="showSystemInfo()">🖥️ ИНФО О СИСТЕМЕ</button></div>
-                </div>
-            `;
-        }
-        
-        async function renderUsersPanel() {
-            const users = await loadUsers();
-            let html = '<div style="margin-bottom: 20px;"><button class="btn-icon btn-success" onclick="addNewUser()">➕ ДОБАВИТЬ ПОЛЬЗОВАТЕЛЯ</button></div>';
-            
-            for (const [id, user] of Object.entries(users)) {
-                const statusClass = user.online ? 'user-online' : 'user-offline';
-                const statusText = user.online ? 'Онлайн' : 'Оффлайн';
-                const workStatusClass = user.workStatus === 'free' ? 'status-online' : (user.workStatus === 'busy' ? 'status-busy' : 'status-break');
-                const workStatusText = user.workStatus === 'free' ? 'Свободен' : (user.workStatus === 'busy' ? 'Занят' : 'Перерыв');
-                
-                html += `
-                    <div class="user-card ${statusClass}">
-                        <div>
-                            <span class="user-name">${user.name}</span>
-                            <span class="user-status ${statusClass === 'user-online' ? 'status-online' : 'status-offline'}">${statusText}</span>
-                            <span class="user-status ${workStatusClass}">${workStatusText}</span>
-                        </div>
-                        <div><strong>ID:</strong> ${id}</div>
-                        <div><strong>Заказов сегодня:</strong> ${user.todayOrders || 0}</div>
-                        <div><strong>Устройство:</strong> ${user.deviceModel || 'Unknown'}</div>
-                        <div>
-                            <button class="btn-icon btn-info" onclick="showUserDetails('${id}')">📱 Детали</button>
-                            <button class="btn-icon btn-warning" onclick="toggleUserBreak('${id}', '${user.workStatus}')">🟡 Перерыв</button>
-                            <button class="btn-icon btn-success" onclick="forceFreeWindow('${id}')">🔓 Освободить</button>
-                            <button class="btn-icon btn-danger" onclick="kickUser('${id}')">🚪 Выгнать</button>
-                            <button class="btn-icon btn-purple" onclick="resetUserPassword('${id}')">🔑 Сброс пароля</button>
-                            <button class="btn-icon btn-danger" onclick="deleteUser('${id}')">🗑 Удалить</button>
-                        </div>
-                    </div>
-                `;
-            }
-            return html;
-        }
-        
-        function renderErrorsPanel() {
-            let html = `
-                <div style="margin-bottom: 15px;">
-                    <button class="btn-icon btn-success" onclick="clearAllErrors()">✅ ОЧИСТИТЬ ВСЕ ОШИБКИ</button>
-                    <button class="btn-icon btn-info" onclick="exportErrorsToFile()">📄 ЭКСПОРТ ОШИБОК</button>
-                </div>
-                <div class="error-log" id="errorLogContainer">
-            `;
-            
-            if (errorLog.length === 0) {
-                html += '<div style="text-align:center; color:#555; padding:20px;">✅ НЕТ ОШИБОК</div>';
-            } else {
-                for (const err of errorLog) {
-                    html += `
-                        <div class="error-item" onclick="copyErrorText('${err.message.replace(/'/g, "\\'")}')">
-                            <div class="error-time">[${err.time}]</div>
-                            <div class="error-text">❌ ${err.message}</div>
-                            <div style="font-size: 11px; color:#555;">Источник: ${err.source}</div>
-                        </div>
-                    `;
-                }
-            }
-            html += '</div>';
-            return html;
-        }
-        
-        function renderSystemLogsPanel() {
-            let html = `
-                <div style="margin-bottom: 15px;">
-                    <button class="btn-icon btn-warning" onclick="clearAllLogs()">🗑 ОЧИСТИТЬ ЛОГИ</button>
-                    <button class="btn-icon btn-info" onclick="exportLogsToFile()">📄 ЭКСПОРТ ЛОГОВ</button>
-                </div>
-                <div class="log-container" id="systemLogsContainer">
-            `;
-            
-            if (systemLogs.length === 0) {
-                html += '<div style="text-align:center; color:#555; padding:20px;">📭 ЛОГИ ОТСУТСТВУЮТ</div>';
-            } else {
-                for (const log of systemLogs.slice(0, 200)) {
-                    const color = log.type === 'ERROR' ? '#ff2a6d' : (log.type === 'WARNING' ? '#ffcc00' : '#00ff66');
-                    html += `<div class="log-entry"><span class="log-time">[${log.time}]</span> <span style="color:${color}">${log.type}</span> - ${log.message}</div>`;
-                }
-            }
-            html += '</div>';
-            return html;
-        }
-        
-        function renderSettingsPanel() {
-            return `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>⚙️ ОБЩИЕ НАСТРОЙКИ</h3>
-                        <button class="btn-icon btn-info" onclick="changeTheme()">🎨 СМЕНИТЬ ТЕМУ</button>
-                        <button class="btn-icon btn-warning" onclick="toggleTTS()">🔊 ВКЛ/ВЫКЛ ОЗВУЧКУ</button>
-                        <button class="btn-icon btn-purple" onclick="setAdminPassword()">🔐 СМЕНИТЬ ПАРОЛЬ АДМИНА</button>
-                    </div>
-                    <div class="stat-card">
-                        <h3>🔄 СИНХРОНИЗАЦИЯ</h3>
-                        <button class="btn-icon btn-success" onclick="syncAllDevices()">🔄 СИНХРОНИЗИРОВАТЬ ВСЁ</button>
-                        <button class="btn-icon btn-info" onclick="syncSettingsToAll()">⚙️ СИНХР. НАСТРОЙКИ</button>
-                    </div>
-                    <div class="stat-card">
-                        <h3>🗑 СБРОС</h3>
-                        <button class="btn-icon btn-warning" onclick="resetAllData()">⚠️ СБРОС ВСЕХ ДАННЫХ</button>
-                        <button class="btn-icon btn-danger" onclick="clearAllTasks()">❌ ОЧИСТИТЬ ВСЕ ЗАКАЗЫ</button>
-                        <button class="btn-icon btn-danger" onclick="resetAllUsers()">👥 СБРОС ПОЛЬЗОВАТЕЛЕЙ</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderBackupPanel() {
-            return `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>💾 СОЗДАТЬ БЭКАП</h3>
-                        <button class="btn-icon btn-success" onclick="createBackup()">📦 СОЗДАТЬ БЭКАП</button>
-                        <button class="btn-icon btn-info" onclick="exportBackupToFile()">💾 СКАЧАТЬ БЭКАП</button>
-                    </div>
-                    <div class="stat-card">
-                        <h3>🔄 ВОССТАНОВЛЕНИЕ</h3>
-                        <input type="file" id="restoreFile" accept=".json" style="margin-bottom:10px;">
-                        <button class="btn-icon btn-warning" onclick="restoreFromBackup()">📂 ВОССТАНОВИТЬ</button>
-                    </div>
-                    <div class="stat-card">
-                        <h3>📊 СТАТИСТИКА БД</h3>
-                        <button class="btn-icon btn-purple" onclick="showDBStats()">📊 ПОКАЗАТЬ СТАТИСТИКУ</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderCommandsPanel() {
-            return `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>📡 ГЛОБАЛЬНЫЕ КОМАНДЫ</h3>
-                        <button class="btn-icon btn-warning" onclick="sendCommandToAll('refresh')">🔄 ОБНОВИТЬ ВСЕМ</button>
-                        <button class="btn-icon btn-danger" onclick="sendCommandToAll('logout')">🚪 ВЫГНАТЬ ВСЕХ</button>
-                        <button class="btn-icon btn-info" onclick="sendCommandToAll('clear_screen')">🗑 ОЧИСТИТЬ ЭКРАНЫ</button>
-                        <button class="btn-icon btn-success" onclick="sendCommandToAll('sync')">🔄 СИНХР. ВСЕМ</button>
-                    </div>
-                    <div class="stat-card">
-                        <h3>🎨 КОМАНДЫ МАСТЕРАМ</h3>
-                        <button class="btn-icon btn-purple" onclick="showClockToAllMasters()">🕐 ВКЛЮЧИТЬ ЧАСЫ ВСЕМ</button>
-                        <button class="btn-icon btn-warning" onclick="sendBreakToAll()">🟡 ПЕРЕРЫВ ВСЕМ</button>
-                        <button class="btn-icon btn-success" onclick="sendResumeToAll()">✅ ВЕРНУТЬ К РАБОТЕ ВСЕХ</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // ============ АДМИН-ФУНКЦИИ ============
-        async function loadUsers() {
-            const snapshot = await database.ref('users').once('value');
-            return snapshot.val() || {};
-        }
-        
-        async function loadTasks() {
-            const snapshot = await database.ref('tasks').once('value');
-            return snapshot.val() || {};
-        }
-        
-        async function getAllQueueItems() {
-            const snapshot = await database.ref('queue').once('value');
-            const queue = snapshot.val() || {};
-            return Object.values(queue);
-        }
-        
-        async function showUserDetails(userId) {
-            const user = (await database.ref(`users/${userId}`).once('value')).val();
-            if (!user) return;
-            
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.display = 'flex';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>📱 ${user.name}</h2>
-                        <span class="close-modal" onclick="this.parentElement.parentElement.parentElement.remove()">✕</span>
-                    </div>
-                    <div><strong>ID:</strong> ${userId}</div>
-                    <div><strong>Роль:</strong> ${user.role}</div>
-                    <div><strong>Статус:</strong> ${user.workStatus}</div>
-                    <div><strong>Заказов сегодня:</strong> ${user.todayOrders || 0}</div>
-                    <div><strong>Онлайн:</strong> ${user.online ? 'Да' : 'Нет'}</div>
-                    <div><strong>Устройство:</strong> ${user.deviceModel || 'Unknown'}</div>
-                    <div><strong>Экран:</strong> ${user.deviceScreen || 'Unknown'}</div>
-                    <div><strong>Язык:</strong> ${user.deviceLanguage || 'ru-RU'}</div>
-                    <div><strong>Таймзона:</strong> ${user.deviceTimezone || 'Europe/Moscow'}</div>
-                    <div><strong>Последний вход:</strong> ${new Date(user.lastSeen).toLocaleString()}</div>
-                    <div><strong>Приоритет:</strong> ${user.priority || 1}</div>
-                    <div style="margin-top:15px;"><strong>User Agent:</strong><br><code style="font-size:10px; word-break:break-all;">${user.deviceUserAgent || 'Unknown'}</code></div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-            modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
-        }
-        
-        async function toggleUserBreak(userId, currentStatus) {
-            const newStatus = currentStatus === 'break' ? 'free' : 'break';
-            await database.ref(`users/${userId}/workStatus`).set(newStatus);
-            logSystem(`Статус пользователя ${userId} изменён на ${newStatus}`, "INFO");
-            showAdminTab('users');
-        }
-        
-        async function forceFreeWindow(userId) {
-            await database.ref(`users/${userId}/workStatus`).set('free');
-            logSystem(`Пользователь ${userId} принудительно освобождён`, "INFO");
-            showAdminTab('users');
-        }
-        
-        async function kickUser(userId) {
-            await database.ref(`users/${userId}`).update({ online: false, workStatus: 'free' });
-            await database.ref(`commands/${userId}`).set({ action: 'logout', timestamp: Date.now() });
-            logSystem(`Пользователь ${userId} выгнан из системы`, "INFO");
-            showAdminTab('users');
-        }
-        
-        async function resetUserPassword(userId) {
-            const newPass = Math.random().toString(36).substring(2, 10);
-            await database.ref(`users/${userId}/password`).set(newPass);
-            alert(`Новый пароль для ${userId}: ${newPass}`);
-            logSystem(`Пароль для ${userId} сброшен`, "INFO");
-        }
-        
-        async function deleteUser(userId) {
-            if(confirm(`Удалить пользователя ${userId}?`)) {
-                await database.ref(`users/${userId}`).remove();
-                logSystem(`Пользователь ${userId} удалён`, "WARNING");
-                showAdminTab('users');
-            }
-        }
-        
-        async function addNewUser() {
-            const userId = prompt("Введите ID пользователя (1-99):");
-            if(!userId) return;
-            const userName = prompt("Введите имя:");
-            if(!userName) return;
-            const userPass = prompt("Введите пароль:");
-            if(!userPass) return;
-            const userRole = confirm("Роль: OK - WORKER, Отмена - CASHBOX") ? "WORKER" : "CASHBOX";
-            
-            await database.ref(`users/${userId}`).set({
-                password: userPass,
-                role: userRole,
-                name: userName,
-                workStatus: "free",
-                online: false,
-                priority: 5,
-                todayOrders: 0
-            });
-            logSystem(`Добавлен пользователь ${userName} (ID: ${userId})`, "INFO");
-            showAdminTab('users');
-        }
-        
-        function copyErrorText(text) {
-            navigator.clipboard.writeText(text);
-            alert("Ошибка скопирована!");
-        }
-        
-        function clearAllErrors() {
-            errorLog = [];
-            saveErrorsToStorage();
+        function logError(err, src = "system") {
+            errorLog.unshift({ time: new Date().toLocaleString(), message: err.message || String(err), source: src });
+            if(errorLog.length > 200) errorLog.pop();
             updateErrorDisplay();
-            logSystem("Лог ошибок очищен", "INFO");
-            showAdminTab('errors');
-        }
-        
-        function clearAllLogs() {
-            systemLogs = [];
-            saveSystemLogsToStorage();
-            updateSystemLogsDisplay();
-            logSystem("Лог системы очищен", "INFO");
-            showAdminTab('logs');
+            logSystem(`Ошибка: ${err.message}`, "ERROR");
         }
         
         function updateErrorDisplay() {
             const container = document.getElementById('errorLogContainer');
-            if(container) {
-                if(errorLog.length === 0) {
-                    container.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">✅ НЕТ ОШИБОК</div>';
-                } else {
-                    container.innerHTML = errorLog.map(err => `
-                        <div class="error-item" onclick="copyErrorText('${err.message.replace(/'/g, "\\'")}')">
-                            <div class="error-time">[${err.time}]</div>
-                            <div class="error-text">❌ ${err.message}</div>
-                            <div style="font-size: 11px; color:#555;">Источник: ${err.source}</div>
-                        </div>
-                    `).join('');
-                }
+            if(!container) return;
+            if(errorLog.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#555;">✅ НЕТ ОШИБОК</div>';
+            } else {
+                container.innerHTML = errorLog.map(err => `
+                    <div class="error-item" onclick="navigator.clipboard.writeText('${err.message.replace(/'/g, "\\'")}')">
+                        <div>[${err.time}]</div>
+                        <div class="error-text">❌ ${err.message}</div>
+                    </div>
+                `).join('');
             }
         }
         
         function updateSystemLogsDisplay() {
             const container = document.getElementById('systemLogsContainer');
-            if(container) {
-                if(systemLogs.length === 0) {
-                    container.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">📭 ЛОГИ ОТСУТСТВУЮТ</div>';
+            if(!container) return;
+            if(systemLogs.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#555;">📭 НЕТ ЛОГОВ</div>';
+            } else {
+                container.innerHTML = systemLogs.slice(0, 150).map(log => {
+                    const color = log.type === 'ERROR' ? '#ff2a6d' : (log.type === 'WARNING' ? '#ffcc00' : '#00ff66');
+                    return `<div class="log-entry">[${log.time}] <span style="color:${color}">${log.type}</span> - ${log.message}</div>`;
+                }).join('');
+            }
+        }
+        
+        // ============ TTS ============
+        function loadRussianVoice() {
+            return new Promise((resolve) => {
+                const voices = window.speechSynthesis.getVoices();
+                if(voices.length) {
+                    selectedVoice = voices.find(v => v.lang.includes('ru')) || voices[0];
+                    resolve(selectedVoice);
                 } else {
-                    container.innerHTML = systemLogs.slice(0, 200).map(log => {
-                        const color = log.type === 'ERROR' ? '#ff2a6d' : (log.type === 'WARNING' ? '#ffcc00' : '#00ff66');
-                        return `<div class="log-entry"><span class="log-time">[${log.time}]</span> <span style="color:${color}">${log.type}</span> - ${log.message}</div>`;
-                    }).join('');
+                    window.speechSynthesis.onvoiceschanged = () => {
+                        const voices2 = window.speechSynthesis.getVoices();
+                        selectedVoice = voices2.find(v => v.lang.includes('ru')) || voices2[0];
+                        resolve(selectedVoice);
+                    };
                 }
-            }
+            });
         }
         
-        function exportErrorsToFile() {
-            const data = JSON.stringify(errorLog, null, 2);
-            const blob = new Blob([data], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `lion_errors_${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            logSystem("Экспорт ошибок выполнен", "INFO");
+        function speakText(text) {
+            if(!ttsEnabled) return;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ru-RU';
+            utterance.rate = 0.9;
+            if(selectedVoice) utterance.voice = selectedVoice;
+            window.speechSynthesis.speak(utterance);
         }
         
-        function exportLogsToFile() {
-            const data = JSON.stringify(systemLogs, null, 2);
-            const blob = new Blob([data], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `lion_logs_${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            logSystem("Экспорт логов выполнен", "INFO");
+        function announceNewOrder(ticketId, code) {
+            speakText(`Новый заказ! Билет номер ${ticketId}. Код на чеке: ${code}. Сообщите клиенту код.`);
         }
         
-        function exportReport() {
-            const report = {
-                timestamp: new Date().toISOString(),
-                errors: errorLog.slice(0, 50),
-                logs: systemLogs.slice(0, 100),
-                stats: {
-                    errorsCount: errorLog.length,
-                    logsCount: systemLogs.length
-                }
-            };
-            const data = JSON.stringify(report, null, 2);
-            const blob = new Blob([data], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `lion_report_${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            logSystem("Отчёт экспортирован", "INFO");
-        }
-        
-        function refreshAllData() {
-            showAdminTab('dashboard');
-            logSystem("Все данные обновлены", "INFO");
-        }
-        
-        function clearAllCache() {
-            localStorage.clear();
-            alert("Кэш очищен! Перезагрузите страницу.");
-            logSystem("Кэш очищен", "WARNING");
-            location.reload();
-        }
-        
-        function showSystemInfo() {
-            alert(`
-🖥️ ИНФОРМАЦИЯ О СИСТЕМЕ
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Браузер: ${navigator.userAgent}
-Платформа: ${navigator.platform}
-Язык: ${navigator.language}
-Экран: ${screen.width}x${screen.height}
-Глубина цвета: ${screen.colorDepth}
-Время: ${new Date().toLocaleString()}
-Ошибок в логе: ${errorLog.length}
-Всего логов: ${systemLogs.length}
-            `);
-        }
-        
-        function changeTheme() {
-            const body = document.body;
-            const isDark = body.style.background.includes('0a0a0f');
-            if(isDark) {
-                body.style.background = "linear-gradient(135deg, #f0f0f5 0%, #e0e0e8 100%)";
-            } else {
-                body.style.background = "linear-gradient(135deg, #0a0a0f 0%, #1a0b2e 100%)";
-            }
-            logSystem("Тема изменена", "INFO");
-        }
-        
-        function toggleTTS() {
-            ttsEnabled = !ttsEnabled;
-            alert(`Озвучка ${ttsEnabled ? 'ВКЛЮЧЕНА' : 'ВЫКЛЮЧЕНА'}`);
-            logSystem(`Озвучка ${ttsEnabled ? 'включена' : 'выключена'}`, "INFO");
-        }
-        
-        function setAdminPassword() {
-            const newPass = prompt("Введите новый пароль администратора:");
-            if(newPass) {
-                localStorage.setItem('admin_password', newPass);
-                alert("Пароль сохранён!");
-                logSystem("Пароль администратора изменён", "WARNING");
-            }
-        }
-        
-        async function syncAllDevices() {
-            logSystem("Синхронизация всех устройств...", "INFO");
-            alert("Синхронизация запущена");
-        }
-        
-        async function syncSettingsToAll() {
-            logSystem("Синхронизация настроек...", "INFO");
-            alert("Настройки синхронизированы");
-        }
-        
-        async function resetAllData() {
-            if(confirm("⚠️ ВНИМАНИЕ! Это удалит ВСЕ ДАННЫЕ! Продолжить?")) {
-                await database.ref('tasks').remove();
-                await database.ref('queue').remove();
-                await database.ref('counter').set(1);
-                alert("Все данные сброшены!");
-                logSystem("ВСЕ ДАННЫЕ СБРОШЕНЫ", "ERROR");
-            }
-        }
-        
-        async function clearAllTasks() {
-            if(confirm("Удалить ВСЕ заказы?")) {
-                await database.ref('tasks').remove();
-                await database.ref('queue').remove();
-                alert("Все заказы удалены!");
-                logSystem("Все заказы удалены", "WARNING");
-            }
-        }
-        
-        async function resetAllUsers() {
-            if(confirm("Сбросить всех пользователей?")) {
-                const defaultUsers = {
-                    "0": { password: "admin123321", role: "CASHBOX", name: "Касса", workStatus: "free", online: false, priority: 0, todayOrders: 0 },
-                    "1": { password: "okno1", role: "WORKER", name: "Александр", workStatus: "free", online: false, priority: 1, todayOrders: 0 },
-                    "2": { password: "okno2", role: "WORKER", name: "Мария", workStatus: "free", online: false, priority: 1, todayOrders: 0 },
-                    "3": { password: "okno3", role: "WORKER", name: "Иван", workStatus: "free", online: false, priority: 1, todayOrders: 0 },
-                    "4": { password: "okno4", role: "WORKER", name: "Екатерина", workStatus: "free", online: false, priority: 1, todayOrders: 0 }
-                };
-                for(const [key, value] of Object.entries(defaultUsers)) {
-                    await database.ref(`users/${key}`).set(value);
-                }
-                alert("Пользователи сброшены!");
-                logSystem("Пользователи сброшены к стандартным", "WARNING");
-            }
-        }
-        
-        async function createBackup() {
-            const users = await loadUsers();
-            const tasks = await loadTasks();
-            const queue = await getAllQueueItems();
-            const counter = await loadCounter();
-            const backup = { users, tasks, queue, counter, timestamp: Date.now() };
-            localStorage.setItem('lion_backup', JSON.stringify(backup));
-            alert("Бэкап создан!");
-            logSystem("Бэкап создан", "INFO");
-        }
-        
-        function exportBackupToFile() {
-            const backup = localStorage.getItem('lion_backup');
-            if(backup) {
-                const blob = new Blob([backup], {type: 'application/json'});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `lion_backup_${Date.now()}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-                logSystem("Бэкап экспортирован", "INFO");
-            } else {
-                alert("Нет сохранённого бэкапа! Сначала создайте бэкап.");
-            }
-        }
-        
-        async function restoreFromBackup() {
-            const fileInput = document.getElementById('restoreFile');
-            if(!fileInput.files[0]) { alert("Выберите файл!"); return; }
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const backup = JSON.parse(e.target.result);
-                    if(backup.users) {
-                        for(const [key, value] of Object.entries(backup.users)) {
-                            await database.ref(`users/${key}`).set(value);
-                        }
-                    }
-                    if(backup.counter) await database.ref('counter').set(backup.counter);
-                    alert("Восстановление завершено!");
-                    logSystem("Восстановление из бэкапа выполнено", "INFO");
-                } catch(err) {
-                    alert("Ошибка восстановления!");
-                    logError(err, "restore");
-                }
-            };
-            reader.readAsText(file);
-        }
-        
-        async function showDBStats() {
-            const users = await loadUsers();
-            const tasks = await loadTasks();
-            const queue = await getAllQueueItems();
-            alert(`
-📊 СТАТИСТИКА БАЗЫ ДАННЫХ
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👥 Пользователей: ${Object.keys(users).length}
-📋 Активных заказов: ${Object.values(tasks).length}
-⏳ В очереди: ${queue.length}
-            `);
-        }
-        
-        async function sendCommandToAll(command) {
-            const users = await loadUsers();
-            for(const userId of Object.keys(users)) {
-                if(userId !== "0") {
-                    await database.ref(`commands/${userId}`).set({ action: command, timestamp: Date.now() });
-                }
-            }
-            alert(`Команда "${command}" отправлена всем`);
-            logSystem(`Команда "${command}" отправлена всем`, "INFO");
-        }
-        
-        async function showClockToAllMasters() {
-            const users = await loadUsers();
-            for(const userId of Object.keys(users)) {
-                if(userId !== "0" && users[userId].role === "WORKER") {
-                    await database.ref(`commands/${userId}`).set({ action: 'show_clock', timestamp: Date.now() });
-                }
-            }
-            alert("Команда включить часы отправлена всем мастерам");
-            logSystem("Команда включить часы отправлена всем", "INFO");
-        }
-        
-        async function sendBreakToAll() {
-            const users = await loadUsers();
-            for(const userId of Object.keys(users)) {
-                if(userId !== "0" && users[userId].role === "WORKER") {
-                    await database.ref(`users/${userId}/workStatus`).set('break');
-                }
-            }
-            alert("Все мастера отправлены на перерыв");
-            logSystem("Все мастера отправлены на перерыв", "WARNING");
-        }
-        
-        async function sendResumeToAll() {
-            const users = await loadUsers();
-            for(const userId of Object.keys(users)) {
-                if(userId !== "0" && users[userId].role === "WORKER") {
-                    await database.ref(`users/${userId}/workStatus`).set('free');
-                }
-            }
-            alert("Все мастера возвращены к работе");
-            logSystem("Все мастера возвращены к работе", "INFO");
-        }
-        
-        // ============ ЗАГРУЗКА ПОЛЬЗОВАТЕЛЕЙ ============
-        async function initDefaultUsers() {
-            const snapshot = await database.ref('users').once('value');
-            if(snapshot.exists()) return;
-            const defaultUsers = {
-                "0": { password: "admin123321", role: "CASHBOX", name: "Касса", workStatus: "free", online: false, priority: 0, todayOrders: 0 },
-                "1": { password: "okno1", role: "WORKER", name: "Александр", workStatus: "free", online: false, priority: 1, todayOrders: 0 },
-                "2": { password: "okno2", role: "WORKER", name: "Мария", workStatus: "free", online: false, priority: 1, todayOrders: 0 },
-                "3": { password: "okno3", role: "WORKER", name: "Иван", workStatus: "free", online: false, priority: 1, todayOrders: 0 },
-                "4": { password: "okno4", role: "WORKER", name: "Екатерина", workStatus: "free", online: false, priority: 1, todayOrders: 0 }
-            };
-            for(const [key, value] of Object.entries(defaultUsers)) {
-                await database.ref(`users/${key}`).set(value);
-            }
-            await database.ref('settings/distributionMode').set("auto");
-            await database.ref('settings/windowPriorities').set({ "1": 1, "2": 1, "3": 1, "4": 1 });
-            await database.ref('counter').set(1);
-        }
-        
-        async function loadCounter() {
-            const s = await database.ref('counter').once('value');
-            return s.val() || 1;
+        // ============ ОСНОВНЫЕ ФУНКЦИИ ============
+        function generateCode() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
         }
         
         function renderLoginScreen() {
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="container" style="max-width:450px;margin:0 auto;">
+            document.getElementById('app').innerHTML = `
+                <div class="login-container">
                     <h1>🦁 LION t.A.T.u.</h1>
-                    <input type="number" id="windowNumber" placeholder="Номер окна" value="0">
-                    <input type="password" id="password" placeholder="Пароль">
+                    <input type="number" id="userNum" placeholder="Номер окна (0-4)" value="0">
+                    <input type="password" id="userPass" placeholder="Пароль">
                     <button onclick="doLogin()">🔓 ВОЙТИ</button>
+                    <div style="margin-top:15px; font-size:11px; color:#555;">Пароли: 0/admin123 | 1/master1 | 2/master2 | 3/master3 | 4/master4</div>
                 </div>
             `;
         }
         
         async function doLogin() {
-            const windowNumber = document.getElementById('windowNumber').value;
-            const password = document.getElementById('password').value;
-            const snapshot = await database.ref(`users/${windowNumber}`).once('value');
-            const userData = snapshot.val();
-            if(!userData || userData.password !== password) {
+            const num = document.getElementById('userNum').value;
+            const pass = document.getElementById('userPass').value;
+            const user = users[num];
+            if(!user || user.password !== pass) {
                 alert("Неверный номер или пароль!");
                 logError(new Error("Неверный вход"), "login");
                 return;
             }
-            currentUser = windowNumber;
-            currentRole = userData.role;
-            currentWindow = userData.name;
-            await database.ref(`users/${windowNumber}`).update({ online: true, lastSeen: Date.now() });
-            localStorage.setItem('user', JSON.stringify({ windowNumber, role: userData.role, name: userData.name }));
+            currentUser = num;
+            currentRole = user.role;
+            currentWindow = user.name;
+            users[num].online = true;
             logSystem(`Вход: ${currentWindow} (${currentRole})`, "INFO");
-            renderAdminPanel();
+            
+            if(currentRole === "CASHBOX") renderCashierScreen();
+            else renderWorkerScreen();
         }
         
+        // ============ ЭКРАН КАССЫ ============
         function renderCashierScreen() {
-            renderAdminPanel();
+            let cartHtml = '';
+            let total = 0;
+            for(let i = 0; i < cart.length; i++) {
+                const item = cart[i];
+                const itemTotal = item.count * item.price;
+                total += itemTotal;
+                cartHtml += `<div class="cart-item"><span>${item.service.toUpperCase()} x${item.count}</span><span>${itemTotal} коп</span><button onclick="removeFromCart(${i})" class="btn-icon btn-danger">🗑</button></div>`;
+            }
+            
+            document.getElementById('app').innerHTML = `
+                <div class="container">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <h1>💰 КАССА</h1>
+                        <div><button class="btn-icon btn-purple" onclick="showAdminPanel()">👑 АДМИН</button>
+                        <button class="btn-icon btn-danger" onclick="logout()">🚪 ВЫХОД</button></div>
+                    </div>
+                    <div class="cashier-layout">
+                        <div class="cashier-left">
+                            <div class="stat-card"><div class="stat-value">БИЛЕТ №${counter}</div></div>
+                            <div style="display:flex; gap:10px; margin:15px 0;">
+                                <button onclick="addToCart('ручка')" class="btn-info">✍️ РУЧКА (4 коп)</button>
+                                <button onclick="addToCart('маркер')" class="btn-warning">🖍️ МАРКЕР (6 коп)</button>
+                            </div>
+                            <div>
+                                <h3>КОЛИЧЕСТВО</h3>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    <button onclick="setCount(1)" class="btn-icon btn-info">x1</button>
+                                    <button onclick="setCount(2)" class="btn-icon btn-info">x2</button>
+                                    <button onclick="setCount(3)" class="btn-icon btn-info">x3</button>
+                                    <button onclick="setCount(4)" class="btn-icon btn-info">x4</button>
+                                    <button onclick="setCount(5)" class="btn-icon btn-info">x5</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cashier-right">
+                            <h3>🛒 КОРЗИНА</h3>
+                            <div id="cartContainer" style="background:#1a1a2e; border-radius:20px; padding:15px;">${cartHtml || '<div style="text-align:center;color:#555;">Корзина пуста</div>'}</div>
+                            <div class="total">💰 ИТОГО: ${total} коп</div>
+                            <button class="btn-success" onclick="confirmOrder()">✅ ПОДТВЕРДИТЬ ЗАКАЗ</button>
+                            <button class="btn-danger" onclick="clearCart()">🗑 ОЧИСТИТЬ</button>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
         
-        // Перехват ошибок
-        window.onerror = function(msg, url, line, col, error) {
-            logError(error || new Error(msg), "global");
-            return false;
-        };
+        function setCount(c) { currentCount = c; }
+        function addToCart(service) { cart.push({ service, count: currentCount, price: prices[service] }); renderCashierScreen(); }
+        function removeFromCart(idx) { cart.splice(idx, 1); renderCashierScreen(); }
+        function clearCart() { cart = []; renderCashierScreen(); }
         
-        window.onunhandledrejection = function(e) {
-            logError(e.reason || new Error("Unhandled Promise Rejection"), "promise");
-        };
-        
-        loadErrorsFromStorage();
-        loadSystemLogsFromStorage();
-        logSystem("Админ-панель загружена", "INFO");
-        
-        initDefaultUsers().then(() => {
-            const savedUser = localStorage.getItem('user');
-            if(savedUser) {
-                const user = JSON.parse(savedUser);
-                currentUser = user.windowNumber;
-                currentRole = user.role;
-                currentWindow = user.name;
-                renderAdminPanel();
+        function confirmOrder() {
+            if(cart.length === 0) { alert("Корзина пуста!"); return; }
+            const total = cart.reduce((s,i) => s + i.count * i.price, 0);
+            const ticketId = counter;
+            const code = generateCode();
+            
+            // Ищем свободного мастера
+            const freeMaster = Object.entries(users).find(([id, u]) => u.role === "WORKER" && u.workStatus === "free");
+            if(!freeMaster) {
+                alert("Нет свободных мастеров! Заказ в очередь.");
+                queue.push({ id: ticketId, items: [...cart], total, code, time: new Date().toLocaleTimeString() });
+                logSystem(`Заказ №${ticketId} в очередь`, "INFO");
             } else {
-                renderLoginScreen();
+                const masterId = freeMaster[0];
+                const masterName = freeMaster[1].name;
+                users[masterId].workStatus = "busy";
+                tasks.push({ id: ticketId, items: [...cart], total, code, time: new Date().toLocaleTimeString(), master: masterName, status: "active" });
+                announceNewOrder(ticketId, code);
+                logSystem(`Заказ №${ticketId} создан, мастер: ${masterName}`, "INFO");
             }
-        });
+            
+            counter++;
+            cart = [];
+            renderCashierScreen();
+        }
+        
+        // ============ ЭКРАН МАСТЕРА ============
+        function renderWorkerScreen() {
+            const myTasks = tasks.filter(t => t.master === currentWindow && t.status === "active");
+            let tasksHtml = '';
+            for(const task of myTasks) {
+                const itemsText = task.items.map(i => `${i.service} x${i.count}`).join(', ');
+                tasksHtml += `
+                    <div class="task-card" onclick="selectTask(${task.id})">
+                        <strong>🎫 БИЛЕТ №${task.id}</strong><br>
+                        📦 ${itemsText}<br>
+                        💰 ${task.total} коп<br>
+                        🔑 ${task.code}
+                    </div>
+                `;
+            }
+            if(!tasksHtml) tasksHtml = '<div style="text-align:center;color:#555;">✨ НЕТ ЗАКАЗОВ ✨</div>';
+            
+            document.getElementById('app').innerHTML = `
+                <div class="container">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <h1>🎨 ${currentWindow}</h1>
+                        <div>
+                            <button class="btn-icon btn-info" onclick="toggleFullscreenClock()">🕐 ЧАСЫ</button>
+                            <button class="btn-icon btn-danger" onclick="logout()">🚪 ВЫХОД</button>
+                        </div>
+                    </div>
+                    <div class="worker-layout">
+                        <div class="worker-tasks">
+                            <h3>📋 МОИ ЗАДАНИЯ</h3>
+                            <div id="tasksContainer">${tasksHtml}</div>
+                        </div>
+                        <div class="worker-tasks">
+                            <h3>🔍 ПОИСК ПО КОДУ</h3>
+                            <input type="text" id="searchCode" placeholder="6-значный код">
+                            <button onclick="searchByCode()" class="btn-info">🔍 НАЙТИ</button>
+                            <div id="currentTaskCard" class="stat-card" style="margin-top:15px;">
+                                <div style="text-align:center;color:#555;">Нет активного заказа</div>
+                            </div>
+                            <div style="display:flex; gap:10px; margin-top:15px;">
+                                <button onclick="clientArrived()" class="btn-warning">👋 КЛИЕНТ ПРИШЁЛ</button>
+                                <button onclick="sendProblem()" class="btn-danger">🔴 ПРОБЛЕМА</button>
+                                <button onclick="completeTask()" class="btn-success">✅ ЗАВЕРШИТЬ</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function selectTask(taskId) {
+            currentTask = tasks.find(t => t.id === taskId);
+            if(currentTask) {
+                const itemsText = currentTask.items.map(i => `• ${i.service} x${i.count} = ${i.count * i.price} коп`).join('<br>');
+                document.getElementById('currentTaskCard').innerHTML = `
+                    <div class="stat-value">🎫 БИЛЕТ №${currentTask.id}</div>
+                    <div style="margin:10px 0;">${itemsText}</div>
+                    <div><strong>💰 ИТОГО: ${currentTask.total} коп</strong></div>
+                    <div>🔑 Код: ${currentTask.code}</div>
+                `;
+            }
+        }
+        
+        function searchByCode() {
+            const code = document.getElementById('searchCode').value;
+            const task = tasks.find(t => t.code === code);
+            if(task) {
+                selectTask(task.id);
+                alert(`Заказ найден! Билет №${task.id}`);
+            } else {
+                alert("Заказ не найден!");
+            }
+        }
+        
+        function clientArrived() {
+            if(!currentTask) { alert("Нет активного заказа!"); return; }
+            speakText("Здравствуйте, присаживайтесь! Выберите татуировку");
+            alert(`👋 Клиент пришёл на билет №${currentTask.id}`);
+        }
+        
+        function sendProblem() {
+            alert("🔴 Сигнал о проблеме отправлен кассиру");
+            logSystem(`Проблема от ${currentWindow}`, "WARNING");
+        }
+        
+        function completeTask() {
+            if(!currentTask) { alert("Нет активного заказа!"); return; }
+            const index = tasks.findIndex(t => t.id === currentTask.id);
+            if(index !== -1) tasks.splice(index, 1);
+            const masterId = Object.keys(users).find(id => users[id].name === currentWindow);
+            if(masterId) users[masterId].workStatus = "free";
+            users[currentUser].todayOrders++;
+            speakText("Хорошего дня, будем ждать вас снова");
+            alert(`✅ Заказ №${currentTask.id} завершён!`);
+            currentTask = null;
+            renderWorkerScreen();
+        }
+        
+        // ============ АДМИН-ПАНЕЛЬ ============
+        function showAdminPanel() {
+            const onlineCount = Object.values(users).filter(u => u.online).length;
+            const busyCount = Object.values(users).filter(u => u.workStatus === 'busy').length;
+            const activeTasks = tasks.length;
+            const queueCount = queue.length;
+            
+            let usersHtml = '';
+            for(const [id, user] of Object.entries(users)) {
+                usersHtml += `
+                    <div class="user-card" style="border-left-color: ${user.online ? '#00ff66' : '#ff2a6d'}">
+                        <div><strong>${user.name}</strong> (ID: ${id})</div>
+                        <div>${user.online ? '🟢 Онлайн' : '⚫ Оффлайн'} | ${user.workStatus === 'free' ? '🟢 Свободен' : (user.workStatus === 'busy' ? '🔴 Занят' : '🟡 Перерыв')}</div>
+                        <div>📊 ${user.todayOrders} заказов</div>
+                        <div>📱 ${user.deviceModel}</div>
+                        <div>
+                            <button class="btn-icon btn-warning" onclick="toggleWorkerBreak('${id}')">🟡 Перерыв</button>
+                            <button class="btn-icon btn-success" onclick="freeWorker('${id}')">🔓 Освободить</button>
+                            <button class="btn-icon btn-danger" onclick="kickWorker('${id}')">🚪 Выгнать</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('app').innerHTML = `
+                <div class="container">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <h1>👑 АДМИН-ПАНЕЛЬ</h1>
+                        <button class="btn-icon btn-info" onclick="renderCashierScreen()">◀ НАЗАД</button>
+                    </div>
+                    <div class="admin-tabs">
+                        <button class="tab-btn active" onclick="showAdminTab('dashboard')">📊 ДАШБОРД</button>
+                        <button class="tab-btn" onclick="showAdminTab('users')">👥 ПОЛЬЗОВАТЕЛИ</button>
+                        <button class="tab-btn" onclick="showAdminTab('tasks')">📋 ЗАКАЗЫ</button>
+                        <button class="tab-btn" onclick="showAdminTab('errors')">⚠️ ОШИБКИ</button>
+                        <button class="tab-btn" onclick="showAdminTab('logs')">📋 ЛОГИ</button>
+                        <button class="tab-btn" onclick="showAdminTab('commands')">📡 КОМАНДЫ</button>
+                    </div>
+                    <div id="adminContent">
+                        <div class="stats-grid">
+                            <div class="stat-card"><div class="stat-value">${Object.keys(users).length}</div><div>Пользователей</div></div>
+                            <div class="stat-card"><div class="stat-value">${onlineCount}</div><div>Онлайн</div></div>
+                            <div class="stat-card"><div class="stat-value">${busyCount}</div><div>Заняты</div></div>
+                            <div class="stat-card"><div class="stat-value">${activeTasks}</div><div>Активных заказов</div></div>
+                            <div class="stat-card"><div class="stat-value">${queueCount}</div><div>В очереди</div></div>
+                            <div class="stat-card"><div class="stat-value">${errorLog.length}</div><div>Ошибок</div></div>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-card"><button class="btn-icon btn-success" onclick="refreshAdmin()">🔄 ОБНОВИТЬ</button></div>
+                            <div class="stat-card"><button class="btn-icon btn-warning" onclick="clearAllLogs()">🗑 ОЧИСТИТЬ ЛОГИ</button></div>
+                            <div class="stat-card"><button class="btn-icon btn-info" onclick="exportFullReport()">📄 ЭКСПОРТ</button></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function showAdminTab(tabName) {
+            const content = document.getElementById('adminContent');
+            if(tabName === 'dashboard') {
+                const onlineCount = Object.values(users).filter(u => u.online).length;
+                const busyCount = Object.values(users).filter(u => u.workStatus === 'busy').length;
+                content.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-value">${Object.keys(users).length}</div><div>Пользователей</div></div>
+                        <div class="stat-card"><div class="stat-value">${onlineCount}</div><div>Онлайн</div></div>
+                        <div class="stat-card"><div class="stat-value">${busyCount}</div><div>Заняты</div></div>
+                        <div class="stat-card"><div class="stat-value">${tasks.length}</div><div>Активных</div></div>
+                        <div class="stat-card"><div class="stat-value">${queue.length}</div><div>В очереди</div></div>
+                        <div class="stat-card"><div class="stat-value">${errorLog.length}</div><div>Ошибок</div></div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card"><button class="btn-icon btn-success" onclick="refreshAdmin()">🔄 ОБНОВИТЬ</button></div>
+                        <div class="stat-card"><button class="btn-icon btn-warning" onclick="clearAllData()">⚠️ СБРОС ВСЕХ ДАННЫХ</button></div>
+                        <div class="stat-card"><button class="btn-icon btn-danger" onclick="clearAllOrders()">❌ ОЧИСТИТЬ ЗАКАЗЫ</button></div>
+                    </div>
+                `;
+            }
+            else if(tabName === 'users') {
+                let usersHtml = '';
+                for(const [id, user] of Object.entries(users)) {
+                    usersHtml += `
+                        <div class="user-card" style="border-left-color: ${user.online ? '#00ff66' : '#ff2a6d'}">
+                            <div><strong>${user.name}</strong> (ID: ${id})</div>
+                            <div>${user.online ? '🟢 Онлайн' : '⚫ Оффлайн'} | ${user.workStatus === 'free' ? '🟢 Свободен' : (user.workStatus === 'busy' ? '🔴 Занят' : '🟡 Перерыв')}</div>
+                            <div>📊 ${user.todayOrders} заказов</div>
+                            <div>📱 ${user.deviceModel}</div>
+                            <div>
+                                <button class="btn-icon btn-warning" onclick="toggleWorkerBreak('${id}')">🟡 Перерыв</button>
+                                <button class="btn-icon btn-success" onclick="freeWorker('${id}')">🔓 Освободить</button>
+                                <button class="btn-icon btn-danger" onclick="kickWorker('${id}')">🚪 Выгнать</button>
+                                <button class="btn-icon btn-purple" onclick="showWorkerDetails('${id}')">📱 Детали</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                content.innerHTML = `
+                    <div style="margin-bottom:15px;"><button class="btn-icon btn-success" onclick="addNewUser()">➕ ДОБАВИТЬ ПОЛЬЗОВАТЕЛЯ</button></div>
+                    ${usersHtml}
+                `;
+            }
+            else if(tabName === 'tasks') {
+                let tasksHtml = '';
+                for(const task of tasks) {
+                    const itemsText = task.items.map(i => `${i.service} x${i.count}`).join(', ');
+                    tasksHtml += `
+                        <div class="user-card">
+                            <div><strong>🎫 БИЛЕТ №${task.id}</strong></div>
+                            <div>📦 ${itemsText}</div>
+                            <div>💰 ${task.total} коп</div>
+                            <div>🎨 ${task.master}</div>
+                            <div><button class="btn-icon btn-danger" onclick="cancelTask(${task.id})">🗑 ОТМЕНИТЬ</button></div>
+                        </div>
+                    `;
+                }
+                if(!tasksHtml) tasksHtml = '<div style="text-align:center;color:#555;">✨ НЕТ АКТИВНЫХ ЗАКАЗОВ ✨</div>';
+                content.innerHTML = tasksHtml;
+            }
+            else if(tabName === 'errors') {
+                content.innerHTML = `
+                    <div style="margin-bottom:15px;">
+                        <button class="btn-icon btn-success" onclick="clearAllErrors()">✅ ОЧИСТИТЬ ОШИБКИ</button>
+                        <button class="btn-icon btn-info" onclick="exportErrors()">📄 ЭКСПОРТ</button>
+                    </div>
+                    <div class="error-log" id="errorLogContainer"></div>
+                `;
+                updateErrorDisplay();
+            }
+            else if(tabName === 'logs') {
+                content.innerHTML = `
+                    <div style="margin-bottom:15px;">
+                        <button class="btn-icon btn-warning" onclick="clearAllLogs()">🗑 ОЧИСТИТЬ ЛОГИ</button>
+                        <button class="btn-icon btn-info" onclick="exportLogs()">📄 ЭКСПОРТ</button>
+                    </div>
+                    <div class="log-container" id="systemLogsContainer"></div>
+                `;
+                updateSystemLogsDisplay();
+            }
+            else if(tabName === 'commands') {
+                content.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card"><button class="btn-icon btn-info" onclick="sendCommandToAll('refresh')">🔄 ОБНОВИТЬ ВСЕМ</button></div>
+                        <div class="stat-card"><button class="btn-icon btn-danger" onclick="sendCommandToAll('logout')">🚪 ВЫГНАТЬ ВСЕХ</button></div>
+                        <div class="stat-card"><button class="btn-icon btn-warning" onclick="sendCommandToAll('break')">🟡 ПЕРЕРЫВ ВСЕМ</button></div>
+                        <div class="stat-card"><button class="btn-icon btn-success" onclick="sendCommandToAll('resume')">✅ ВЕРНУТЬ ВСЕХ</button></div>
+                        <div class="stat-card"><button class="btn-icon btn-purple" onclick="showClockToAll()">🕐 ЧАСЫ ВСЕМ</button></div>
+                    </div>
+                `;
+            }
+        }
+        
+        // ============ АДМИН-ФУНКЦИИ ============
+        function toggleWorkerBreak(userId) {
+            const newStatus = users[userId].workStatus === 'break' ? 'free' : 'break';
+            users[userId].workStatus = newStatus;
+            logSystem(`Пользователь ${userId} ${newStatus === 'break' ? 'на перерыве' : 'вернулся'}`, "INFO");
+            showAdminPanel();
+        }
+        
+        function freeWorker(userId) {
+            users[userId].workStatus = 'free';
+            logSystem(`Пользователь ${userId} освобождён`, "INFO");
+            showAdminPanel();
+        }
+        
+        function kickWorker(userId) {
+            users[userId].online = false;
+            users[userId].workStatus = 'free';
+            logSystem(`Пользователь ${userId} выгнан`, "WARNING");
+            showAdminPanel();
+        }
+        
+        function showWorkerDetails(userId) {
+            const user = users[userId];
+            alert(`📱 ДЕТАЛИ УСТРОЙСТВА\nИмя: ${user.name}\nID: ${userId}\nУстройство: ${user.deviceModel}\nСтатус: ${user.online ? 'Онлайн' : 'Оффлайн'}\nРабота: ${user.workStatus}\nЗаказов: ${user.todayOrders}`);
+        }
+        
+        function addNewUser() {
+            const newId = prompt("Введите ID (1-99):");
+            if(!newId) return;
+            const newName = prompt("Введите имя:");
+            if(!newName) return;
+            const newPass = prompt("Введите пароль:");
+            if(!newPass) return;
+            users[newId] = {
+                password: newPass,
+                role: "WORKER",
+                name: newName,
+                workStatus: "free",
+                online: false,
+                todayOrders: 0,
+                deviceModel: "New Device"
+            };
+            logSystem(`Добавлен пользователь ${newName} (ID: ${newId})`, "INFO");
+            showAdminPanel();
+        }
+        
+        function cancelTask(taskId) {
+            const index = tasks.findIndex(t => t.id === taskId);
+            if(index !== -1) {
+                tasks.splice(index, 1);
+                logSystem(`Заказ №${taskId} отменён`, "WARNING");
+                showAdminPanel();
+            }
+        }
+        
+        function refreshAdmin() {
+            logSystem("Статистика обновлена", "INFO");
+            showAdminPanel();
+        }
+        
+        function clearAllErrors() {
+            errorLog = [];
+            updateErrorDisplay();
+            logSystem("Лог ошибок очищен", "INFO");
+            showAdminPanel();
+        }
+        
+        function clearAllLogs() {
+            systemLogs = [];
+            updateSystemLogsDisplay();
+            logSystem("Лог системы очищен", "INFO");
+            showAdminPanel();
+        }
+        
+        function clearAllData() {
+            if(confirm("⚠️ ВНИМАНИЕ! Это удалит ВСЕ ДАННЫЕ (пользователи, заказы, очередь)!")) {
+                tasks = [];
+                queue = [];
+                counter = 1;
+                errorLog = [];
+                systemLogs = [];
+                logSystem("ВСЕ ДАННЫЕ СБРОШЕНЫ", "ERROR");
+                alert("Данные сброшены");
+                showAdminPanel();
+            }
+        }
+        
+        function clearAllOrders() {
+            if(confirm("Удалить ВСЕ активные заказы?")) {
+                tasks = [];
+                queue = [];
+                logSystem("Все заказы удалены", "WARNING");
+                alert("Заказы удалены");
+                showAdminPanel();
+            }
+        }
+        
+        function exportFullReport() {
+            const report = {
+                timestamp: new Date().toISOString(),
+                users: users,
+                tasks: tasks,
+                queue: queue,
+                errors: errorLog.slice(0, 100),
+                logs: systemLogs.slice(0, 200)
+            };
+            downloadJSON(report, `lion_full_report_${Date.now()}.json`);
+            logSystem("Полный отчёт экспортирован", "INFO");
+        }
+        
+        function exportErrors() {
+            downloadJSON(errorLog, `lion_errors_${Date.now()}.json`);
+        }
+        
+        function exportLogs() {
+            downloadJSON(systemLogs, `lion_logs_${Date.now()}.json`);
+        }
+        
+        function downloadJSON(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function sendCommandToAll(cmd) {
+            logSystem(`Команда "${cmd}" отправлена всем`, "INFO");
+            alert(`Команда "${cmd}" отправлена`);
+            if(cmd === 'break') {
+                for(const id in users) {
+                    if(users[id].role === "WORKER") users[id].workStatus = 'break';
+                }
+            }
+            if(cmd === 'resume') {
+                for(const id in users) {
+                    if(users[id].role === "WORKER") users[id].workStatus = 'free';
+                }
+            }
+        }
+        
+        function showClockToAll() {
+            for(const id in users) {
+                if(users[id].role === "WORKER" && users[id].online) {
+                    // Симулируем отправку команды
+                }
+            }
+            alert("🕐 Команда 'Показать часы' отправлена всем мастерам");
+            logSystem("Команда 'Показать часы' отправлена всем", "INFO");
+        }
+        
+        // ============ ЧАСЫ ============
+        function toggleFullscreenClock() {
+            if(fullscreenClockActive) {
+                closeFullscreenClock();
+            } else {
+                showFullscreenClock();
+            }
+        }
+        
+        function showFullscreenClock() {
+            fullscreenClockActive = true;
+            const overlay = document.createElement('div');
+            overlay.className = 'fullscreen-clock';
+            overlay.id = 'fullscreenClock';
+            overlay.innerHTML = `
+                <div class="clock-time" id="clockTime">--:--:--</div>
+                <div class="clock-date" id="clockDate">--</div>
+                <button onclick="closeFullscreenClock()" style="position:absolute; top:20px; right:20px; width:auto; padding:10px 20px;">✕ ЗАКРЫТЬ</button>
+            `;
+            document.body.appendChild(overlay);
+            
+            function updateClock() {
+                const now = new Date();
+                document.getElementById('clockTime').innerHTML = now.toLocaleTimeString('ru-RU');
+                document.getElementById('clockDate').innerHTML = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+            }
+            updateClock();
+            window.clockInterval = setInterval(updateClock, 1000);
+        }
+        
+        function closeFullscreenClock() {
+            const el = document.getElementById('fullscreenClock');
+            if(el) el.remove();
+            if(window.clockInterval) clearInterval(window.clockInterval);
+            fullscreenClockActive = false;
+        }
+        
+        function logout() {
+            if(currentUser) users[currentUser].online = false;
+            currentUser = null;
+            renderLoginScreen();
+        }
+        
+        // ============ ЗАПУСК ============
+        loadRussianVoice();
+        logSystem("Система загружена", "INFO");
+        renderLoginScreen();
     </script>
 </body>
 </html>
