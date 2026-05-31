@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>LION t.A.T.u. <title>
-<link rel="icon" type="image/x-icon" href="logo.ico">
-<link rel="icon" type="image/png" href="https://i.postimg.cc/mghWfVfT/LT-avatarka-tatu-salon.jpg">
+    <title>LION t.A.T.u. — Рабочий терминал</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -178,16 +176,71 @@
             color: #00ff66;
             font-weight: bold;
         }
-        .fullscreen-clock {
+        
+        /* ============ КРАСИВЫЕ ЧАСЫ НА ВЕСЬ ЭКРАН ============ */
+        .fullscreen-clock-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(15px);
+            z-index: 2000;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100%;
-            min-height: 400px;
-            font-size: 8vw;
-            font-family: monospace;
+            flex-direction: column;
+            cursor: pointer;
+            animation: fadeInClock 0.5s ease;
+        }
+        @keyframes fadeInClock {
+            from { opacity: 0; backdrop-filter: blur(0px); }
+            to { opacity: 1; backdrop-filter: blur(15px); }
+        }
+        .fullscreen-clock-content {
+            text-align: center;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.7), rgba(10, 10, 20, 0.8));
+            border-radius: 60px;
+            padding: 40px 60px;
+            border: 2px solid rgba(5, 217, 232, 0.5);
+            box-shadow: 0 0 80px rgba(5, 217, 232, 0.3);
+            backdrop-filter: blur(5px);
+        }
+        .fullscreen-time {
+            font-size: 12vw;
+            font-family: 'Courier New', monospace;
             color: #05d9e8;
-            text-shadow: 0 0 20px rgba(5, 217, 232, 0.5);
+            text-shadow: 0 0 30px #05d9e8;
+            letter-spacing: 10px;
+            font-weight: bold;
+        }
+        .fullscreen-date {
+            font-size: 2vw;
+            color: #ffcc00;
+            margin-top: 20px;
+            letter-spacing: 2px;
+        }
+        .fullscreen-subtitle {
+            font-size: 1.2vw;
+            color: #888;
+            margin-top: 30px;
+        }
+        .close-clock-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 42, 109, 0.8);
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 2001;
+        }
+        .close-clock-btn:hover {
+            background: #ff2a6d;
         }
         @media (max-width: 768px) {
             .container { padding: 15px; }
@@ -196,7 +249,10 @@
             button { width: 100%; }
             .problem-notify { left: 10px; right: 10px; }
             .floating-code { left: 10px; right: 10px; bottom: 10px; }
-            .fullscreen-clock { font-size: 15vw; min-height: 300px; }
+            .fullscreen-time { font-size: 15vw; letter-spacing: 5px; }
+            .fullscreen-date { font-size: 5vw; }
+            .fullscreen-subtitle { font-size: 3vw; }
+            .fullscreen-clock-content { padding: 30px 20px; margin: 20px; }
         }
     </style>
 </head>
@@ -249,6 +305,8 @@
         let queueCurrentPage = 1;
         let queueItemsPerPage = 5;
         let problemListenerStarted = false;
+        let clockActive = false;
+        let clockInterval = null;
         
         const prices = { "ручка": 4, "маркер": 6 };
         
@@ -333,6 +391,56 @@
         function announceWindowFree(windowNum) { speakText(`Окно`); setTimeout(() => { speakNumber(windowNum); setTimeout(() => speakText(`освобождено`), 500); }, 300); }
         function announceProblemResolved(windowNum) { speakText(`Проблема на окне`); setTimeout(() => { speakNumber(windowNum); setTimeout(() => speakText(`решена`), 500); }, 300); }
         
+        // ============ КРАСИВЫЕ ЧАСЫ ============
+        function showFullscreenClock() {
+            if (clockActive) return;
+            clockActive = true;
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'fullscreen-clock-overlay';
+            overlay.id = 'fullscreenClockOverlay';
+            overlay.innerHTML = `
+                <button class="close-clock-btn" onclick="closeFullscreenClock()">✕ ЗАКРЫТЬ</button>
+                <div class="fullscreen-clock-content">
+                    <div class="fullscreen-time" id="fullscreenTime">--:--:--</div>
+                    <div class="fullscreen-date" id="fullscreenDate">--</div>
+                    <div class="fullscreen-subtitle">🦁 LION t.A.T.u. | Ожидание заказов...</div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            
+            function updateClockDisplay() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('ru-RU');
+                const dateStr = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+                const timeEl = document.getElementById('fullscreenTime');
+                const dateEl = document.getElementById('fullscreenDate');
+                if (timeEl) timeEl.textContent = timeStr;
+                if (dateEl) dateEl.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+            }
+            
+            updateClockDisplay();
+            clockInterval = setInterval(updateClockDisplay, 1000);
+        }
+        
+        function closeFullscreenClock() {
+            const overlay = document.getElementById('fullscreenClockOverlay');
+            if (overlay) overlay.remove();
+            if (clockInterval) clearInterval(clockInterval);
+            clockActive = false;
+        }
+        
+        function toggleClock() {
+            if (clockActive) closeFullscreenClock();
+            else showFullscreenClock();
+        }
+        
+        // Удалённое включение часов от кассира
+        function remoteShowClock() {
+            showFullscreenClock();
+            showSuccess(`🔔 Кассир включил часы на вашем устройстве`);
+        }
+        
         // ============ ГЕНЕРАЦИЯ ============
         function generate6DigitCode() { return Math.floor(100000 + Math.random() * 900000).toString(); }
         
@@ -396,11 +504,24 @@
             localStorage.setItem('user', JSON.stringify({ windowNumber, role: userData.role, name: userData.name }));
             setupPageVisibilityTracking();
             startProblemListener();
+            
+            // Слушаем команды от кассира (включить часы)
+            if (currentRole === 'WORKER') {
+                database.ref(`commands/${currentUser}`).on('value', (snapshot) => {
+                    const cmd = snapshot.val();
+                    if (cmd && cmd.action === 'show_clock') {
+                        remoteShowClock();
+                        database.ref(`commands/${currentUser}`).remove();
+                    }
+                });
+            }
+            
             return true;
         }
         
         async function logout() {
             if (currentUser) await database.ref(`users/${currentUser}`).update({ online: false });
+            if (clockActive) closeFullscreenClock();
             currentUser = null; currentRole = null; currentWindow = null;
             localStorage.removeItem('user');
             renderLoginScreen();
@@ -769,13 +890,16 @@
         async function setBreakByCashier(num) { await updateUserStatus(num, "break"); showSuccess(`🟡 Окно ${num} на перерыве`); await loadWindowsStatus(); }
         async function removeBreakByCashier(num) { await updateUserStatus(num, "free"); showSuccess(`✅ Окно ${num} возвращено к работе`); await loadWindowsStatus(); }
         
-        // ============ ЭКРАН МАСТЕРА ============
+        // ============ ЭКРАН МАСТЕРА С КНОПКОЙ ЧАСОВ ============
         function renderWorkerScreen() {
             const app = document.getElementById('app');
             app.innerHTML = `
                 <div class="container">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h1>🦁 ${currentWindow}</h1>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button onclick="toggleClock()" class="btn-sm" style="background: #05d9e8; width: auto; padding: 8px 15px;">🕐 ЧАСЫ</button>
+                            <h1 style="margin: 0;">🦁 ${currentWindow}</h1>
+                        </div>
                         <div class="clock" id="clock"></div>
                     </div>
                     <div class="flex-row">
@@ -801,21 +925,12 @@
             document.getElementById('codeInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchByCode(); });
         }
         
-        function showFullscreenClock() {
+        // Автоматическое появление часов если нет заказов
+        function checkAndShowClockIfNoOrders() {
             const container = document.getElementById('tasksContainer');
-            if (container && container.innerHTML.includes('НЕТ ЗАКАЗОВ')) {
-                if (!document.getElementById('fullscreenClock')) {
-                    const clockDiv = document.createElement('div');
-                    clockDiv.className = 'fullscreen-clock';
-                    clockDiv.id = 'fullscreenClock';
-                    clockDiv.innerHTML = `<div style="text-align:center;"><div style="font-size:5vw;">🕐</div><div id="bigClock" style="font-size:8vw;font-family:monospace;">--:--:--</div><div style="font-size:2vw;">Ожидание заказов...</div></div>`;
-                    const parent = container.parentNode;
-                    parent.appendChild(clockDiv);
-                    setInterval(() => { const c = document.getElementById('bigClock'); if (c) c.innerText = new Date().toLocaleTimeString('ru-RU'); }, 1000);
-                }
-            } else {
-                const existing = document.getElementById('fullscreenClock');
-                if (existing) existing.remove();
+            if (container && container.innerHTML.includes('НЕТ ЗАКАЗОВ') && !clockActive) {
+                // Не показываем автоматически, только по кнопке мастера или кассира
+                // Мастер сам решит включать часы или нет
             }
         }
         
@@ -826,14 +941,20 @@
             const waiting = Object.values(tasks).filter(t => t.status === "waiting");
             if (waiting.length === 0) {
                 container.innerHTML = '<div class="card" style="text-align:center;color:#555;">✨ НЕТ ЗАКАЗОВ ✨</div>';
-                showFullscreenClock();
                 return;
             }
-            const existing = document.getElementById('fullscreenClock');
-            if (existing) existing.remove();
             container.innerHTML = '';
             for (const task of waiting) {
-                container.innerHTML += `<div class="card ticket-card" onclick="takeOrder(${task.id})"><div style="display:flex;justify-content:space-between;"><span class="ticket-number">🎫 БИЛЕТ №${task.id}</span><span class="status-badge status-waiting">ОЖИДАЕТ</span></div><div>📦 ${task.items.map(i=>`${i.service.toUpperCase()} x${i.count}`).join(', ')}</div><div>💰 ${task.total} коп</div><div>🔑 ${task.code6}</div><div>⏰ ${task.appointmentTime || 'Сейчас'}</div></div>`;
+                container.innerHTML += `<div class="card ticket-card" onclick="takeOrder(${task.id})">
+                    <div style="display:flex;justify-content:space-between;">
+                        <span class="ticket-number">🎫 БИЛЕТ №${task.id}</span>
+                        <span class="status-badge status-waiting">ОЖИДАЕТ</span>
+                    </div>
+                    <div>📦 ${task.items.map(i=>`${i.service.toUpperCase()} x${i.count}`).join(', ')}</div>
+                    <div>💰 ${task.total} коп</div>
+                    <div>🔑 ${task.code6}</div>
+                    <div>⏰ ${task.appointmentTime || 'Сейчас'}</div>
+                </div>`;
             }
         }
         
@@ -847,6 +968,8 @@
             displayCurrentOrder(task);
             await loadWorkerTasks();
             showSuccess(`✅ Заказ №${task.id} взят`);
+            // Если часы были открыты — закрываем (появился заказ)
+            if (clockActive) closeFullscreenClock();
         }
         
         async function searchByCode() {
@@ -880,7 +1003,6 @@
             displayCurrentOrder(currentActiveTask);
         }
         
-        // ============ ЗАВЕРШЕНИЕ ЗАКАЗА (УДАЛЕНИЕ ИЗ БАЗЫ) ============
         async function completeOrder() {
             if (!currentActiveTask) { showError("Нет активного заказа!"); return; }
             await saveToCheckLog({ id: currentActiveTask.id, code6: currentActiveTask.code6, items: currentActiveTask.items, total: currentActiveTask.total, time: currentActiveTask.time, appointmentTime: currentActiveTask.appointmentTime, master: currentWindow, windowNum: currentUser, status: "completed", completedAt: new Date().toLocaleString('ru-RU') });
@@ -900,11 +1022,11 @@
             let windowsHtml = '';
             for (const [num, user] of Object.entries(users)) {
                 if (user.role === "WORKER") {
-                    windowsHtml += `<div class="window-row"><span><strong>${user.name}</strong></span><span>${user.online ? '🟢 Онлайн' : '⚫ Оффлайн'}</span><span title="${user.deviceUserAgent || ''}">📱 ${(user.deviceModel || 'Unknown').substring(0,20)}</span><span>📊 ${user.todayOrders || 0}</span><span>${user.workStatus === 'free' ? '🟢 Свободен' : user.workStatus === 'busy' ? '🔴 Занят' : '🟡 Перерыв'}</span><div style="display:flex;gap:5px;"><button onclick="showDeviceDetails(${num})" class="btn-sm" style="background:#00aaff;">📱</button><button onclick="kickWorker(${num})" class="btn-danger btn-sm">🚪</button><button onclick="forceFreeWindow(${num})" class="btn-success btn-sm">🔓</button><button onclick="setBreakByCashier(${num})" class="btn-warning btn-sm">🟡</button><button onclick="removeBreakByCashier(${num})" class="btn-success btn-sm">✅</button></div></div>`;
+                    windowsHtml += `<div class="window-row"><span><strong>${user.name}</strong></span><span>${user.online ? '🟢 Онлайн' : '⚫ Оффлайн'}</span><span title="${user.deviceUserAgent || ''}">📱 ${(user.deviceModel || 'Unknown').substring(0,20)}</span><span>📊 ${user.todayOrders || 0}</span><span>${user.workStatus === 'free' ? '🟢 Свободен' : user.workStatus === 'busy' ? '🔴 Занят' : '🟡 Перерыв'}</span><div style="display:flex;gap:5px;"><button onclick="showDeviceDetails(${num})" class="btn-sm" style="background:#00aaff;">📱</button><button onclick="showClockToWorker(${num})" class="btn-sm" style="background:#05d9e8;">🕐 ЧАСЫ</button><button onclick="kickWorker(${num})" class="btn-danger btn-sm">🚪</button><button onclick="forceFreeWindow(${num})" class="btn-success btn-sm">🔓</button><button onclick="setBreakByCashier(${num})" class="btn-warning btn-sm">🟡</button><button onclick="removeBreakByCashier(${num})" class="btn-success btn-sm">✅</button></div></div>`;
                 }
             }
             const app = document.getElementById('app');
-            app.innerHTML = `<div class="container" style="max-width:1200px;"><h1>👑 АДМИН-ПАНЕЛЬ</h1><div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;"><button onclick="addNewWindow()" class="btn-success">➕ ДОБАВИТЬ ОКНО</button><button onclick="renderCashierScreen()" class="btn-purple">◀ НАЗАД</button><button onclick="forceLogoutAll()" class="btn-danger">🚪 ВЫГНАТЬ ВСЕХ</button><button onclick="clearAllTasks()" class="btn-warning">🗑 ОЧИСТИТЬ ВСЕ</button><button onclick="showSchedulePanel()" class="btn-warning">⏰ РАСПИСАНИЕ</button><button onclick="showCheckLogs()" class="btn-success">📊 ЛОГ ЧЕКОВ</button><button onclick="globalSync()" class="btn-purple">🔄 СИНХР</button></div><h2>🪟 УПРАВЛЕНИЕ ОКНАМИ</h2><div class="card"><div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;font-weight:bold;padding:10px;border-bottom:1px solid #333;"><div>Окно</div><div>Статус</div><div>Устройство</div><div>Заказов</div><div>Работа</div><div>Действия</div></div>${windowsHtml}</div><h2>⚙️ НАСТРОЙКИ РАСПРЕДЕЛЕНИЯ</h2><div class="card"><div class="mode-selector"><button class="mode-btn ${distributionMode === 'auto' ? 'active' : ''}" onclick="saveDistributionMode('auto')">🔄 АВТО</button><button class="mode-btn ${distributionMode === 'manual' ? 'active' : ''}" onclick="saveDistributionMode('manual')">✋ РУЧНОЙ</button><button class="mode-btn ${distributionMode === 'priority' ? 'active' : ''}" onclick="saveDistributionMode('priority')">⭐ ПРИОРИТЕТ</button></div><div id="prioritySettings"></div></div></div>`;
+            app.innerHTML = `<div class="container" style="max-width:1200px;"><h1>👑 АДМИН-ПАНЕЛЬ</h1><div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;"><button onclick="addNewWindow()" class="btn-success">➕ ДОБАВИТЬ ОКНО</button><button onclick="renderCashierScreen()" class="btn-purple">◀ НАЗАД</button><button onclick="forceLogoutAll()" class="btn-danger">🚪 ВЫГНАТЬ ВСЕХ</button><button onclick="clearAllTasks()" class="btn-warning">🗑 ОЧИСТИТЬ ВСЕ</button><button onclick="showSchedulePanel()" class="btn-warning">⏰ РАСПИСАНИЕ</button><button onclick="showCheckLogs()" class="btn-success">📊 ЛОГ ЧЕКОВ</button><button onclick="globalSync()" class="btn-purple">🔄 СИНХР</button></div><h2>🪟 УПРАВЛЕНИЕ ОКНАМИ</h2><div class="card"><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;font-weight:bold;padding:10px;border-bottom:1px solid #333;"><div>Окно</div><div>Статус</div><div>Устройство</div><div>Заказов</div><div>Работа</div><div colspan="2">Действия</div></div>${windowsHtml}</div><h2>⚙️ НАСТРОЙКИ РАСПРЕДЕЛЕНИЯ</h2><div class="card"><div class="mode-selector"><button class="mode-btn ${distributionMode === 'auto' ? 'active' : ''}" onclick="saveDistributionMode('auto')">🔄 АВТО</button><button class="mode-btn ${distributionMode === 'manual' ? 'active' : ''}" onclick="saveDistributionMode('manual')">✋ РУЧНОЙ</button><button class="mode-btn ${distributionMode === 'priority' ? 'active' : ''}" onclick="saveDistributionMode('priority')">⭐ ПРИОРИТЕТ</button></div><div id="prioritySettings"></div></div></div>`;
             if (distributionMode === 'priority') {
                 const priorityDiv = document.getElementById('prioritySettings');
                 priorityDiv.innerHTML = '<h3>Приоритет (меньше = выше)</h3><div style="display:flex;gap:10px;flex-wrap:wrap;">';
@@ -915,15 +1037,24 @@
             }
         }
         
+        async function showClockToWorker(windowNum) {
+            await database.ref(`commands/${windowNum}`).set({ action: 'show_clock', timestamp: Date.now(), from: currentWindow });
+            showSuccess(`🕐 Команда "Показать часы" отправлена окну ${windowNum}`);
+        }
+        
         async function showDeviceDetails(num) {
             const snap = await database.ref(`users/${num}`).once('value');
             const d = snap.val();
             if (!d) { showError("Устройство не найдено"); return; }
-            const detailsHtml = `<div class="card"><h3>📱 ${d.name}</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><strong>Модель:</strong></div><div>${d.deviceModel || 'Unknown'}</div><div><strong>Экран:</strong></div><div>${d.deviceScreen || 'Unknown'}</div><div><strong>Язык:</strong></div><div>${d.deviceLanguage || 'ru-RU'}</div><div><strong>Таймзона:</strong></div><div>${d.deviceTimezone || 'Europe/Moscow'}</div><div><strong>Онлайн:</strong></div><div>${d.online ? '🟢 Да' : '⚫ Нет'}</div><div><strong>Последний вход:</strong></div><div>${new Date(d.lastSeen).toLocaleString()}</div><div><strong>Статус:</strong></div><div>${d.workStatus === 'free' ? '🟢 Свободен' : d.workStatus === 'busy' ? '🔴 Занят' : '🟡 Перерыв'}</div><div><strong>Заказов сегодня:</strong></div><div>${d.todayOrders || 0}</div></div></div><div class="card"><h3>⚙️ УПРАВЛЕНИЕ</h3><div style="display:flex;gap:10px;"><button onclick="remoteCommand(${num}, 'clear_screen')" class="btn-warning">🗑 Очистить</button><button onclick="remoteCommand(${num}, 'refresh')" class="btn-purple">🔄 Обновить</button><button onclick="remoteCommand(${num}, 'logout')" class="btn-danger">🚪 Выгнать</button></div></div><button onclick="showAdminPanel()" class="btn-purple">◀ НАЗАД</button>`;
+            const detailsHtml = `<div class="card"><h3>📱 ${d.name}</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><strong>Модель:</strong></div><div>${d.deviceModel || 'Unknown'}</div><div><strong>Экран:</strong></div><div>${d.deviceScreen || 'Unknown'}</div><div><strong>Язык:</strong></div><div>${d.deviceLanguage || 'ru-RU'}</div><div><strong>Таймзона:</strong></div><div>${d.deviceTimezone || 'Europe/Moscow'}</div><div><strong>Онлайн:</strong></div><div>${d.online ? '🟢 Да' : '⚫ Нет'}</div><div><strong>Последний вход:</strong></div><div>${new Date(d.lastSeen).toLocaleString()}</div><div><strong>Статус:</strong></div><div>${d.workStatus === 'free' ? '🟢 Свободен' : d.workStatus === 'busy' ? '🔴 Занят' : '🟡 Перерыв'}</div><div><strong>Заказов сегодня:</strong></div><div>${d.todayOrders || 0}</div></div></div><div class="card"><h3>⚙️ УПРАВЛЕНИЕ</h3><div style="display:flex;gap:10px;"><button onclick="remoteCommand(${num}, 'clear_screen')" class="btn-warning">🗑 Очистить</button><button onclick="remoteCommand(${num}, 'refresh')" class="btn-purple">🔄 Обновить</button><button onclick="remoteCommand(${num}, 'show_clock')" class="btn-sm" style="background:#05d9e8;">🕐 ЧАСЫ</button><button onclick="remoteCommand(${num}, 'logout')" class="btn-danger">🚪 Выгнать</button></div></div><button onclick="showAdminPanel()" class="btn-purple">◀ НАЗАД</button>`;
             document.getElementById('app').innerHTML = `<div class="container">${detailsHtml}</div>`;
         }
         
-        async function remoteCommand(num, cmd) { await database.ref(`commands/${num}`).set({ action: cmd, timestamp: Date.now(), from: currentWindow }); showSuccess(`✅ Команда "${cmd}" отправлена`); }
+        async function remoteCommand(num, cmd) { 
+            await database.ref(`commands/${num}`).set({ action: cmd, timestamp: Date.now(), from: currentWindow }); 
+            showSuccess(`✅ Команда "${cmd}" отправлена`);
+            if (cmd === 'show_clock') showSuccess(`🕐 Часы включены на устройстве ${num}`);
+        }
         async function globalSync() { const users = await loadUsers(); for (const [num] of Object.entries(users)) if (num !== "0") await database.ref(`commands/${num}`).set({ action: 'sync', timestamp: Date.now() }); showSuccess("🔄 Синхронизация запущена"); }
         async function setPriority(num) { const p = parseInt(document.getElementById(`priority_${num}`).value); await saveWindowPriority(num, p); showAdminPanel(); }
         async function kickWorker(num) { await database.ref(`users/${num}`).update({ online: false, workStatus: "free" }); await database.ref(`commands/${num}`).set({ action: "logout", timestamp: Date.now() }); showSuccess(`✅ Мастер ${num} выгнан`); showAdminPanel(); }
@@ -963,7 +1094,29 @@
             if (currentRole === 'WORKER') database.ref(`commands/${currentUser}`).on('value', (s) => { if (s.val()?.action === 'logout') { showError("🔒 Админ вышел!"); setTimeout(()=>logout(),2000); } });
         }
         
-        loadRussianVoice().then(() => initDefaultUsers().then(() => { const saved = localStorage.getItem('user'); if (saved) { const u = JSON.parse(saved); currentUser = u.windowNumber; currentRole = u.role; currentWindow = u.name; if (currentRole === 'CASHBOX') { startQueueListener(); renderCashierScreen(); } else { renderWorkerScreen(); } startProblemListener(); } else renderLoginScreen(); }));
+        async function checkSavedCode() {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                const user = JSON.parse(savedUser);
+                currentUser = user.windowNumber;
+                currentRole = user.role;
+                currentWindow = user.name;
+                if (currentRole === 'CASHBOX') {
+                    startQueueListener();
+                    renderCashierScreen();
+                } else {
+                    renderWorkerScreen();
+                }
+                startProblemListener();
+                return true;
+            }
+            return false;
+        }
+        
+        loadRussianVoice().then(() => initDefaultUsers().then(async () => { 
+            const saved = await checkSavedCode(); 
+            if (!saved) renderLoginScreen(); 
+        }));
     </script>
 </body>
 </html>
