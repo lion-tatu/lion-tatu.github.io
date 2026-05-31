@@ -310,86 +310,168 @@
         
         const prices = { "ручка": 4, "маркер": 6 };
         
-        // ============ MICROSOFT ELENA TTS ============
-        function loadRussianVoice() {
-            return new Promise((resolve) => {
-                const voices = window.speechSynthesis.getVoices();
-                if (voices.length) {
-                    selectedVoice = voices.find(v => v.lang.includes('ru') && (v.name.includes('Microsoft') || v.name.includes('Elena'))) ||
-                                   voices.find(v => v.lang.includes('ru')) || voices[0];
-                    resolve(selectedVoice);
-                } else {
-                    window.speechSynthesis.onvoiceschanged = () => {
-                        const newVoices = window.speechSynthesis.getVoices();
-                        selectedVoice = newVoices.find(v => v.lang.includes('ru') && (v.name.includes('Microsoft') || v.name.includes('Elena'))) ||
-                                       newVoices.find(v => v.lang.includes('ru')) || newVoices[0];
-                        resolve(selectedVoice);
-                    };
-                }
-            });
+// ============ MICROSOFT ELENA TTS (БЕЗ ОБРЫВОВ) ============
+let ttsEnabled = true;
+let selectedVoice = null;
+let ttsQueue = [];
+let isSpeaking = false;
+
+function loadRussianVoice() {
+    return new Promise((resolve) => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length) {
+            selectedVoice = voices.find(v => v.lang.includes('ru') && (v.name.includes('Microsoft') || v.name.includes('Elena'))) ||
+                           voices.find(v => v.lang.includes('ru')) || voices[0];
+            resolve(selectedVoice);
+        } else {
+            window.speechSynthesis.onvoiceschanged = () => {
+                const newVoices = window.speechSynthesis.getVoices();
+                selectedVoice = newVoices.find(v => v.lang.includes('ru') && (v.name.includes('Microsoft') || v.name.includes('Elena'))) ||
+                               newVoices.find(v => v.lang.includes('ru')) || newVoices[0];
+                resolve(selectedVoice);
+            };
         }
-        
-        function speakText(text, rate = 0.85, volume = 0.9) {
-            if (!ttsEnabled) return;
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'ru-RU';
-            utterance.rate = rate;
-            utterance.volume = volume;
-            if (selectedVoice) utterance.voice = selectedVoice;
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utterance);
-        }
-        
-        function speakNumber(num) {
-            const units = ['ноль', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
-            const teens = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
-            const tens = ['', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто'];
-            if (num < 10) speakText(units[num]);
-            else if (num < 20) speakText(teens[num - 10]);
-            else if (num < 100) {
-                const ten = Math.floor(num / 10);
-                const unit = num % 10;
-                let text = tens[ten];
-                if (unit > 0) text += ' ' + units[unit];
-                speakText(text);
-            } else speakText(num.toString().split('').join(' '));
-        }
-        
-        function speakCode(code) {
-            const digits = code.toString().split('');
-            const words = ['ноль', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
-            let text = '';
-            for (const digit of digits) text += words[parseInt(digit)] + ' ';
-            speakText(text.trim());
-        }
-        
-        function announceNewOrder(ticketId, code6) {
-            speakText(`Новый заказ! Билет номер`);
-            setTimeout(() => { speakNumber(ticketId);
-                setTimeout(() => { speakText(`Код на чеке`);
-                    setTimeout(() => { speakCode(code6);
-                        setTimeout(() => speakText(`Сообщите клиенту код`), 500);
-                    }, 300);
-                }, 300);
-            }, 300);
-        }
-        
-        function announceQueue(ticketId, minutes) {
-            speakText(`Заказ поставлен в очередь. Билет номер`);
-            setTimeout(() => { speakNumber(ticketId);
-                setTimeout(() => { speakText(`Ожидание примерно`);
-                    setTimeout(() => { speakNumber(minutes);
-                        setTimeout(() => speakText(`минут`), 500);
-                    }, 300);
-                }, 300);
-            }, 300);
-        }
-        
-        function announceClientArrived() { speakText(`Здравствуйте, присаживайтесь! Выберите татуировку`); }
-        function announceProblem(windowNum) { speakText(`Внимание! Проблема на окне`); setTimeout(() => speakNumber(windowNum), 500); setTimeout(() => speakText(`Срочно подойдите`), 1500); }
-        function announceComplete() { speakText(`Заказ завершён. Хорошего дня, будем ждать вас снова`); }
-        function announceWindowFree(windowNum) { speakText(`Окно`); setTimeout(() => { speakNumber(windowNum); setTimeout(() => speakText(`освобождено`), 500); }, 300); }
-        function announceProblemResolved(windowNum) { speakText(`Проблема на окне`); setTimeout(() => { speakNumber(windowNum); setTimeout(() => speakText(`решена`), 500); }, 300); }
+    });
+}
+
+function speakText(text, rate = 0.85, volume = 0.9) {
+    if (!ttsEnabled) return;
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ru-RU';
+    utterance.rate = rate;
+    utterance.volume = volume;
+    if (selectedVoice) utterance.voice = selectedVoice;
+    
+    // Добавляем в очередь
+    ttsQueue.push(utterance);
+    processTtsQueue();
+}
+
+function processTtsQueue() {
+    if (isSpeaking || ttsQueue.length === 0) return;
+    
+    isSpeaking = true;
+    const utterance = ttsQueue.shift();
+    
+    utterance.onend = () => {
+        isSpeaking = false;
+        processTtsQueue();
+    };
+    
+    utterance.onerror = () => {
+        isSpeaking = false;
+        processTtsQueue();
+    };
+    
+    window.speechSynthesis.speak(utterance);
+}
+
+// Очистка очереди (если нужно срочно остановить)
+function clearTtsQueue() {
+    ttsQueue = [];
+    if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        isSpeaking = false;
+    }
+}
+
+function speakNumber(num) {
+    const units = ['ноль', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
+    const teens = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
+    const tens = ['', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто'];
+    
+    if (num < 10) speakText(units[num]);
+    else if (num < 20) speakText(teens[num - 10]);
+    else if (num < 100) {
+        const ten = Math.floor(num / 10);
+        const unit = num % 10;
+        let text = tens[ten];
+        if (unit > 0) text += ' ' + units[unit];
+        speakText(text);
+    } else {
+        speakText(num.toString().split('').join(' '));
+    }
+}
+
+function speakCode(code) {
+    const digits = code.toString().split('');
+    const words = ['ноль', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
+    let text = '';
+    for (const digit of digits) text += words[parseInt(digit)] + ' ';
+    speakText(text.trim());
+}
+
+// Функции озвучки с паузами между фразами (без обрывов)
+function announceNewOrder(ticketId, code6) {
+    speakText(`Новый заказ! Билет номер`);
+    setTimeout(() => {
+        speakNumber(ticketId);
+        setTimeout(() => {
+            speakText(`Код на чеке`);
+            setTimeout(() => {
+                speakCode(code6);
+                setTimeout(() => {
+                    speakText(`Сообщите клиенту код`);
+                }, 800);
+            }, 500);
+        }, 500);
+    }, 500);
+}
+
+function announceQueue(ticketId, minutes) {
+    speakText(`Заказ поставлен в очередь. Билет номер`);
+    setTimeout(() => {
+        speakNumber(ticketId);
+        setTimeout(() => {
+            speakText(`Ожидание примерно`);
+            setTimeout(() => {
+                speakNumber(minutes);
+                setTimeout(() => {
+                    speakText(`минут`);
+                }, 600);
+            }, 400);
+        }, 400);
+    }, 400);
+}
+
+function announceClientArrived() {
+    speakText(`Здравствуйте, присаживайтесь! Выберите татуировку`);
+}
+
+function announceProblem(windowNum) {
+    speakText(`Внимание! Проблема на окне`);
+    setTimeout(() => {
+        speakNumber(windowNum);
+        setTimeout(() => {
+            speakText(`Срочно подойдите`);
+        }, 600);
+    }, 500);
+}
+
+function announceComplete() {
+    speakText(`Заказ завершён. Хорошего дня, будем ждать вас снова`);
+}
+
+function announceWindowFree(windowNum) {
+    speakText(`Окно`);
+    setTimeout(() => {
+        speakNumber(windowNum);
+        setTimeout(() => {
+            speakText(`освобождено`);
+        }, 500);
+    }, 400);
+}
+
+function announceProblemResolved(windowNum) {
+    speakText(`Проблема на окне`);
+    setTimeout(() => {
+        speakNumber(windowNum);
+        setTimeout(() => {
+            speakText(`решена`);
+        }, 500);
+    }, 400);
+}
         
         // ============ КРАСИВЫЕ ЧАСЫ ============
         function showFullscreenClock() {
