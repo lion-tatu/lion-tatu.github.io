@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>LION t.A.T.u. — Проверка заказа</title>
-<link rel="icon" type="image/x-icon" href="logo.ico">
-<link rel="icon" type="image/png" href="https://i.postimg.cc/mghWfVfT/LT-avatarka-tatu-salon.jpg">
-<link rel="apple-touch-icon" href="logo.ico">
+    <link rel="icon" type="image/x-icon" href="logo.ico">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -235,35 +233,67 @@
 <body>
     <div id="app"></div>
 
+    <!-- СЕКРЕТНЫЙ КОНФИГ (URL НЕ ВИДНЫ) -->
+    <script src="config.js"></script>
+    
+    <!-- ОСНОВНОЙ КОД -->
     <script>
-        // ============ ЗАШИФРОВАННЫЕ ДАННЫЕ ============
-        const _KEY = "LionTatu2024SecretKey";
+        // ============ ПОЛУЧАЕМ URL ИЗ СЕКРЕТНОГО ФАЙЛА ============
+        // Ждём загрузки config.js
+        let MAIN_DB_URL = null;
+        let CHEKI_DB_URL = null;
         
-        function _decrypt(encrypted) {
-            let result = "";
-            for (let i = 0; i < encrypted.length; i++) {
-                result += String.fromCharCode(encrypted.charCodeAt(i) ^ _KEY.charCodeAt(i % _KEY.length));
+        function waitForConfig() {
+            return new Promise((resolve) => {
+                const checkInterval = setInterval(() => {
+                    if (window.__CONFIG__ && window.__CONFIG__.MAIN_DB_URL) {
+                        MAIN_DB_URL = window.__CONFIG__.MAIN_DB_URL;
+                        CHEKI_DB_URL = window.__CONFIG__.CHEKI_DB_URL;
+                        clearInterval(checkInterval);
+                        // Сразу удаляем конфиг из памяти, чтобы нельзя было прочитать через консоль
+                        setTimeout(() => {
+                            try { delete window.__CONFIG__; } catch(e) {}
+                        }, 100);
+                        resolve();
+                    }
+                }, 50);
+            });
+        }
+        
+        // ============ ФУНКЦИЯ ОБЪЕДИНЕНИЯ ТОВАРОВ ============
+        function mergeItems(items) {
+            const merged = {};
+            for (const item of items) {
+                const service = item.service;
+                if (merged[service]) {
+                    merged[service].count += item.count;
+                } else {
+                    merged[service] = { ...item };
+                }
+            }
+            const result = [];
+            for (const service in merged) {
+                result.push({
+                    service: service,
+                    count: merged[service].count,
+                    price: merged[service].price
+                });
             }
             return result;
         }
         
-        // Зашифрованный URL базы данных (замените на свой зашифрованный)
-        // Оригинал: https://pvz-database-default-rtdb.firebaseio.com/
-        const _ENC_MAIN_DB = "G3h7K2l9M5n1P8q4R6s2T0u7W9y1C4v6X8z0B3e5G7i9K1l3N5p7R9t1";
-        // Оригинал: https://cheki-tatu-save-default-rtdb.firebaseio.com/
-        const _ENC_CHEKI_DB = "H4i8L3m0N6o2Q9r5S7t3U1v8W0x2C5y7Z9a1B4d6F8h0J2k4M6o8Q0s2";
-        
-        const MAIN_DB_URL = _decrypt(_ENC_MAIN_DB);
-        const CHEKI_DB_URL = _decrypt(_ENC_CHEKI_DB);
-        
         // ============ КЭШ ============
         let ordersCache = {};
-        let activeTasksCache = {};
         let lastUpdate = 0;
+        let currentCode = null;
+        let currentTask = null;
+        let watchInterval = null;
         
-        // ============ ПОЛУЧЕНИЕ ЗАКАЗА (СНАЧАЛА ИЗ ОСНОВНОЙ БД, ПОТОМ ИЗ АРХИВА) ============
+        // ============ ПОЛУЧЕНИЕ ЗАКАЗА ============
         async function getOrderByCode(code) {
-            // 1. Сначала ищем в АКТИВНЫХ заказах (основная БД)
+            if (!MAIN_DB_URL || !CHEKI_DB_URL) return null;
+            
+            // 1. Сначала ищем в АКТИВНЫХ заказах
             try {
                 const activeResponse = await fetch(`${MAIN_DB_URL}tasks.json`);
                 const activeData = await activeResponse.json();
@@ -271,7 +301,6 @@
                 if (activeData) {
                     for (const [id, task] of Object.entries(activeData)) {
                         if (task.code6 === code) {
-                            // Определяем статус
                             let status = "waiting";
                             let clientStatus = task.clientStatus || "waiting";
                             
@@ -282,18 +311,19 @@
                                 status = "waiting";
                             }
                             
+                            const mergedItems = mergeItems(task.items);
+                            
                             return {
                                 id: task.id,
                                 code6: task.code6,
-                                items: task.items,
+                                items: mergedItems,
                                 total: task.total,
                                 time: task.time,
                                 appointmentTime: task.appointmentTime,
                                 master: task.master,
                                 status: status,
                                 clientStatus: clientStatus,
-                                source: "active",
-                                taskStatus: task.status
+                                source: "active"
                             };
                         }
                     }
@@ -302,7 +332,7 @@
                 console.error("Ошибка загрузки активных заказов:", e);
             }
             
-            // 2. Если не нашли - ищем в АРХИВЕ (завершённые заказы)
+            // 2. Если не нашли - ищем в АРХИВЕ
             try {
                 const archiveResponse = await fetch(`${CHEKI_DB_URL}checkLogs.json`);
                 const archiveData = await archiveResponse.json();
@@ -310,10 +340,11 @@
                 if (archiveData) {
                     for (const [id, log] of Object.entries(archiveData)) {
                         if (log.code6 === code) {
+                            const mergedItems = mergeItems(log.items);
                             return {
                                 id: log.id,
                                 code6: log.code6,
-                                items: log.items,
+                                items: mergedItems,
                                 total: log.total,
                                 time: log.time,
                                 appointmentTime: log.appointmentTime,
@@ -334,38 +365,26 @@
         // ============ ПОЛУЧЕНИЕ СТАТУСА ============
         function getStatusInfo(status, clientStatus, source) {
             if (source === "archive" || status === "completed") {
-                return { 
-                    text: '🔴 ГОТОВО', 
-                    class: 'status-ready', 
-                    message: 'Ваш заказ готов! Спасибо за визит!',
-                    emoji: '✅'
-                };
+                return { text: '🔴 ГОТОВО', class: 'status-ready', message: 'Ваш заказ готов! Спасибо за визит!', emoji: '✅' };
             }
             
             const statusMap = {
-                'waiting': { 
-                    text: '🟡 ОЖИДАНИЕ', 
-                    class: 'status-waiting', 
-                    message: 'Ваш заказ в очереди. Скоро мастер пригласит вас!',
-                    emoji: '⏳'
-                },
-                'active': { 
-                    text: '🟢 ВАС ЗОВУТ!', 
-                    class: 'status-call', 
-                    message: 'Пройдите к мастеру! Вас уже ждут.',
-                    emoji: '🔔'
-                },
-                'session': { 
-                    text: '🟣 НА СЕАНСЕ', 
-                    class: 'status-session', 
-                    message: 'Мастер уже работает над вашей татуировкой',
-                    emoji: '🎨'
-                }
+                'waiting': { text: '🟡 ОЖИДАНИЕ', class: 'status-waiting', message: 'Ваш заказ в очереди. Скоро мастер пригласит вас!', emoji: '⏳' },
+                'active': { text: '🟢 ВАС ЗОВУТ!', class: 'status-call', message: 'Пройдите к мастеру! Вас уже ждут.', emoji: '🔔' },
+                'session': { text: '🟣 НА СЕАНСЕ', class: 'status-session', message: 'Мастер уже работает над вашей татуировкой', emoji: '🎨' }
             };
             
             if (clientStatus === 'session') return statusMap['session'];
             if (status === 'active') return statusMap['active'];
             return statusMap['waiting'];
+        }
+        
+        function generateQRData(task) {
+            const total = task.items.reduce((sum, item) => sum + (item.count * item.price), 0);
+            const itemsText = task.items.map(item => `${item.service} x${item.count} = ${item.count * item.price} коп`).join('\n');
+            
+            let data = `🎫 БИЛЕТ №${task.id}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📋 СОСТАВ ЗАКАЗА:\n${itemsText}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n💰 ИТОГО: ${total} коп (${(total/100).toFixed(2)} руб)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔑 КОД: ${task.code6}`;
+            return data;
         }
         
         function renderStatus(task) {
@@ -380,11 +399,9 @@
                 </div>
             `).join('');
             
-            // Данные для QR-кода
-            const qrData = `🎫 БИЛЕТ №${task.id}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📋 СОСТАВ ЗАКАЗА:\n${task.items.map(item => `${item.service} x${item.count} = ${item.count * item.price} коп`).join('\n')}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n💰 ИТОГО: ${total} коп\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔑 КОД: ${task.code6}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n${statusInfo.text}`;
+            const qrData = generateQRData(task);
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrData)}`;
             
-            // Дополнительная информация
             const statusNote = task.source === 'archive' ? '<div style="font-size: 10px; color: #555; margin-top: 10px;">📦 Заказ выполнен и сохранён в архиве</div>' : '';
             const masterDisplay = task.master ? `<span class="master-name">${task.master}</span>` : 'Назначается';
             
@@ -445,48 +462,25 @@
             app.innerHTML = html;
         }
         
-        // ============ АВТООБНОВЛЕНИЕ ============
-        let currentCode = null;
-        let currentTask = null;
-        let watchInterval = null;
-        
         async function checkOrderByCode(code) {
             const task = await getOrderByCode(code);
-            
             if (!task) {
                 showError("❌ Неверный код! Заказ не найден.");
                 return false;
             }
-            
-            // Проверяем, изменился ли статус
-            const oldStatus = currentTask ? (currentTask.clientStatus || currentTask.status) : null;
-            const newStatus = task.clientStatus || task.status;
             
             currentCode = code;
             currentTask = task;
             saveCode(code);
             renderStatus(task);
             
-            // Если статус изменился на "active" (зовут) - можно добавить звук
-            if (oldStatus !== newStatus && newStatus === 'active') {
-                // Воспроизводим звук уведомления (если поддержка есть)
-                try {
-                    const audio = new Audio('data:audio/wav;base64,U3RlYWx0aCBzb3VuZA==');
-                    audio.play().catch(e => console.log("Звук не воспроизведён"));
-                } catch(e) {}
-            }
-            
-            // Запускаем автообновление
             if (watchInterval) clearInterval(watchInterval);
             watchInterval = setInterval(async () => {
                 if (currentCode) {
                     const updatedTask = await getOrderByCode(currentCode);
-                    if (updatedTask) {
-                        const updatedStatus = updatedTask.clientStatus || updatedTask.status;
-                        if (updatedStatus !== (currentTask?.clientStatus || currentTask?.status)) {
-                            currentTask = updatedTask;
-                            renderStatus(updatedTask);
-                        }
+                    if (updatedTask && (updatedTask.clientStatus || updatedTask.status) !== (currentTask?.clientStatus || currentTask?.status)) {
+                        currentTask = updatedTask;
+                        renderStatus(updatedTask);
                     }
                 }
             }, 5000);
@@ -495,17 +489,9 @@
         }
         
         // ============ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ============
-        function saveCode(code) {
-            localStorage.setItem('lion_client_code', code);
-        }
-        
-        function getSavedCode() {
-            return localStorage.getItem('lion_client_code');
-        }
-        
-        function clearSavedCode() {
-            localStorage.removeItem('lion_client_code');
-        }
+        function saveCode(code) { localStorage.setItem('lion_client_code', code); }
+        function getSavedCode() { return localStorage.getItem('lion_client_code'); }
+        function clearSavedCode() { localStorage.removeItem('lion_client_code'); }
         
         function showError(msg) {
             const app = document.getElementById('app');
@@ -519,40 +505,25 @@
         function renderInputScreen() {
             const app = document.getElementById('app');
             const savedCode = getSavedCode();
-            
-            const savedHtml = savedCode ? `
-                <div class="saved-code" onclick="useSavedCode()">
-                    <span>📌 Сохранённый код</span>
-                    <span>${savedCode}</span>
-                    <span>▶</span>
-                </div>
-            ` : '';
+            const savedHtml = savedCode ? `<div class="saved-code" onclick="useSavedCode()"><span>📌 Сохранённый код</span><span>${savedCode}</span><span>▶</span></div>` : '';
             
             const html = `
                 <div class="container">
                     <img src="https://i.postimg.cc/mghWfVfT/LT-avatarka-tatu-salon.jpg" alt="LION t.A.T.u." class="logo">
                     <h1>🦁 LION t.A.T.u.</h1>
                     <div class="subtitle">Введите код с чека</div>
-                    
                     <input type="text" id="codeInput" class="code-input" placeholder="000000" maxlength="6" inputmode="numeric" autofocus>
                     <button onclick="submitCode()">🔍 ПРОВЕРИТЬ</button>
-                    
                     ${savedHtml}
-                    
                     <div class="footer">Введите 6-значный код с чека для отслеживания статуса заказа</div>
                 </div>
             `;
-            
             app.innerHTML = html;
             
             const input = document.getElementById('codeInput');
             if (input) {
-                input.addEventListener('input', (e) => {
-                    e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
-                });
-                input.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') submitCode();
-                });
+                input.addEventListener('input', (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6); });
+                input.addEventListener('keypress', (e) => { if (e.key === 'Enter') submitCode(); });
             }
         }
         
@@ -568,19 +539,9 @@
         async function submitCode() {
             const input = document.getElementById('codeInput');
             if (!input) return;
-            
             const code = input.value.trim();
-            
-            if (code.length !== 6) {
-                showError("Введите 6-значный код!");
-                return;
-            }
-            
-            if (!/^\d+$/.test(code)) {
-                showError("Код должен содержать только цифры!");
-                return;
-            }
-            
+            if (code.length !== 6) { showError("Введите 6-значный код!"); return; }
+            if (!/^\d+$/.test(code)) { showError("Код должен содержать только цифры!"); return; }
             await checkOrderByCode(code);
         }
         
@@ -591,14 +552,6 @@
             renderInputScreen();
         }
         
-        // ============ ЗАПУСК ============
-        (async function() {
-            const hasSaved = await checkSavedCode();
-            if (!hasSaved) {
-                renderInputScreen();
-            }
-        })();
-        
         async function checkSavedCode() {
             const savedCode = getSavedCode();
             if (savedCode) {
@@ -606,12 +559,17 @@
                 if (task) {
                     await checkOrderByCode(savedCode);
                     return true;
-                } else {
-                    clearSavedCode();
-                }
+                } else { clearSavedCode(); }
             }
             return false;
         }
+        
+        // ============ ЗАПУСК ============
+        (async function() {
+            await waitForConfig();
+            const hasSaved = await checkSavedCode();
+            if (!hasSaved) { renderInputScreen(); }
+        })();
     </script>
 </body>
 </html>
