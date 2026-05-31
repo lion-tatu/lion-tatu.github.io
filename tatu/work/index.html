@@ -12,7 +12,7 @@
             min-height: 100vh;
             padding: 20px;
         }
-        /* Общие контейнеры */
+        /* Контейнеры */
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -30,7 +30,6 @@
             padding: 40px;
             text-align: center;
         }
-        /* Формы */
         input, select, button {
             width: 100%;
             padding: 12px;
@@ -72,7 +71,7 @@
             background: #05d9e8;
             color: #0a0a0f;
         }
-        /* Карточки статистики */
+        /* Карточки */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -133,7 +132,7 @@
         }
         .error-text { color: #ff2a6d; }
         .log-entry { padding: 5px; border-bottom: 1px solid #222; color: #0f0; }
-        /* Часы на весь экран */
+        /* Часы */
         .fullscreen-clock {
             position: fixed;
             top: 0;
@@ -171,8 +170,6 @@
         }
         .total { font-size: 1.5em; color: #00ff66; text-align: right; padding: 10px; }
         /* Мастер */
-        .worker-layout { display: flex; gap: 20px; flex-wrap: wrap; }
-        .worker-tasks { flex: 1; min-width: 280px; }
         .task-card {
             background: #1a1a2e;
             border-radius: 20px;
@@ -180,8 +177,9 @@
             margin-bottom: 10px;
             cursor: pointer;
         }
+        .task-card:hover { background: #252540; }
         @media (max-width: 768px) {
-            .cashier-layout, .worker-layout { flex-direction: column; }
+            .cashier-layout { flex-direction: column; }
             .user-card { flex-direction: column; align-items: stretch; }
             .clock-time { font-size: 15vw; letter-spacing: 5px; }
             .clock-date { font-size: 5vw; }
@@ -192,7 +190,7 @@
     <div id="app"></div>
 
     <script>
-        // ============ ДЕМО-ДАННЫЕ ============
+        // ============ ДАННЫЕ ============
         let currentUser = null;
         let currentRole = null;
         let currentWindow = null;
@@ -200,7 +198,7 @@
         let currentCount = 1;
         let ttsEnabled = true;
         let selectedVoice = null;
-        let currentTicket = 1;
+        let currentTicket = 5;
         let currentTask = null;
         let errorLog = [];
         let systemLogs = [];
@@ -208,7 +206,7 @@
         
         const prices = { "ручка": 4, "маркер": 6 };
         
-        // Демо-пользователи
+        // Пользователи
         let users = {
             "0": { password: "admin123", role: "CASHBOX", name: "Касса", workStatus: "free", online: true, todayOrders: 0, deviceModel: "Admin PC" },
             "1": { password: "master1", role: "WORKER", name: "Александр", workStatus: "free", online: true, todayOrders: 0, deviceModel: "iPhone" },
@@ -219,9 +217,8 @@
         
         let tasks = [];
         let queue = [];
-        let counter = 5;
         
-        // ============ ЛОГИРОВАНИЕ ============
+        // ============ ЛОГИ ============
         function logSystem(msg, type = "INFO") {
             systemLogs.unshift({ time: new Date().toLocaleString(), type, message: msg });
             if(systemLogs.length > 500) systemLogs.pop();
@@ -293,11 +290,12 @@
             speakText(`Новый заказ! Билет номер ${ticketId}. Код на чеке: ${code}. Сообщите клиенту код.`);
         }
         
-        // ============ ОСНОВНЫЕ ФУНКЦИИ ============
+        // ============ ВСПОМОГАТЕЛЬНЫЕ ============
         function generateCode() {
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
         
+        // ============ ВХОД ============
         function renderLoginScreen() {
             document.getElementById('app').innerHTML = `
                 <div class="login-container">
@@ -329,7 +327,7 @@
             else renderWorkerScreen();
         }
         
-        // ============ ЭКРАН КАССЫ ============
+        // ============ КАССА ============
         function renderCashierScreen() {
             let cartHtml = '';
             let total = 0;
@@ -349,7 +347,7 @@
                     </div>
                     <div class="cashier-layout">
                         <div class="cashier-left">
-                            <div class="stat-card"><div class="stat-value">БИЛЕТ №${counter}</div></div>
+                            <div class="stat-card"><div class="stat-value">БИЛЕТ №${currentTicket}</div></div>
                             <div style="display:flex; gap:10px; margin:15px 0;">
                                 <button onclick="addToCart('ручка')" class="btn-info">✍️ РУЧКА (4 коп)</button>
                                 <button onclick="addToCart('маркер')" class="btn-warning">🖍️ МАРКЕР (6 коп)</button>
@@ -385,14 +383,14 @@
         function confirmOrder() {
             if(cart.length === 0) { alert("Корзина пуста!"); return; }
             const total = cart.reduce((s,i) => s + i.count * i.price, 0);
-            const ticketId = counter;
+            const ticketId = currentTicket;
             const code = generateCode();
             
             // Ищем свободного мастера
             const freeMaster = Object.entries(users).find(([id, u]) => u.role === "WORKER" && u.workStatus === "free");
             if(!freeMaster) {
-                alert("Нет свободных мастеров! Заказ в очередь.");
                 queue.push({ id: ticketId, items: [...cart], total, code, time: new Date().toLocaleTimeString() });
+                alert("Нет свободных мастеров! Заказ в очередь.");
                 logSystem(`Заказ №${ticketId} в очередь`, "INFO");
             } else {
                 const masterId = freeMaster[0];
@@ -401,14 +399,15 @@
                 tasks.push({ id: ticketId, items: [...cart], total, code, time: new Date().toLocaleTimeString(), master: masterName, status: "active" });
                 announceNewOrder(ticketId, code);
                 logSystem(`Заказ №${ticketId} создан, мастер: ${masterName}`, "INFO");
+                alert(`✅ Заказ №${ticketId} создан!\nМастер: ${masterName}\nКод: ${code}`);
             }
             
-            counter++;
+            currentTicket++;
             cart = [];
             renderCashierScreen();
         }
         
-        // ============ ЭКРАН МАСТЕРА ============
+        // ============ МАСТЕР ============
         function renderWorkerScreen() {
             const myTasks = tasks.filter(t => t.master === currentWindow && t.status === "active");
             let tasksHtml = '';
@@ -431,15 +430,16 @@
                         <h1>🎨 ${currentWindow}</h1>
                         <div>
                             <button class="btn-icon btn-info" onclick="toggleFullscreenClock()">🕐 ЧАСЫ</button>
+                            <button class="btn-icon btn-purple" onclick="showAdminPanel()">👑 АДМИН</button>
                             <button class="btn-icon btn-danger" onclick="logout()">🚪 ВЫХОД</button>
                         </div>
                     </div>
-                    <div class="worker-layout">
-                        <div class="worker-tasks">
+                    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:280px;">
                             <h3>📋 МОИ ЗАДАНИЯ</h3>
                             <div id="tasksContainer">${tasksHtml}</div>
                         </div>
-                        <div class="worker-tasks">
+                        <div style="flex:1; min-width:280px;">
                             <h3>🔍 ПОИСК ПО КОДУ</h3>
                             <input type="text" id="searchCode" placeholder="6-значный код">
                             <button onclick="searchByCode()" class="btn-info">🔍 НАЙТИ</button>
@@ -533,7 +533,7 @@
                 <div class="container">
                     <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
                         <h1>👑 АДМИН-ПАНЕЛЬ</h1>
-                        <button class="btn-icon btn-info" onclick="renderCashierScreen()">◀ НАЗАД</button>
+                        <button class="btn-icon btn-info" onclick="goBack()">◀ НАЗАД</button>
                     </div>
                     <div class="admin-tabs">
                         <button class="tab-btn active" onclick="showAdminTab('dashboard')">📊 ДАШБОРД</button>
@@ -554,12 +554,17 @@
                         </div>
                         <div class="stats-grid">
                             <div class="stat-card"><button class="btn-icon btn-success" onclick="refreshAdmin()">🔄 ОБНОВИТЬ</button></div>
-                            <div class="stat-card"><button class="btn-icon btn-warning" onclick="clearAllLogs()">🗑 ОЧИСТИТЬ ЛОГИ</button></div>
-                            <div class="stat-card"><button class="btn-icon btn-info" onclick="exportFullReport()">📄 ЭКСПОРТ</button></div>
+                            <div class="stat-card"><button class="btn-icon btn-warning" onclick="clearAllData()">⚠️ СБРОС ВСЕХ ДАННЫХ</button></div>
+                            <div class="stat-card"><button class="btn-icon btn-danger" onclick="clearAllOrders()">❌ ОЧИСТИТЬ ЗАКАЗЫ</button></div>
                         </div>
                     </div>
                 </div>
             `;
+        }
+        
+        function goBack() {
+            if(currentRole === "CASHBOX") renderCashierScreen();
+            else renderWorkerScreen();
         }
         
         function showAdminTab(tabName) {
@@ -596,7 +601,6 @@
                                 <button class="btn-icon btn-warning" onclick="toggleWorkerBreak('${id}')">🟡 Перерыв</button>
                                 <button class="btn-icon btn-success" onclick="freeWorker('${id}')">🔓 Освободить</button>
                                 <button class="btn-icon btn-danger" onclick="kickWorker('${id}')">🚪 Выгнать</button>
-                                <button class="btn-icon btn-purple" onclick="showWorkerDetails('${id}')">📱 Детали</button>
                             </div>
                         </div>
                     `;
@@ -658,9 +662,8 @@
         
         // ============ АДМИН-ФУНКЦИИ ============
         function toggleWorkerBreak(userId) {
-            const newStatus = users[userId].workStatus === 'break' ? 'free' : 'break';
-            users[userId].workStatus = newStatus;
-            logSystem(`Пользователь ${userId} ${newStatus === 'break' ? 'на перерыве' : 'вернулся'}`, "INFO");
+            users[userId].workStatus = users[userId].workStatus === 'break' ? 'free' : 'break';
+            logSystem(`Пользователь ${userId} ${users[userId].workStatus === 'break' ? 'на перерыве' : 'вернулся'}`, "INFO");
             showAdminPanel();
         }
         
@@ -675,11 +678,6 @@
             users[userId].workStatus = 'free';
             logSystem(`Пользователь ${userId} выгнан`, "WARNING");
             showAdminPanel();
-        }
-        
-        function showWorkerDetails(userId) {
-            const user = users[userId];
-            alert(`📱 ДЕТАЛИ УСТРОЙСТВА\nИмя: ${user.name}\nID: ${userId}\nУстройство: ${user.deviceModel}\nСтатус: ${user.online ? 'Онлайн' : 'Оффлайн'}\nРабота: ${user.workStatus}\nЗаказов: ${user.todayOrders}`);
         }
         
         function addNewUser() {
@@ -731,12 +729,16 @@
         }
         
         function clearAllData() {
-            if(confirm("⚠️ ВНИМАНИЕ! Это удалит ВСЕ ДАННЫЕ (пользователи, заказы, очередь)!")) {
+            if(confirm("⚠️ Удалить ВСЕ ДАННЫЕ?")) {
                 tasks = [];
                 queue = [];
-                counter = 1;
-                errorLog = [];
-                systemLogs = [];
+                currentTicket = 1;
+                for(let id in users) {
+                    if(users[id].role === "WORKER") {
+                        users[id].todayOrders = 0;
+                        users[id].workStatus = "free";
+                    }
+                }
                 logSystem("ВСЕ ДАННЫЕ СБРОШЕНЫ", "ERROR");
                 alert("Данные сброшены");
                 showAdminPanel();
@@ -744,42 +746,34 @@
         }
         
         function clearAllOrders() {
-            if(confirm("Удалить ВСЕ активные заказы?")) {
+            if(confirm("Удалить ВСЕ заказы?")) {
                 tasks = [];
                 queue = [];
+                for(let id in users) {
+                    if(users[id].role === "WORKER") users[id].workStatus = "free";
+                }
                 logSystem("Все заказы удалены", "WARNING");
                 alert("Заказы удалены");
                 showAdminPanel();
             }
         }
         
-        function exportFullReport() {
-            const report = {
-                timestamp: new Date().toISOString(),
-                users: users,
-                tasks: tasks,
-                queue: queue,
-                errors: errorLog.slice(0, 100),
-                logs: systemLogs.slice(0, 200)
-            };
-            downloadJSON(report, `lion_full_report_${Date.now()}.json`);
-            logSystem("Полный отчёт экспортирован", "INFO");
-        }
-        
         function exportErrors() {
-            downloadJSON(errorLog, `lion_errors_${Date.now()}.json`);
-        }
-        
-        function exportLogs() {
-            downloadJSON(systemLogs, `lion_logs_${Date.now()}.json`);
-        }
-        
-        function downloadJSON(data, filename) {
-            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const blob = new Blob([JSON.stringify(errorLog, null, 2)], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = filename;
+            a.download = `lion_errors_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function exportLogs() {
+            const blob = new Blob([JSON.stringify(systemLogs, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lion_logs_${Date.now()}.json`;
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -800,11 +794,6 @@
         }
         
         function showClockToAll() {
-            for(const id in users) {
-                if(users[id].role === "WORKER" && users[id].online) {
-                    // Симулируем отправку команды
-                }
-            }
             alert("🕐 Команда 'Показать часы' отправлена всем мастерам");
             logSystem("Команда 'Показать часы' отправлена всем", "INFO");
         }
@@ -832,8 +821,10 @@
             
             function updateClock() {
                 const now = new Date();
-                document.getElementById('clockTime').innerHTML = now.toLocaleTimeString('ru-RU');
-                document.getElementById('clockDate').innerHTML = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+                const timeEl = document.getElementById('clockTime');
+                const dateEl = document.getElementById('clockDate');
+                if(timeEl) timeEl.innerHTML = now.toLocaleTimeString('ru-RU');
+                if(dateEl) dateEl.innerHTML = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
             }
             updateClock();
             window.clockInterval = setInterval(updateClock, 1000);
