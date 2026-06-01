@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>LION t.A.T.u. — Тату студия</title>
+    <title>LION t.A.T.u. — Рабочий терминал</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: linear-gradient(135deg, #0a0a0f 0%, #1a0b2e 100%);
-            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             min-height: 100vh;
             padding: 20px;
         }
@@ -45,7 +45,7 @@
             font-weight: bold;
             cursor: pointer;
         }
-        h1, h2, h3 { color: #ff2a6d; margin-bottom: 15px; }
+        h1, h2, h3 { color: #ff2a6d; margin-bottom: 15px; text-align: center; }
         .flex-row { display: flex; gap: 20px; flex-wrap: wrap; }
         .flex-col { flex: 1; min-width: 280px; }
         .card {
@@ -55,7 +55,7 @@
             margin-bottom: 15px;
             border: 1px solid rgba(5, 217, 232, 0.2);
         }
-        .ticket-number { font-size: 2em; color: #ff2a6d; font-weight: bold; }
+        .ticket-number { font-size: 2em; color: #ff2a6d; font-weight: bold; text-align: center; }
         .cart-item {
             display: flex;
             justify-content: space-between;
@@ -92,7 +92,24 @@
 <body>
     <div id="app"></div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
     <script>
+        // ============ FIREBASE КОНФИГ (твои данные) ============
+        const FIREBASE_CONFIG = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "https://pvz-database-default-rtdb.firebaseio.com/",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        firebase.initializeApp(FIREBASE_CONFIG);
+        const database = firebase.database();
+        
         // ============ ДАННЫЕ ============
         let currentUser = null;
         let currentRole = null;
@@ -101,21 +118,10 @@
         let currentCount = 1;
         let ttsEnabled = true;
         let selectedVoice = null;
-        let currentTicket = 5;
+        let currentTicket = 1;
         let currentTask = null;
         
         const prices = { "ручка": 4, "маркер": 6 };
-        
-        // Пользователи
-        let users = {
-            "0": { password: "admin123", role: "CASHBOX", name: "Касса", workStatus: "free", online: true, todayOrders: 0 },
-            "1": { password: "master1", role: "WORKER", name: "Александр", workStatus: "free", online: true, todayOrders: 0 },
-            "2": { password: "master2", role: "WORKER", name: "Мария", workStatus: "free", online: true, todayOrders: 0 },
-            "3": { password: "master3", role: "WORKER", name: "Иван", workStatus: "free", online: true, todayOrders: 0 },
-            "4": { password: "master4", role: "WORKER", name: "Екатерина", workStatus: "free", online: true, todayOrders: 0 }
-        };
-        
-        let tasks = [];
         
         // ============ TTS (ЛЮБОЙ РУССКИЙ ГОЛОС) ============
         function loadRussianVoice() {
@@ -151,6 +157,61 @@
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
         
+        // ============ ЗАГРУЗКА ДАННЫХ ИЗ FIREBASE ============
+        async function loadUsers() {
+            const snapshot = await database.ref('users').once('value');
+            return snapshot.val() || {};
+        }
+        
+        async function loadCounter() {
+            const snapshot = await database.ref('counter').once('value');
+            return snapshot.val() || 1;
+        }
+        
+        async function saveCounter(value) {
+            await database.ref('counter').set(value);
+        }
+        
+        async function loadTasks() {
+            const snapshot = await database.ref('tasks').once('value');
+            return snapshot.val() || {};
+        }
+        
+        async function saveTask(task) {
+            await database.ref(`tasks/${task.id}`).set(task);
+        }
+        
+        async function deleteTask(taskId) {
+            await database.ref(`tasks/${taskId}`).remove();
+        }
+        
+        async function updateUserStatus(userId, status) {
+            await database.ref(`users/${userId}/workStatus`).set(status);
+        }
+        
+        async function updateUserOrders(userId, orders) {
+            await database.ref(`users/${userId}/todayOrders`).set(orders);
+        }
+        
+        // ============ ИНИЦИАЛИЗАЦИЯ ПОЛЬЗОВАТЕЛЕЙ (ПРИ ПЕРВОМ ЗАПУСКЕ) ============
+        async function initDefaultUsers() {
+            const snapshot = await database.ref('users').once('value');
+            if(snapshot.exists()) return;
+            
+            const defaultUsers = {
+                "0": { password: "admin123321", role: "CASHBOX", name: "Касса", workStatus: "free", online: false, todayOrders: 0 },
+                "1": { password: "okno1", role: "WORKER", name: "Александр", workStatus: "free", online: false, todayOrders: 0 },
+                "2": { password: "okno2", role: "WORKER", name: "Мария", workStatus: "free", online: false, todayOrders: 0 },
+                "3": { password: "okno3", role: "WORKER", name: "Иван", workStatus: "free", online: false, todayOrders: 0 },
+                "4": { password: "okno4", role: "WORKER", name: "Екатерина", workStatus: "free", online: false, todayOrders: 0 }
+            };
+            
+            for(const [key, value] of Object.entries(defaultUsers)) {
+                await database.ref(`users/${key}`).set(value);
+            }
+            await database.ref('counter').set(1);
+        }
+        
         // ============ ЭКРАН ВХОДА ============
         function renderLoginScreen() {
             document.getElementById('app').innerHTML = `
@@ -159,23 +220,28 @@
                     <input type="number" id="userNum" placeholder="Номер окна (0-4)" value="0">
                     <input type="password" id="userPass" placeholder="Пароль">
                     <button onclick="doLogin()">🔓 ВОЙТИ</button>
-                    <div style="margin-top:15px; font-size:12px; color:#555;">Пароли: 0/admin123 | 1/master1 | 2/master2 | 3/master3 | 4/master4</div>
                 </div>
             `;
         }
         
-        function doLogin() {
+        async function doLogin() {
             const num = document.getElementById('userNum').value;
             const pass = document.getElementById('userPass').value;
+            
+            const users = await loadUsers();
             const user = users[num];
+            
             if(!user || user.password !== pass) {
                 alert("Неверный номер или пароль!");
                 return;
             }
+            
             currentUser = num;
             currentRole = user.role;
             currentWindow = user.name;
-            users[num].online = true;
+            await database.ref(`users/${num}`).update({ online: true, lastSeen: Date.now() });
+            
+            currentTicket = await loadCounter();
             
             if(currentRole === "CASHBOX") renderCashierScreen();
             else renderWorkerScreen();
@@ -233,14 +299,15 @@
         function removeFromCart(idx) { cart.splice(idx, 1); renderCashierScreen(); }
         function clearCart() { cart = []; renderCashierScreen(); }
         
-        function confirmOrder() {
+        async function confirmOrder() {
             if(cart.length === 0) { alert("Корзина пуста!"); return; }
             const total = cart.reduce((s,i) => s + i.count * i.price, 0);
             const ticketId = currentTicket;
             const code = generateCode();
             
-            // Ищем свободного мастера
+            const users = await loadUsers();
             const freeMaster = Object.entries(users).find(([id, u]) => u.role === "WORKER" && u.workStatus === "free");
+            
             if(!freeMaster) {
                 alert("Нет свободных мастеров!");
                 return;
@@ -248,20 +315,34 @@
             
             const masterId = freeMaster[0];
             const masterName = freeMaster[1].name;
-            users[masterId].workStatus = "busy";
-            tasks.push({ id: ticketId, items: [...cart], total, code, time: new Date().toLocaleTimeString(), master: masterName, status: "active" });
+            
+            await updateUserStatus(masterId, "busy");
+            
+            const task = {
+                id: ticketId,
+                items: [...cart],
+                total: total,
+                code: code,
+                time: new Date().toLocaleTimeString(),
+                master: masterName,
+                status: "active"
+            };
+            await saveTask(task);
             
             announceNewOrder(ticketId, code, masterName);
             alert(`✅ БИЛЕТ №${ticketId}\n🔑 КОД: ${code}\n💰 ${total} коп\n🎨 Мастер: ${masterName}`);
             
             currentTicket++;
+            await saveCounter(currentTicket);
             cart = [];
             renderCashierScreen();
         }
         
         // ============ МАСТЕР ============
-        function renderWorkerScreen() {
-            const myTasks = tasks.filter(t => t.master === currentWindow && t.status === "active");
+        async function renderWorkerScreen() {
+            const tasks = await loadTasks();
+            const myTasks = Object.values(tasks).filter(t => t.master === currentWindow && t.status === "active");
+            
             let tasksHtml = '';
             for(const task of myTasks) {
                 const itemsText = task.items.map(i => `${i.service} x${i.count}`).join(', ');
@@ -305,15 +386,15 @@
                 </div>
             `;
             
-            // Часы
             setInterval(() => {
                 const clock = document.getElementById('liveClock');
                 if(clock) clock.innerText = new Date().toLocaleTimeString('ru-RU');
             }, 1000);
         }
         
-        function selectTask(taskId) {
-            currentTask = tasks.find(t => t.id === taskId);
+        async function selectTask(taskId) {
+            const tasks = await loadTasks();
+            currentTask = tasks[taskId];
             if(currentTask) {
                 const itemsText = currentTask.items.map(i => `• ${i.service} x${i.count} = ${i.count * i.price} коп`).join('<br>');
                 document.getElementById('currentTaskCard').innerHTML = `
@@ -325,11 +406,12 @@
             }
         }
         
-        function searchByCode() {
+        async function searchByCode() {
             const code = document.getElementById('searchCode').value;
-            const task = tasks.find(t => t.code === code);
+            const tasks = await loadTasks();
+            const task = Object.values(tasks).find(t => t.code === code);
             if(task) {
-                selectTask(task.id);
+                await selectTask(task.id);
                 alert(`Заказ найден! Билет №${task.id}`);
             } else {
                 alert("Заказ не найден!");
@@ -346,28 +428,34 @@
             alert("🔴 Сигнал о проблеме отправлен кассиру");
         }
         
-        function completeTask() {
+        async function completeTask() {
             if(!currentTask) { alert("Нет активного заказа!"); return; }
-            const index = tasks.findIndex(t => t.id === currentTask.id);
-            if(index !== -1) tasks.splice(index, 1);
-            const masterId = Object.keys(users).find(id => users[id].name === currentWindow);
-            if(masterId) users[masterId].workStatus = "free";
-            users[currentUser].todayOrders++;
+            await deleteTask(currentTask.id);
+            await updateUserStatus(currentUser, "free");
+            
+            const users = await loadUsers();
+            const newOrders = (users[currentUser].todayOrders || 0) + 1;
+            await updateUserOrders(currentUser, newOrders);
+            
             speakText("Хорошего дня, будем ждать вас снова");
             alert(`✅ Заказ №${currentTask.id} завершён!`);
             currentTask = null;
             renderWorkerScreen();
         }
         
-        function logout() {
-            if(currentUser) users[currentUser].online = false;
+        async function logout() {
+            if(currentUser) {
+                await database.ref(`users/${currentUser}`).update({ online: false });
+            }
             currentUser = null;
             renderLoginScreen();
         }
         
         // ============ ЗАПУСК ============
         loadRussianVoice();
-        renderLoginScreen();
+        initDefaultUsers().then(() => {
+            renderLoginScreen();
+        });
     </script>
 </body>
 </html>
