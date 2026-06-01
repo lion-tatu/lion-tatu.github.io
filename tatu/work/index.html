@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>LION t.A.T.u. — Рабочий терминал</title>
+    <title>LION t.A.T.u. — Тату студия</title>
     <style>
-        /* ВСЕ СТИЛИ КАК РАНЬШЕ */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: linear-gradient(135deg, #0a0a0f 0%, #1a0b2e 100%);
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
             min-height: 100vh;
             padding: 20px;
         }
@@ -22,6 +21,31 @@
             box-shadow: 0 0 50px rgba(255, 42, 109, 0.3);
             border: 1px solid rgba(5, 217, 232, 0.3);
         }
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: rgba(26, 26, 46, 0.95);
+            border-radius: 35px;
+            padding: 40px;
+            text-align: center;
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: #252540;
+            border: 1px solid #05d9e8;
+            border-radius: 25px;
+            color: white;
+            font-size: 16px;
+        }
+        button {
+            background: #05d9e8;
+            color: #0a0a0f;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        h1, h2, h3 { color: #ff2a6d; margin-bottom: 15px; }
         .flex-row { display: flex; gap: 20px; flex-wrap: wrap; }
         .flex-col { flex: 1; min-width: 280px; }
         .card {
@@ -31,170 +55,45 @@
             margin-bottom: 15px;
             border: 1px solid rgba(5, 217, 232, 0.2);
         }
-        .ticket-card { cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
-        .ticket-card:hover { border-color: #05d9e8; transform: translateX(5px); }
         .ticket-number { font-size: 2em; color: #ff2a6d; font-weight: bold; }
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .status-free { background: #00ff66; color: #0a0a0f; }
-        .status-busy { background: #ff0000; color: white; }
-        .status-break { background: #ffcc00; color: #0a0a0f; }
-        .status-waiting { background: #ffcc00; color: #0a0a0f; }
-        .status-session { background: #b300ff; color: white; }
-        .window-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid #333;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
         .cart-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
             padding: 8px;
             border-bottom: 1px solid #333;
         }
-        .total { font-size: 1.5em; font-weight: bold; color: #00ff66; text-align: right; padding: 10px; }
-        .clock { font-size: 2em; font-family: monospace; color: #05d9e8; text-align: right; }
-        button {
-            padding: 12px 20px;
-            font-size: 1em;
-            background: #05d9e8;
-            border: none;
-            border-radius: 35px;
-            color: #0a0a0f;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        button:active { transform: scale(0.97); }
-        .btn-danger { background: #ff0000; color: white; }
-        .btn-success { background: #00ff66; color: #0a0a0f; }
-        .btn-warning { background: #ff6600; color: white; }
-        .btn-purple { background: #b300ff; color: white; }
-        .btn-sm { padding: 5px 12px; font-size: 12px; }
-        input, select {
-            width: 100%;
-            padding: 12px;
-            background: #252540;
-            border: 1px solid #05d9e8;
-            border-radius: 25px;
-            color: white;
-            font-size: 14px;
-            outline: none;
-            margin-bottom: 10px;
-        }
-        h1 { text-align: center; color: #ff2a6d; font-size: 1.8em; margin-bottom: 15px; }
-        h2 { color: #05d9e8; font-size: 1.2em; margin-bottom: 10px; }
-        h3 { color: #ffcc00; font-size: 1em; margin-bottom: 8px; }
-        .error { color: #ff0000; text-align: center; padding: 10px; }
-        .success { color: #00ff66; text-align: center; padding: 10px; }
-        .tts-control {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #252540;
-            padding: 10px;
-            border-radius: 25px;
-            margin-bottom: 15px;
-        }
-        .mode-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .mode-btn { flex: 1; text-align: center; }
-        .mode-btn.active { background: #00ff66; color: #0a0a0f; }
-        .floating-code {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #1a1a2e, #0a0a0f);
-            border: 2px solid #00ff66;
+        .total { font-size: 1.5em; color: #00ff66; text-align: right; padding: 10px; }
+        .task-card {
+            background: #1a1a2e;
             border-radius: 20px;
-            padding: 15px 25px;
-            box-shadow: 0 0 20px rgba(0,255,102,0.3);
-            z-index: 1000;
-            text-align: center;
-            animation: fadeInOut 10s ease;
-        }
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateX(50px); }
-            10% { opacity: 1; transform: translateX(0); }
-            80% { opacity: 1; transform: translateX(0); }
-            100% { opacity: 0; transform: translateX(50px); visibility: hidden; }
-        }
-        .problem-notify {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            left: 20px;
-            background: linear-gradient(135deg, #ff0000, #990000);
-            border-radius: 25px;
-            padding: 20px;
-            box-shadow: 0 0 30px rgba(255,0,0,0.3);
-            z-index: 1000;
-        }
-        .queue-container-scroll {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .queue-item {
-            border-bottom: 1px solid #333;
-            padding: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
             cursor: pointer;
-            transition: 0.2s;
+            border-left: 4px solid #05d9e8;
         }
-        .queue-item:hover { background: #252540; }
-        .queue-wait { color: #ffcc00; font-size: 11px; margin-top: 5px; }
-        .queue-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
-            gap: 10px;
+        .task-card:hover { background: #252540; }
+        .btn-icon {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
         }
-        .queue-nav button { flex: 1; padding: 8px; font-size: 14px; }
-        .current-page { color: #00ff66; font-weight: bold; }
-        .fullscreen-clock {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            min-height: 400px;
-            font-size: 8vw;
-            font-family: monospace;
-            color: #05d9e8;
-            text-shadow: 0 0 20px rgba(5, 217, 232, 0.5);
-        }
+        .btn-success { background: #00ff66; color: #0a0a0f; }
+        .btn-danger { background: #ff2a6d; color: white; }
+        .btn-warning { background: #ff6600; color: white; }
+        .btn-info { background: #05d9e8; color: #0a0a0f; }
+        .clock-time { font-size: 2em; font-family: monospace; color: #05d9e8; text-align: right; }
         @media (max-width: 768px) {
-            .container { padding: 15px; }
             .flex-row { flex-direction: column; }
-            .window-row { flex-direction: column; align-items: stretch; }
-            button { width: 100%; }
-            .fullscreen-clock { font-size: 15vw; min-height: 300px; }
         }
     </style>
 </head>
 <body>
     <div id="app"></div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    
-    <!-- Загрузчик конфигов -->
-    <script src="/AlexBit_K/config/loader.js"></script>
-
     <script>
-        // ============ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ============
+        // ============ ДАННЫЕ ============
         let currentUser = null;
         let currentRole = null;
         let currentWindow = null;
@@ -202,309 +101,273 @@
         let currentCount = 1;
         let ttsEnabled = true;
         let selectedVoice = null;
-        let currentTicketNumber = 1;
-        let distributionMode = "auto";
-        let windowPriorities = {};
-        let currentActiveTask = null;
-        let queueCurrentPage = 1;
-        let queueItemsPerPage = 5;
-        
-        let database = null;
-        let chekiDatabase = null;
-        let APP_CONFIG = null;
-        let ENCRYPTION_KEY = null;
+        let currentTicket = 5;
+        let currentTask = null;
         
         const prices = { "ручка": 4, "маркер": 6 };
         
-        // ============ MICROSOFT ELENA TTS ============
+        // Пользователи
+        let users = {
+            "0": { password: "admin123", role: "CASHBOX", name: "Касса", workStatus: "free", online: true, todayOrders: 0 },
+            "1": { password: "master1", role: "WORKER", name: "Александр", workStatus: "free", online: true, todayOrders: 0 },
+            "2": { password: "master2", role: "WORKER", name: "Мария", workStatus: "free", online: true, todayOrders: 0 },
+            "3": { password: "master3", role: "WORKER", name: "Иван", workStatus: "free", online: true, todayOrders: 0 },
+            "4": { password: "master4", role: "WORKER", name: "Екатерина", workStatus: "free", online: true, todayOrders: 0 }
+        };
+        
+        let tasks = [];
+        
+        // ============ TTS (ЛЮБОЙ РУССКИЙ ГОЛОС) ============
         function loadRussianVoice() {
             return new Promise((resolve) => {
                 const voices = window.speechSynthesis.getVoices();
-                if (voices.length) {
-                    selectedVoice = voices.find(v => v.lang.includes('ru') && v.name.includes('Microsoft')) ||
-                                   voices.find(v => v.lang.includes('ru')) || voices[0];
+                if(voices.length) {
+                    selectedVoice = voices.find(v => v.lang.includes('ru')) || voices[0];
                     resolve(selectedVoice);
                 } else {
                     window.speechSynthesis.onvoiceschanged = () => {
-                        const newVoices = window.speechSynthesis.getVoices();
-                        selectedVoice = newVoices.find(v => v.lang.includes('ru') && v.name.includes('Microsoft')) ||
-                                       newVoices.find(v => v.lang.includes('ru')) || newVoices[0];
+                        const voices2 = window.speechSynthesis.getVoices();
+                        selectedVoice = voices2.find(v => v.lang.includes('ru')) || voices2[0];
                         resolve(selectedVoice);
                     };
                 }
             });
         }
         
-        function speakText(text, rate = 0.85) {
-            if (!ttsEnabled) return;
+        function speakText(text) {
+            if(!ttsEnabled) return;
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'ru-RU';
-            utterance.rate = rate;
-            if (selectedVoice) utterance.voice = selectedVoice;
-            window.speechSynthesis.cancel();
+            utterance.rate = 0.9;
+            if(selectedVoice) utterance.voice = selectedVoice;
             window.speechSynthesis.speak(utterance);
         }
         
-        function speakNumber(num) {
-            const units = ['ноль', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
-            const teens = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
-            const tens = ['', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто'];
-            if (num < 10) speakText(units[num]);
-            else if (num < 20) speakText(teens[num - 10]);
-            else if (num < 100) {
-                const ten = Math.floor(num / 10);
-                const unit = num % 10;
-                let text = tens[ten];
-                if (unit > 0) text += ' ' + units[unit];
-                speakText(text);
-            } else speakText(num.toString().split('').join(' '));
+        function announceNewOrder(ticketId, code, masterName) {
+            speakText(`Новый заказ! Билет номер ${ticketId}. Код на чеке: ${code}. Пройдите к мастеру ${masterName}.`);
         }
         
-        function speakCode(code) {
-            const digits = code.toString().split('');
-            const words = ['ноль', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
-            speakText(digits.map(d => words[parseInt(d)]).join(' '));
-        }
-        
-        function announceNewOrder(ticketId, code6) {
-            speakText(`Новый заказ! Билет номер`);
-            setTimeout(() => { speakNumber(ticketId); setTimeout(() => { speakText(`Код на чеке`); setTimeout(() => { speakCode(code6); setTimeout(() => speakText(`Сообщите клиенту код`), 500); }, 300); }, 300); }, 300);
-        }
-        
-        function announceComplete() { speakText(`Заказ завершён. Хорошего дня, будем ждать вас снова`); }
-        function announceProblem(windowNum) { speakText(`Внимание! Проблема на окне`); setTimeout(() => speakNumber(windowNum), 500); }
-        function announceClientArrived() { speakText(`Здравствуйте, присаживайтесь! Выберите татуировку`); }
-        function announceWindowFree(windowNum) { speakText(`Окно`); setTimeout(() => { speakNumber(windowNum); setTimeout(() => speakText(`освобождено`), 500); }, 300); }
-        
-        // ============ ГЕНЕРАЦИЯ ============
-        function generate6DigitCode() { return Math.floor(100000 + Math.random() * 900000).toString(); }
-        
-        // ============ ОПРЕДЕЛЕНИЕ МОДЕЛИ ============
-        async function getFullDeviceModel() {
-            const ua = navigator.userAgent;
-            let deviceModel = "Unknown";
-            if (ua.includes("iPhone")) deviceModel = "iPhone";
-            else if (ua.includes("iPad")) deviceModel = "iPad";
-            else if (ua.includes("Android")) {
-                const match = ua.match(/Android; [\w\d\s]+; ([\w\d\s]+) Build/i);
-                deviceModel = match && match[1] ? match[1] : "Android";
-            } else if (ua.includes("Windows")) deviceModel = "Windows PC";
-            else if (ua.includes("Mac")) deviceModel = "Mac";
-            return { fullModel: deviceModel, userAgent: ua.substring(0, 200) };
-        }
-        
-        // ============ ИНИЦИАЛИЗАЦИЯ ============
-        async function initApp() {
-            const config = await loadConfig();
-            if (!config) {
-                document.getElementById('app').innerHTML = `<div class="container"><h1>🔐 ОШИБКА</h1><div class="error">Не удалось загрузить конфигурацию. Проверьте папку AlexBit_K/config/</div></div>`;
-                return;
-            }
-            
-            APP_CONFIG = config.settings;
-            ENCRYPTION_KEY = config.key;
-            
-            // Инициализация Firebase с расшифрованными данными
-            firebase.initializeApp(config.firebase, 'main');
-            firebase.initializeApp({ ...config.firebase, databaseURL: config.firebase.chekiDB }, 'cheki');
-            database = firebase.app('main').database();
-            chekiDatabase = firebase.app('cheki').database();
-            
-            await initDefaultUsers();
-            await loadDistributionSettings();
-            await loadRussianVoice();
-            
-            const savedUser = localStorage.getItem('user');
-            if (savedUser) {
-                const user = JSON.parse(savedUser);
-                currentUser = user.windowNumber;
-                currentRole = user.role;
-                currentWindow = user.name;
-                if (currentRole === 'CASHBOX') renderCashierScreen();
-                else renderWorkerScreen();
-            } else {
-                renderLoginScreen();
-            }
-        }
-        
-        async function initDefaultUsers() {
-            const snapshot = await database.ref('users').once('value');
-            if (snapshot.exists()) return;
-            for (const [key, value] of Object.entries(APP_CONFIG.defaultUsers)) {
-                await database.ref(`users/${key}`).set({ ...value, workStatus: "free", online: false, todayOrders: 0 });
-            }
-            await database.ref('settings/distributionMode').set("auto");
-            await database.ref('settings/windowPriorities').set({ "1": 1, "2": 1, "3": 1, "4": 1 });
-            await database.ref('counter').set(1);
+        function generateCode() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
         }
         
         // ============ ЭКРАН ВХОДА ============
         function renderLoginScreen() {
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="container">
+            document.getElementById('app').innerHTML = `
+                <div class="login-container">
                     <h1>🦁 LION t.A.T.u.</h1>
-                    <div class="tts-control"><label>🔊 Озвучка</label><input type="checkbox" id="ttsToggle" checked></div>
-                    <input type="number" id="windowNumber" placeholder="Номер окна (0 - касса, 1-4 - мастера)" value="0">
-                    <input type="password" id="password" placeholder="Пароль">
-                    <div style="font-size:12px; color:#555; text-align:center; margin-bottom:15px;">Пароли: Касса(0): admin123321 | Окна 1-4: okno1-4</div>
+                    <input type="number" id="userNum" placeholder="Номер окна (0-4)" value="0">
+                    <input type="password" id="userPass" placeholder="Пароль">
                     <button onclick="doLogin()">🔓 ВОЙТИ</button>
+                    <div style="margin-top:15px; font-size:12px; color:#555;">Пароли: 0/admin123 | 1/master1 | 2/master2 | 3/master3 | 4/master4</div>
                 </div>
             `;
-            document.getElementById('ttsToggle').addEventListener('change', (e) => { ttsEnabled = e.target.checked; });
         }
         
-        async function doLogin() {
-            const windowNumber = document.getElementById('windowNumber').value;
-            const password = document.getElementById('password').value;
-            ttsEnabled = document.getElementById('ttsToggle').checked;
-            const snapshot = await database.ref(`users/${windowNumber}`).once('value');
-            const userData = snapshot.val();
-            if (!userData || userData.password !== password) {
-                showError("Неверный номер или пароль!");
+        function doLogin() {
+            const num = document.getElementById('userNum').value;
+            const pass = document.getElementById('userPass').value;
+            const user = users[num];
+            if(!user || user.password !== pass) {
+                alert("Неверный номер или пароль!");
                 return;
             }
-            const deviceInfo = await getFullDeviceModel();
-            await database.ref(`users/${windowNumber}`).update({ online: true, lastSeen: Date.now(), deviceModel: deviceInfo.fullModel });
-            currentUser = windowNumber;
-            currentRole = userData.role;
-            currentWindow = userData.name;
-            localStorage.setItem('user', JSON.stringify({ windowNumber, role: userData.role, name: userData.name }));
-            setupPageVisibilityTracking();
-            if (currentRole === 'CASHBOX') renderCashierScreen();
+            currentUser = num;
+            currentRole = user.role;
+            currentWindow = user.name;
+            users[num].online = true;
+            
+            if(currentRole === "CASHBOX") renderCashierScreen();
             else renderWorkerScreen();
         }
         
-        function setupPageVisibilityTracking() {
-            window.addEventListener('beforeunload', async () => { if (currentUser) await database.ref(`users/${currentUser}`).update({ online: false }); });
-            document.addEventListener('visibilitychange', async () => { if (currentUser) await database.ref(`users/${currentUser}`).update({ online: !document.hidden }); });
+        // ============ КАССА ============
+        function renderCashierScreen() {
+            let cartHtml = '';
+            let total = 0;
+            for(let i = 0; i < cart.length; i++) {
+                const item = cart[i];
+                const itemTotal = item.count * item.price;
+                total += itemTotal;
+                cartHtml += `<div class="cart-item"><span>${item.service.toUpperCase()} x${item.count}</span><span>${itemTotal} коп</span><button onclick="removeFromCart(${i})" class="btn-icon btn-danger">🗑</button></div>`;
+            }
+            
+            document.getElementById('app').innerHTML = `
+                <div class="container">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <h1>💰 КАССА</h1>
+                        <button class="btn-icon btn-danger" onclick="logout()">🚪 ВЫХОД</button>
+                    </div>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <div class="card"><div class="ticket-number">БИЛЕТ №${currentTicket}</div></div>
+                            <div style="display:flex; gap:10px; margin:15px 0;">
+                                <button onclick="addToCart('ручка')" class="btn-info">✍️ РУЧКА (4 коп)</button>
+                                <button onclick="addToCart('маркер')" class="btn-warning">🖍️ МАРКЕР (6 коп)</button>
+                            </div>
+                            <div class="card">
+                                <h3>КОЛИЧЕСТВО</h3>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    <button onclick="setCount(1)" class="btn-icon btn-info">x1</button>
+                                    <button onclick="setCount(2)" class="btn-icon btn-info">x2</button>
+                                    <button onclick="setCount(3)" class="btn-icon btn-info">x3</button>
+                                    <button onclick="setCount(4)" class="btn-icon btn-info">x4</button>
+                                    <button onclick="setCount(5)" class="btn-icon btn-info">x5</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-col">
+                            <h3>🛒 КОРЗИНА</h3>
+                            <div class="card" id="cartContainer">${cartHtml || '<div style="text-align:center;color:#555;">Корзина пуста</div>'}</div>
+                            <div class="total">💰 ИТОГО: ${total} коп</div>
+                            <button class="btn-success" onclick="confirmOrder()">✅ ПОДТВЕРДИТЬ ЗАКАЗ</button>
+                            <button class="btn-danger" onclick="clearCart()">🗑 ОЧИСТИТЬ</button>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
         
-        async function logout() {
-            if (currentUser) await database.ref(`users/${currentUser}`).update({ online: false });
-            localStorage.removeItem('user');
+        function setCount(c) { currentCount = c; }
+        function addToCart(service) { cart.push({ service, count: currentCount, price: prices[service] }); renderCashierScreen(); }
+        function removeFromCart(idx) { cart.splice(idx, 1); renderCashierScreen(); }
+        function clearCart() { cart = []; renderCashierScreen(); }
+        
+        function confirmOrder() {
+            if(cart.length === 0) { alert("Корзина пуста!"); return; }
+            const total = cart.reduce((s,i) => s + i.count * i.price, 0);
+            const ticketId = currentTicket;
+            const code = generateCode();
+            
+            // Ищем свободного мастера
+            const freeMaster = Object.entries(users).find(([id, u]) => u.role === "WORKER" && u.workStatus === "free");
+            if(!freeMaster) {
+                alert("Нет свободных мастеров!");
+                return;
+            }
+            
+            const masterId = freeMaster[0];
+            const masterName = freeMaster[1].name;
+            users[masterId].workStatus = "busy";
+            tasks.push({ id: ticketId, items: [...cart], total, code, time: new Date().toLocaleTimeString(), master: masterName, status: "active" });
+            
+            announceNewOrder(ticketId, code, masterName);
+            alert(`✅ БИЛЕТ №${ticketId}\n🔑 КОД: ${code}\n💰 ${total} коп\n🎨 Мастер: ${masterName}`);
+            
+            currentTicket++;
+            cart = [];
+            renderCashierScreen();
+        }
+        
+        // ============ МАСТЕР ============
+        function renderWorkerScreen() {
+            const myTasks = tasks.filter(t => t.master === currentWindow && t.status === "active");
+            let tasksHtml = '';
+            for(const task of myTasks) {
+                const itemsText = task.items.map(i => `${i.service} x${i.count}`).join(', ');
+                tasksHtml += `
+                    <div class="task-card" onclick="selectTask(${task.id})">
+                        <strong>🎫 БИЛЕТ №${task.id}</strong><br>
+                        📦 ${itemsText}<br>
+                        💰 ${task.total} коп<br>
+                        🔑 ${task.code}
+                    </div>
+                `;
+            }
+            if(!tasksHtml) tasksHtml = '<div style="text-align:center;color:#555;">✨ НЕТ ЗАКАЗОВ ✨</div>';
+            
+            document.getElementById('app').innerHTML = `
+                <div class="container">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <h1>🎨 ${currentWindow}</h1>
+                        <button class="btn-icon btn-danger" onclick="logout()">🚪 ВЫХОД</button>
+                    </div>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h3>📋 МОИ ЗАДАНИЯ</h3>
+                            <div id="tasksContainer">${tasksHtml}</div>
+                        </div>
+                        <div class="flex-col">
+                            <h3>🔍 ПОИСК ПО КОДУ</h3>
+                            <input type="text" id="searchCode" placeholder="6-значный код">
+                            <button onclick="searchByCode()" class="btn-info">🔍 НАЙТИ</button>
+                            <div class="card" id="currentTaskCard" style="margin-top:15px;">
+                                <div style="text-align:center;color:#555;">Нет активного заказа</div>
+                            </div>
+                            <div style="display:flex; gap:10px; margin-top:15px;">
+                                <button onclick="clientArrived()" class="btn-warning">👋 КЛИЕНТ ПРИШЁЛ</button>
+                                <button onclick="sendProblem()" class="btn-danger">🔴 ПРОБЛЕМА</button>
+                                <button onclick="completeTask()" class="btn-success">✅ ЗАВЕРШИТЬ</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="clock-time" id="liveClock"></div>
+                </div>
+            `;
+            
+            // Часы
+            setInterval(() => {
+                const clock = document.getElementById('liveClock');
+                if(clock) clock.innerText = new Date().toLocaleTimeString('ru-RU');
+            }, 1000);
+        }
+        
+        function selectTask(taskId) {
+            currentTask = tasks.find(t => t.id === taskId);
+            if(currentTask) {
+                const itemsText = currentTask.items.map(i => `• ${i.service} x${i.count} = ${i.count * i.price} коп`).join('<br>');
+                document.getElementById('currentTaskCard').innerHTML = `
+                    <div class="ticket-number">🎫 БИЛЕТ №${currentTask.id}</div>
+                    <div style="margin:10px 0;">${itemsText}</div>
+                    <div><strong>💰 ИТОГО: ${currentTask.total} коп</strong></div>
+                    <div>🔑 Код: ${currentTask.code}</div>
+                `;
+            }
+        }
+        
+        function searchByCode() {
+            const code = document.getElementById('searchCode').value;
+            const task = tasks.find(t => t.code === code);
+            if(task) {
+                selectTask(task.id);
+                alert(`Заказ найден! Билет №${task.id}`);
+            } else {
+                alert("Заказ не найден!");
+            }
+        }
+        
+        function clientArrived() {
+            if(!currentTask) { alert("Нет активного заказа!"); return; }
+            speakText("Здравствуйте, присаживайтесь! Выберите татуировку");
+            alert(`👋 Клиент пришёл на билет №${currentTask.id}`);
+        }
+        
+        function sendProblem() {
+            alert("🔴 Сигнал о проблеме отправлен кассиру");
+        }
+        
+        function completeTask() {
+            if(!currentTask) { alert("Нет активного заказа!"); return; }
+            const index = tasks.findIndex(t => t.id === currentTask.id);
+            if(index !== -1) tasks.splice(index, 1);
+            const masterId = Object.keys(users).find(id => users[id].name === currentWindow);
+            if(masterId) users[masterId].workStatus = "free";
+            users[currentUser].todayOrders++;
+            speakText("Хорошего дня, будем ждать вас снова");
+            alert(`✅ Заказ №${currentTask.id} завершён!`);
+            currentTask = null;
+            renderWorkerScreen();
+        }
+        
+        function logout() {
+            if(currentUser) users[currentUser].online = false;
+            currentUser = null;
             renderLoginScreen();
         }
         
-        // ============ ЗАГРУЗКА ДАННЫХ ============
-        async function loadCounter() { const s = await database.ref('counter').once('value'); return s.val() || 1; }
-        async function updateCounter(v) { await database.ref('counter').set(v); }
-        async function loadTasks() { const s = await database.ref('tasks').once('value'); return s.val() || {}; }
-        async function saveTask(t) { await database.ref(`tasks/${t.id}`).set(t); }
-        async function deleteTask(id) { await database.ref(`tasks/${id}`).remove(); }
-        async function updateTaskStatus(id, status, master = null) { const t = (await database.ref(`tasks/${id}`).once('value')).val(); if (t) { t.status = status; if (master) t.master = master; await database.ref(`tasks/${id}`).set(t); } }
-        async function loadUsers() { const s = await database.ref('users').once('value'); return s.val() || {}; }
-        async function updateUserStatus(num, status) { await database.ref(`users/${num}/workStatus`).set(status); }
-        async function updateUserTodayOrders(num, inc = true) { const u = (await database.ref(`users/${num}`).once('value')).val(); if (u) await database.ref(`users/${num}/todayOrders`).set((u.todayOrders || 0) + (inc ? 1 : 0)); }
-        
-        async function loadDistributionSettings() {
-            const m = await database.ref('settings/distributionMode').once('value');
-            distributionMode = m.val() || "auto";
-            const p = await database.ref('settings/windowPriorities').once('value');
-            windowPriorities = p.val() || { "1": 1, "2": 1, "3": 1, "4": 1 };
-        }
-        
-        async function saveDistributionMode(mode) { distributionMode = mode; await database.ref('settings/distributionMode').set(mode); showSuccess(`Режим: ${mode}`); if (currentRole === 'CASHBOX') renderCashierScreen(); }
-        async function saveWindowPriority(num, priority) { windowPriorities[num] = priority; await database.ref('settings/windowPriorities').set(windowPriorities); await database.ref(`users/${num}/priority`).set(priority); showSuccess(`Приоритет окна ${num} = ${priority}`); }
-        
-        async function getAvailableSlots() {
-            const schedule = (await database.ref('schedule').once('value')).val() || {};
-            const tasks = await loadTasks();
-            const booked = Object.values(tasks).map(t => t.appointmentTime).filter(t => t);
-            return Object.entries(schedule).filter(([t, d]) => d.available && !booked.includes(t)).map(([t]) => t).sort();
-        }
-        
-        // ============ ОЧЕРЕДЬ ============
-        async function addToQueue(data) { await database.ref(`queue/${Date.now()}`).set({ ...data, queuedAt: Date.now(), status: "waiting" }); }
-        async function getNextFromQueue() { const q = (await database.ref('queue').orderByChild('queuedAt').once('value')).val() || {}; return Object.values(q).sort((a,b)=>a.queuedAt-b.queuedAt)[0] || null; }
-        async function getAllQueueItems() { const q = (await database.ref('queue').once('value')).val() || {}; return Object.values(q).sort((a,b)=>a.queuedAt-b.queuedAt); }
-        async function removeFromQueue(id) { await database.ref(`queue/${id}`).remove(); }
-        
-        async function assignOrderToMaster(order, masterNum) {
-            const users = await loadUsers();
-            const masterName = users[masterNum]?.name || `Окно ${masterNum}`;
-            await updateUserStatus(masterNum, "busy");
-            await saveTask({ id: order.id, code6: order.code6, items: order.items, total: order.total, time: order.time, appointmentTime: order.appointmentTime, status: "waiting", master: masterName, clientStatus: "waiting", createdAt: order.createdAt, windowNum: masterNum });
-            showSuccess(`✅ ЗАКАЗ №${order.id} назначен ${masterName}`);
-            if (currentRole === 'CASHBOX') { await loadWindowsStatus(); await updateTimeSelect(); await loadQueueDisplay(); }
-        }
-        
-        async function loadQueueDisplay() {
-            const container = document.getElementById('queueContainer');
-            if (!container) return;
-            const items = await getAllQueueItems();
-            const totalPages = Math.ceil(items.length / queueItemsPerPage);
-            const start = (queueCurrentPage-1)*queueItemsPerPage;
-            const page = items.slice(start, start+queueItemsPerPage);
-            if (items.length===0) { container.innerHTML='<div style="text-align:center;color:#555;padding:15px;">✨ ОЧЕРЕДЬ ПУСТА ✨</div>'; return; }
-            let html = `<div class="queue-container-scroll">`;
-            for (const o of page) {
-                const wait = Math.ceil((o.queuedAt+5*60000-Date.now())/60000);
-                html += `<div class="queue-item" onclick="showQueueItemDetails('${o.queueId}')">
-                    <div><strong>🎫 БИЛЕТ №${o.id}</strong> | ⏰ ${o.appointmentTime} | 💰 ${o.total} коп</div>
-                    <div>📦 ${o.items.map(i=>`${i.service} x${i.count}`).join(', ')}</div>
-                    <div>🔑 Код: ${o.code6}</div>
-                    <div class="queue-wait">⏳ Ожидание: ${wait>0?wait:0} мин</div>
-                    <button onclick="event.stopPropagation(); removeQueueItem('${o.queueId}')" class="btn-sm btn-danger">🗑 Удалить</button>
-                </div>`;
-            }
-            html += `</div>`;
-            if (totalPages>1) html += `<div class="queue-nav"><button onclick="changeQueuePage(-1)" class="btn-sm">◀ Назад</button><span class="current-page">${queueCurrentPage}/${totalPages}</span><button onclick="changeQueuePage(1)" class="btn-sm">Вперед ▶</button></div>`;
-            container.innerHTML = html;
-        }
-        
-        function changeQueuePage(delta) { queueCurrentPage += delta; if(queueCurrentPage<1) queueCurrentPage=1; loadQueueDisplay(); }
-        async function showQueueItemDetails(id) { const o=(await database.ref(`queue/${id}`).once('value')).val(); if(o) alert(`🎫 БИЛЕТ №${o.id}\n📦 ${o.items.map(i=>`${i.service} x${i.count}`).join(', ')}\n💰 ${o.total} коп\n🔑 ${o.code6}`); }
-        async function removeQueueItem(id) { if(confirm("Удалить заказ?")){ await removeFromQueue(id); await loadQueueDisplay(); showSuccess("✅ Удалено"); } }
-        
-        function startQueueListener() {
-            database.ref('users').on('child_changed', async (s) => {
-                const u = s.val();
-                if(u && u.role==="WORKER" && u.workStatus==="free") {
-                    const next = await getNextFromQueue();
-                    if(next) { await removeFromQueue(next.queueId); await assignOrderToMaster(next, s.key); await loadQueueDisplay(); }
-                }
-            });
-            database.ref('queue').on('value', () => { if(currentRole==='CASHBOX') loadQueueDisplay(); });
-        }
-        
-        async function saveToCheckLog(data) { await chekiDatabase.ref(`checkLogs/${Date.now()}_${data.id}`).set({ ...data, timestamp: Date.now(), date: new Date().toLocaleDateString('ru-RU') }); }
-        
-        async function getBestWindow() {
-            const users = await loadUsers();
-            let free = Object.entries(users).filter(([_,u])=>u.role==="WORKER" && u.workStatus==="free").map(([num,d])=>({ num: parseInt(num), todayOrders: d.todayOrders||0, priority: windowPriorities[num]||1 }));
-            if(free.length===0) return null;
-            if(distributionMode==="auto") return free.sort((a,b)=>a.todayOrders-b.todayOrders)[0].num;
-            if(distributionMode==="priority") return free.sort((a,b)=>a.priority-b.priority)[0].num;
-            return null;
-        }
-        
-        // ============ ПРОБЛЕМЫ ============
-        function showProblemNotification(p) {
-            const html = `<div id="problemNotify_${p.id}" class="problem-notify"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;"><div><div style="font-size:24px;font-weight:bold;">🔴 ПРОБЛЕМА!</div><div>📌 Окно: ${p.window} (№${p.windowNum})</div>${p.ticket?`<div>🎫 Билет: №${p.ticket}</div>`:'<div>⚠️ Общая проблема</div>'}<div>⏰ ${p.time}</div></div><button onclick="resolveProblemLocally('${p.id}','${p.windowNum}')" style="background:#00ff66;padding:15px 30px;border-radius:50px;cursor:pointer;">🚶‍♂️ ИДУ</button></div></div>`;
-            const app = document.getElementById('app');
-            const div = document.createElement('div');
-            div.id = `problemNotify_${p.id}`;
-            div.innerHTML = html;
-            app.insertBefore(div, app.firstChild);
-            announceProblem(p.windowNum);
-            setTimeout(() => { const el = document.getElementById(`problemNotify_${p.id}`); if(el) el.remove(); }, 30000);
-        }
-        
-        function resolveProblemLocally(id, winNum) {
-            const el = document.getElementById(`problemNotify_${id}`);
-            if(el) el.remove();
-            showSuccess(`✅ Проблема на окне ${winNum} решена`);
-        }
-        
-        async function sendProblemFromWorker() { showProblemNotification({ id: Date.now(), window: currentWindow, windowNum: currentUser, ticket: currentActiveTask?.id || null, time: new Date().toLocaleTimeString() }); showSuccess(`🔴 Сигнал отправлен кассиру`); }
-        async function sendProblemFromCashierToWindow(winNum) { const users = await loadUsers(); if(!users[winNum]) { showError(`Окно ${winNum} не найдено`); return; } showProblemNotification({ id: Date.now(), window: users[winNum].name, windowNum: winNum, ticket: null, time: new Date().toLocaleTimeString() }); showSuccess(`🔴 Сигнал отправлен на окно ${winNum}`); }
-        
-        function showError(msg) { const app = document.getElementById('app'); const d=document.createElement('div'); d.className='error'; d.innerText=msg; app.insertBefore(d,app.firstChild); setTimeout(()=>d.remove(),3000); }
-        function showSuccess(msg) { const app = document.getElementById('app'); const d=document.createElement('div'); d.className='success'; d.innerText=msg; app.insertBefore(d,app.firstChild); setTimeout(()=>d.remove(),3000); }
-        
-        function showFloatingCode(code, id) {
-            const app = document.getElementById('app');
-            const div = document.createElement('div');
-            div.className = 'floating-code';
-            div.innerHTML = `<div style="font-size:12px;
+        // ============ ЗАПУСК ============
+        loadRussianVoice();
+        renderLoginScreen();
+    </script>
+</body>
+</html>
