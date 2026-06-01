@@ -3,100 +3,493 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>LION t.A.T.u. — Рабочий терминал</title>
+    <title>LION t.A.T.u. — Терминал v3.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: linear-gradient(135deg, #0a0a0f 0%, #1a0b2e 100%);
-            font-family: 'Segoe UI', sans-serif;
-            min-height: 100vh;
-            padding: 20px;
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #13132b;
+            --accent-pink: #ff2a6d;
+            --accent-cyan: #05d9e8;
+            --accent-green: #00ff88;
+            --accent-purple: #b537f2;
+            --accent-orange: #ff6b35;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #e8e8f0;
+            --text-secondary: #8888a0;
+            --shadow-glow: 0 0 30px rgba(5, 217, 232, 0.3);
+            --shadow-pink: 0 0 30px rgba(255, 42, 109, 0.3);
         }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-primary);
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            color: var(--text-primary);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Анимированный фон */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(5, 217, 232, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 42, 109, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(181, 55, 242, 0.05) 0%, transparent 50%);
+            animation: bgMove 20s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes bgMove {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, 1%) rotate(1deg); }
+            66% { transform: translate(-1%, -2%) rotate(-1deg); }
+        }
+
+        /* Стеклянные контейнеры */
+        .glass-container {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .login-container {
+            max-width: 440px;
+            margin: 80px auto;
+            padding: 48px 40px;
+            text-align: center;
+            animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(5, 217, 232, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(5, 217, 232, 0.6); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .logo-animation {
+            font-size: 5em;
+            animation: float 3s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        /* Инпуты в стиле нео-брутализм */
+        .neo-input {
+            width: 100%;
+            padding: 16px 20px;
+            margin: 12px 0;
+            background: rgba(10, 10, 30, 0.8);
+            border: 2px solid var(--glass-border);
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            outline: none;
+        }
+
+        .neo-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(5, 217, 232, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .neo-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* Кнопки с градиентом */
+        .btn-gradient {
+            width: 100%;
+            padding: 16px 24px;
+            margin: 10px 0;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-gradient::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(5, 217, 232, 0.4);
+        }
+
+        .btn-gradient:hover::before {
+            left: 100%;
+        }
+
+        .btn-gradient:active {
+            transform: translateY(-1px);
+        }
+
+        /* Кнопки действий */
+        .btn-success { 
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            color: #000;
+            font-weight: 700;
+        }
+        .btn-danger { 
+            background: linear-gradient(135deg, #ff2a6d, #cc1155);
+            color: white;
+            font-weight: 700;
+        }
+        .btn-warning { 
+            background: linear-gradient(135deg, #ff6b35, #ff8c42);
+            color: white;
+            font-weight: 700;
+        }
+        .btn-info { 
+            background: linear-gradient(135deg, #05d9e8, #00b4d8);
+            color: #000;
+            font-weight: 700;
+        }
+        .btn-purple { 
+            background: linear-gradient(135deg, #b537f2, #7b2ff7);
+            color: white;
+            font-weight: 700;
+        }
+
+        .btn-icon {
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 2px solid var(--glass-border);
+            background: var(--glass);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-icon:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* Карточки */
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(5, 217, 232, 0.3);
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* Тикет */
+        .ticket-display {
+            font-size: 3em;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* Статистика */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(5, 217, 232, 0.1), rgba(181, 55, 242, 0.1));
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .stat-value {
+            font-size: 3.5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Табы */
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            padding: 4px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 14px;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            color: white;
+            box-shadow: 0 4px 15px rgba(5, 217, 232, 0.3);
+        }
+
+        /* Прогресс-бар */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green), var(--accent-pink));
+            border-radius: 4px;
+            transition: width 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { filter: brightness(1); }
+            50% { filter: brightness(1.3); }
+            100% { filter: brightness(1); }
+        }
+
+        /* Уведомления */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 16px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            color: white;
+            z-index: 2000;
+            animation: slideInRight 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Онлайн индикатор */
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .status-online {
+            background: var(--accent-green);
+            box-shadow: 0 0 15px var(--accent-green);
+        }
+
+        .status-offline {
+            background: #ff2a6d;
+            box-shadow: 0 0 15px #ff2a6d;
+        }
+
+        .status-busy {
+            background: var(--accent-orange);
+            box-shadow: 0 0 15px var(--accent-orange);
+            animation: pulse 1s infinite;
+        }
+
+        /* Сетка */
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            background: rgba(26, 26, 46, 0.95);
-            border-radius: 35px;
-            padding: 25px;
-            box-shadow: 0 0 50px rgba(255, 42, 109, 0.3);
-            border: 1px solid rgba(5, 217, 232, 0.3);
+            padding: 24px;
         }
-        .login-container {
-            max-width: 400px;
-            margin: 100px auto;
-            background: rgba(26, 26, 46, 0.95);
-            border-radius: 35px;
-            padding: 40px;
-            text-align: center;
+
+        h1 {
+            font-size: 2em;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
         }
-        input, button {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background: #252540;
-            border: 1px solid #05d9e8;
-            border-radius: 25px;
-            color: white;
-            font-size: 16px;
+
+        h3 {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
         }
-        button {
-            background: #05d9e8;
-            color: #0a0a0f;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        h1, h2, h3 { color: #ff2a6d; margin-bottom: 15px; text-align: center; }
-        .flex-row { display: flex; gap: 20px; flex-wrap: wrap; }
-        .flex-col { flex: 1; min-width: 280px; }
-        .card {
-            background: #1a1a2e;
-            border-radius: 25px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(5, 217, 232, 0.2);
-        }
-        .ticket-number { font-size: 2em; color: #ff2a6d; font-weight: bold; text-align: center; }
-        .cart-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px;
-            border-bottom: 1px solid #333;
-        }
-        .total { font-size: 1.5em; color: #00ff66; text-align: right; padding: 10px; }
+
         .task-card {
-            background: #1a1a2e;
-            border-radius: 20px;
-            padding: 15px;
-            margin-bottom: 10px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
             cursor: pointer;
-            border-left: 4px solid #05d9e8;
+            border-left: 4px solid var(--accent-cyan);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
         }
-        .task-card:hover { background: #252540; }
-        .btn-icon {
-            padding: 6px 12px;
-            border-radius: 20px;
-            border: none;
-            cursor: pointer;
-            font-size: 12px;
+
+        .task-card:hover {
+            transform: translateX(8px);
+            border-left-color: var(--accent-pink);
+            box-shadow: var(--shadow-glow);
         }
-        .btn-success { background: #00ff66; color: #0a0a0f; }
-        .btn-danger { background: #ff2a6d; color: white; }
-        .btn-warning { background: #ff6600; color: white; }
-        .btn-info { background: #05d9e8; color: #0a0a0f; }
-        .clock-time { font-size: 2em; font-family: monospace; color: #05d9e8; text-align: right; }
+
+        .clock-display {
+            font-size: 2.5em;
+            font-weight: 900;
+            font-family: 'Inter', monospace;
+            text-align: right;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Адаптивность */
         @media (max-width: 768px) {
-            .flex-row { flex-direction: column; }
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+            .login-container {
+                margin: 40px 20px;
+                padding: 30px 20px;
+            }
+            .stat-value {
+                font-size: 2.5em;
+            }
+        }
+
+        /* Скроллбар */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(var(--accent-cyan), var(--accent-purple));
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
     <div id="app"></div>
+    <div id="toastContainer"></div>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <script>
-        // ============ FIREBASE КОНФИГ (твои данные) ============
+        // ============ FIREBASE КОНФИГ ============
         const FIREBASE_CONFIG = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_AUTH_DOMAIN",
@@ -110,7 +503,7 @@
         firebase.initializeApp(FIREBASE_CONFIG);
         const database = firebase.database();
         
-        // ============ ДАННЫЕ ============
+        // ============ СОСТОЯНИЕ ============
         let currentUser = null;
         let currentRole = null;
         let currentWindow = null;
@@ -120,342 +513,805 @@
         let selectedVoice = null;
         let currentTicket = 1;
         let currentTask = null;
+        let activeTab = 'stats';
         
-        const prices = { "ручка": 4, "маркер": 6 };
+        const prices = { 
+            "ручка": 4, 
+            "маркер": 6,
+            "тату набор": 12,
+            "временная тату": 8,
+            "блеск-тату": 10,
+            "хна": 15
+        };
         
-        // ============ TTS (ЛЮБОЙ РУССКИЙ ГОЛОС) ============
-        function loadRussianVoice() {
+        // ============ TTS ============
+        function initVoice() {
             return new Promise((resolve) => {
                 const voices = window.speechSynthesis.getVoices();
                 if(voices.length) {
                     selectedVoice = voices.find(v => v.lang.includes('ru')) || voices[0];
-                    resolve(selectedVoice);
+                    resolve();
                 } else {
                     window.speechSynthesis.onvoiceschanged = () => {
-                        const voices2 = window.speechSynthesis.getVoices();
-                        selectedVoice = voices2.find(v => v.lang.includes('ru')) || voices2[0];
-                        resolve(selectedVoice);
+                        const v = window.speechSynthesis.getVoices();
+                        selectedVoice = v.find(vo => vo.lang.includes('ru')) || v[0];
+                        resolve();
                     };
                 }
             });
         }
         
-        function speakText(text) {
-            if(!ttsEnabled) return;
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'ru-RU';
-            utterance.rate = 0.9;
-            if(selectedVoice) utterance.voice = selectedVoice;
-            window.speechSynthesis.speak(utterance);
+        function speak(text) {
+            if(!ttsEnabled || !text) return;
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'ru-RU';
+            u.rate = 0.9;
+            if(selectedVoice) u.voice = selectedVoice;
+            window.speechSynthesis.speak(u);
         }
         
-        function announceNewOrder(ticketId, code, masterName) {
-            speakText(`Новый заказ! Билет номер ${ticketId}. Код на чеке: ${code}. Пройдите к мастеру ${masterName}.`);
+        function toast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            el.className = 'toast';
+            const icons = { success: '✅', danger: '🔴', warning: '⚠️', info: 'ℹ️' };
+            el.innerHTML = `${icons[type] || 'ℹ️'} ${msg}`;
+            container.appendChild(el);
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(100%)';
+                setTimeout(() => el.remove(), 300);
+            }, 3000);
         }
         
         function generateCode() {
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
         
-        // ============ ЗАГРУЗКА ДАННЫХ ИЗ FIREBASE ============
-        async function loadUsers() {
-            const snapshot = await database.ref('users').once('value');
-            return snapshot.val() || {};
+        // ============ FIREBASE API ============
+        async function fbGet(path) {
+            const snap = await database.ref(path).once('value');
+            return snap.val();
         }
         
-        async function loadCounter() {
-            const snapshot = await database.ref('counter').once('value');
-            return snapshot.val() || 1;
+        async function fbSet(path, data) {
+            await database.ref(path).set(data);
         }
         
-        async function saveCounter(value) {
-            await database.ref('counter').set(value);
+        async function fbUpdate(path, data) {
+            await database.ref(path).update(data);
         }
         
-        async function loadTasks() {
-            const snapshot = await database.ref('tasks').once('value');
-            return snapshot.val() || {};
+        async function fbRemove(path) {
+            await database.ref(path).remove();
         }
         
-        async function saveTask(task) {
-            await database.ref(`tasks/${task.id}`).set(task);
-        }
-        
-        async function deleteTask(taskId) {
-            await database.ref(`tasks/${taskId}`).remove();
-        }
-        
-        async function updateUserStatus(userId, status) {
-            await database.ref(`users/${userId}/workStatus`).set(status);
-        }
-        
-        async function updateUserOrders(userId, orders) {
-            await database.ref(`users/${userId}/todayOrders`).set(orders);
-        }
-        
-        // ============ ИНИЦИАЛИЗАЦИЯ ПОЛЬЗОВАТЕЛЕЙ (ПРИ ПЕРВОМ ЗАПУСКЕ) ============
-        async function initDefaultUsers() {
-            const snapshot = await database.ref('users').once('value');
-            if(snapshot.exists()) return;
+        // ============ ИНИЦИАЛИЗАЦИЯ ============
+        async function initDefaults() {
+            const users = await fbGet('users');
+            if(users) return;
             
             const defaultUsers = {
-                "0": { password: "admin123321", role: "CASHBOX", name: "Касса", workStatus: "free", online: false, todayOrders: 0 },
-                "1": { password: "okno1", role: "WORKER", name: "Александр", workStatus: "free", online: false, todayOrders: 0 },
-                "2": { password: "okno2", role: "WORKER", name: "Мария", workStatus: "free", online: false, todayOrders: 0 },
-                "3": { password: "okno3", role: "WORKER", name: "Иван", workStatus: "free", online: false, todayOrders: 0 },
-                "4": { password: "okno4", role: "WORKER", name: "Екатерина", workStatus: "free", online: false, todayOrders: 0 }
+                "0": { password: "admin123321", role: "ADMIN", name: "Администратор", workStatus: "free", online: false, todayOrders: 0, rating: 5.0, totalOrders: 0 },
+                "1": { password: "okno1", role: "WORKER", name: "Александр", workStatus: "free", online: false, todayOrders: 0, rating: 4.8, totalOrders: 0 },
+                "2": { password: "okno2", role: "WORKER", name: "Мария", workStatus: "free", online: false, todayOrders: 0, rating: 4.9, totalOrders: 0 },
+                "3": { password: "okno3", role: "WORKER", name: "Иван", workStatus: "free", online: false, todayOrders: 0, rating: 4.7, totalOrders: 0 },
+                "4": { password: "okno4", role: "WORKER", name: "Екатерина", workStatus: "free", online: false, todayOrders: 0, rating: 5.0, totalOrders: 0 }
             };
             
-            for(const [key, value] of Object.entries(defaultUsers)) {
-                await database.ref(`users/${key}`).set(value);
+            for(const [id, data] of Object.entries(defaultUsers)) {
+                await fbSet(`users/${id}`, data);
             }
-            await database.ref('counter').set(1);
+            await fbSet('counter', 1);
+            await fbSet('settings', { workingHours: { start: 9, end: 21 }, soundEnabled: true });
         }
         
-        // ============ ЭКРАН ВХОДА ============
-        function renderLoginScreen() {
+        // ============ АВТОРИЗАЦИЯ ============
+        function renderLogin() {
             document.getElementById('app').innerHTML = `
-                <div class="login-container">
-                    <h1>🦁 LION t.A.T.u.</h1>
-                    <input type="number" id="userNum" placeholder="Номер окна (0-4)" value="0">
-                    <input type="password" id="userPass" placeholder="Пароль">
-                    <button onclick="doLogin()">🔓 ВОЙТИ</button>
+                <div class="glass-container login-container">
+                    <div class="logo-animation">🦁</div>
+                    <h1 style="font-size: 2.5em; margin: 20px 0;">LION t.A.T.u.</h1>
+                    <p style="color: var(--text-secondary); margin-bottom: 30px;">Рабочий терминал v3.0</p>
+                    
+                    <input type="number" id="userNum" class="neo-input" placeholder="Номер окна (0-4)" value="0" autofocus>
+                    <input type="password" id="userPass" class="neo-input" placeholder="Пароль">
+                    
+                    <button onclick="doLogin()" class="btn-gradient">
+                        🔓 ВОЙТИ В СИСТЕМУ
+                    </button>
+                    
+                    <div style="margin-top: 24px; color: var(--text-secondary); font-size: 0.85em; line-height: 1.6;">
+                        <div>👑 Админ: <strong>0</strong> | 🎨 Мастера: <strong>1-4</strong></div>
+                        <div style="margin-top: 8px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px;">
+                            <div>🔑 Пароли загружаются из Firebase</div>
+                            <div style="font-size: 0.9em; margin-top: 4px;">Изменить можно в админ-панели</div>
+                        </div>
+                    </div>
                 </div>
             `;
+            
+            // Enter для входа
+            document.addEventListener('keydown', function(e) {
+                if(e.key === 'Enter' && document.getElementById('userPass')) {
+                    doLogin();
+                }
+            });
         }
         
         async function doLogin() {
             const num = document.getElementById('userNum').value;
             const pass = document.getElementById('userPass').value;
             
-            const users = await loadUsers();
+            const users = await fbGet('users');
+            
+            if(!users || !users[num]) {
+                toast('Пользователь не найден', 'danger');
+                return;
+            }
+            
             const user = users[num];
             
-            if(!user || user.password !== pass) {
-                alert("Неверный номер или пароль!");
+            if(user.password !== pass) {
+                toast('Неверный пароль! Проверьте данные в Firebase', 'danger');
                 return;
             }
             
             currentUser = num;
             currentRole = user.role;
             currentWindow = user.name;
-            await database.ref(`users/${num}`).update({ online: true, lastSeen: Date.now() });
             
-            currentTicket = await loadCounter();
+            await fbUpdate(`users/${num}`, { 
+                online: true, 
+                lastSeen: Date.now() 
+            });
             
-            if(currentRole === "CASHBOX") renderCashierScreen();
-            else renderWorkerScreen();
+            currentTicket = (await fbGet('counter')) || 1;
+            
+            toast(`Добро пожаловать, ${user.name}!`, 'success');
+            
+            switch(user.role) {
+                case 'ADMIN': renderAdmin(); break;
+                case 'CASHBOX': renderCashier(); break;
+                case 'WORKER': renderWorker(); break;
+                default: renderWorker();
+            }
         }
         
-        // ============ КАССА ============
-        function renderCashierScreen() {
-            let cartHtml = '';
-            let total = 0;
-            for(let i = 0; i < cart.length; i++) {
-                const item = cart[i];
-                const itemTotal = item.count * item.price;
-                total += itemTotal;
-                cartHtml += `<div class="cart-item"><span>${item.service.toUpperCase()} x${item.count}</span><span>${itemTotal} коп</span><button onclick="removeFromCart(${i})" class="btn-icon btn-danger">🗑</button></div>`;
-            }
+        // ============ АДМИН-ПАНЕЛЬ ============
+        async function renderAdmin() {
+            const [users, tasks, history, settings] = await Promise.all([
+                fbGet('users'),
+                fbGet('tasks'),
+                fbGet('history'),
+                fbGet('settings')
+            ]);
+            
+            const totalEarnings = history ? Object.values(history).reduce((s, h) => s + (h.total || 0), 0) : 0;
+            const totalOrders = history ? Object.values(history).length : 0;
+            const activeTasks = tasks ? Object.values(tasks).filter(t => t.status === 'active').length : 0;
+            const avgCheck = totalOrders > 0 ? (totalEarnings / totalOrders).toFixed(1) : 0;
             
             document.getElementById('app').innerHTML = `
                 <div class="container">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                        <h1>💰 КАССА</h1>
-                        <button class="btn-icon btn-danger" onclick="logout()">🚪 ВЫХОД</button>
-                    </div>
-                    <div class="flex-row">
-                        <div class="flex-col">
-                            <div class="card"><div class="ticket-number">БИЛЕТ №${currentTicket}</div></div>
-                            <div style="display:flex; gap:10px; margin:15px 0;">
-                                <button onclick="addToCart('ручка')" class="btn-info">✍️ РУЧКА (4 коп)</button>
-                                <button onclick="addToCart('маркер')" class="btn-warning">🖍️ МАРКЕР (6 коп)</button>
+                    <div class="glass-container" style="padding: 30px;">
+                        <div class="flex-between" style="margin-bottom: 24px;">
+                            <div>
+                                <h1 style="font-size: 2.5em;">👑 АДМИН-ПАНЕЛЬ</h1>
+                                <p style="color: var(--text-secondary);">Управление системой LION t.A.T.u.</p>
                             </div>
-                            <div class="card">
-                                <h3>КОЛИЧЕСТВО</h3>
-                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                                    <button onclick="setCount(1)" class="btn-icon btn-info">x1</button>
-                                    <button onclick="setCount(2)" class="btn-icon btn-info">x2</button>
-                                    <button onclick="setCount(3)" class="btn-icon btn-info">x3</button>
-                                    <button onclick="setCount(4)" class="btn-icon btn-info">x4</button>
-                                    <button onclick="setCount(5)" class="btn-icon btn-info">x5</button>
-                                </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn-icon" onclick="toggleSound()">
+                                    ${ttsEnabled ? '🔊' : '🔇'} ЗВУК
+                                </button>
+                                <button class="btn-icon btn-danger" onclick="logout()">
+                                    🚪 ВЫХОД
+                                </button>
                             </div>
                         </div>
-                        <div class="flex-col">
-                            <h3>🛒 КОРЗИНА</h3>
-                            <div class="card" id="cartContainer">${cartHtml || '<div style="text-align:center;color:#555;">Корзина пуста</div>'}</div>
-                            <div class="total">💰 ИТОГО: ${total} коп</div>
-                            <button class="btn-success" onclick="confirmOrder()">✅ ПОДТВЕРДИТЬ ЗАКАЗ</button>
-                            <button class="btn-danger" onclick="clearCart()">🗑 ОЧИСТИТЬ</button>
+                        
+                        <div class="tab-nav">
+                            <button class="tab-btn ${activeTab === 'stats' ? 'active' : ''}" onclick="switchTab('stats')">📊 СТАТИСТИКА</button>
+                            <button class="tab-btn ${activeTab === 'monitor' ? 'active' : ''}" onclick="switchTab('monitor')">👥 МОНИТОРИНГ</button>
+                            <button class="tab-btn ${activeTab === 'history' ? 'active' : ''}" onclick="switchTab('history')">📋 ИСТОРИЯ</button>
+                            <button class="tab-btn ${activeTab === 'settings' ? 'active' : ''}" onclick="switchTab('settings')">⚙️ НАСТРОЙКИ</button>
+                        </div>
+                        
+                        <div id="adminContent"></div>
+                    </div>
+                </div>
+            `;
+            
+            renderAdminContent(users, tasks, history, settings);
+        }
+        
+        function renderAdminContent(users, tasks, history, settings) {
+            const content = document.getElementById('adminContent');
+            if(!content) return;
+            
+            switch(activeTab) {
+                case 'stats':
+                    const totalEarnings = history ? Object.values(history).reduce((s, h) => s + (h.total || 0), 0) : 0;
+                    const totalOrders = history ? Object.values(history).length : 0;
+                    const avgCheck = totalOrders > 0 ? (totalEarnings / totalOrders).toFixed(1) : 0;
+                    const popular = getPopularService(history);
+                    
+                    content.innerHTML = `
+                        <div class="grid-4" style="margin-bottom: 24px;">
+                            <div class="stat-card">
+                                <div class="stat-value">${totalEarnings}</div>
+                                <div class="stat-label">💰 ВЫРУЧКА (коп)</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${totalOrders}</div>
+                                <div class="stat-label">📦 ЗАКАЗОВ</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${avgCheck}</div>
+                                <div class="stat-label">📊 СРЕДНИЙ ЧЕК</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" style="font-size: 2em;">${popular || '—'}</div>
+                                <div class="stat-label">🔥 ПОПУЛЯРНОЕ</div>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="margin-top: 20px;">
+                            <h3>📈 ЗАГРУЗКА ПО ЧАСАМ</h3>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${getCurrentHourLoad()}%;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.85em;">
+                                <span>9:00</span><span>12:00</span><span>15:00</span><span>18:00</span><span>21:00</span>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'monitor':
+                    let workersHtml = '<div class="grid-2">';
+                    for(const [id, user] of Object.entries(users || {})) {
+                        if(user.role === 'WORKER') {
+                            const statusClass = !user.online ? 'status-offline' : 
+                                              user.workStatus === 'busy' ? 'status-busy' : 'status-online';
+                            const statusText = !user.online ? 'ОФЛАЙН' : 
+                                             user.workStatus === 'busy' ? 'ЗАНЯТ' : 'СВОБОДЕН';
+                            
+                            workersHtml += `
+                                <div class="card">
+                                    <div class="flex-between">
+                                        <div>
+                                            <span class="status-dot ${statusClass}"></span>
+                                            <strong>${user.name}</strong>
+                                            <span style="color: var(--text-secondary);">(Окно ${id})</span>
+                                        </div>
+                                        <div>
+                                            <span style="color: var(--accent-cyan);">⭐ ${user.rating || '5.0'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-between" style="margin-top: 12px; color: var(--text-secondary);">
+                                        <span>📦 Сегодня: ${user.todayOrders || 0}</span>
+                                        <span>📦 Всего: ${user.totalOrders || 0}</span>
+                                        <span style="color: ${user.workStatus === 'free' ? 'var(--accent-green)' : 'var(--accent-orange)'};">
+                                            ${statusText}
+                                        </span>
+                                    </div>
+                                    <div style="margin-top: 12px; display: flex; gap: 8px;">
+                                        <button class="btn-icon" onclick="changePassword('${id}')" style="flex:1;">🔑 ПАРОЛЬ</button>
+                                        <button class="btn-icon" onclick="resetWorker('${id}')" style="flex:1;">🔄 СБРОС</button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                    workersHtml += '</div>';
+                    content.innerHTML = workersHtml;
+                    break;
+                    
+                case 'history':
+                    let histHtml = '<div style="max-height: 500px; overflow-y: auto;">';
+                    const sorted = history ? Object.entries(history).sort((a,b) => b[1].timestamp - a[1].timestamp).slice(0, 20) : [];
+                    for(const [id, record] of sorted) {
+                        histHtml += `
+                            <div class="task-card">
+                                <div class="flex-between">
+                                    <strong>🎫 БИЛЕТ №${record.id || id}</strong>
+                                    <span>💰 ${record.total} коп</span>
+                                </div>
+                                <div style="color: var(--text-secondary); font-size: 0.9em; margin-top: 8px;">
+                                    👤 ${record.master} | 🕒 ${new Date(record.timestamp).toLocaleString('ru-RU')}
+                                </div>
+                                <div style="margin-top: 4px; font-size: 0.85em;">
+                                    ${record.items ? record.items.map(i => `${i.service} x${i.count}`).join(', ') : '—'}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    histHtml += sorted.length === 0 ? '<p style="text-align:center; color: var(--text-secondary);">Нет записей</p>' : '';
+                    histHtml += '</div>';
+                    content.innerHTML = `<h3>📋 ПОСЛЕДНИЕ ЗАКАЗЫ</h3>${histHtml}`;
+                    break;
+                    
+                case 'settings':
+                    content.innerHTML = `
+                        <div class="grid-2">
+                            <div class="card">
+                                <h3>⚙️ РАБОЧИЕ ЧАСЫ</h3>
+                                <label style="color: var(--text-secondary);">Начало:</label>
+                                <input type="number" id="startHour" class="neo-input" value="${settings?.workingHours?.start || 9}" min="0" max="23">
+                                <label style="color: var(--text-secondary);">Конец:</label>
+                                <input type="number" id="endHour" class="neo-input" value="${settings?.workingHours?.end || 21}" min="0" max="23">
+                                <button onclick="saveWorkHours()" class="btn-gradient" style="margin-top: 16px;">💾 СОХРАНИТЬ</button>
+                            </div>
+                            <div class="card">
+                                <h3>🔧 ДЕЙСТВИЯ</h3>
+                                <button onclick="resetDay()" class="btn-icon btn-warning" style="width:100%; margin-bottom:12px;">🔄 СБРОСИТЬ ДЕНЬ</button>
+                                <button onclick="exportData()" class="btn-icon btn-info" style="width:100%; margin-bottom:12px;">📥 ЭКСПОРТ ДАННЫХ</button>
+                                <button onclick="changeAdminPassword()" class="btn-icon btn-purple" style="width:100%;">🔑 СМЕНИТЬ ПАРОЛЬ АДМИНА</button>
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+        }
+        
+        function switchTab(tab) {
+            activeTab = tab;
+            renderAdmin();
+        }
+        
+        function getPopularService(history) {
+            if(!history) return null;
+            const count = {};
+            Object.values(history).forEach(h => {
+                if(h.items) h.items.forEach(i => {
+                    count[i.service] = (count[i.service] || 0) + i.count;
+                });
+            });
+            const sorted = Object.entries(count).sort((a,b) => b[1] - a[1]);
+            return sorted[0] ? sorted[0][0] : null;
+        }
+        
+        function getCurrentHourLoad() {
+            const hour = new Date().getHours();
+            if(hour < 9) return 0;
+            if(hour > 21) return 100;
+            return Math.min(100, ((hour - 9) / 12) * 100);
+        }
+        
+        // ============ КАССА ============
+        function renderCashier() {
+            let cartHtml = '';
+            let total = 0;
+            cart.forEach((item, i) => {
+                const itemTotal = item.count * item.price;
+                total += itemTotal;
+                cartHtml += `
+                    <div class="flex-between" style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 8px;">
+                        <span>${item.service.toUpperCase()} x${item.count}</span>
+                        <div>
+                            <span style="font-weight: 700;">${itemTotal} коп</span>
+                            <button onclick="removeFromCart(${i})" style="background: none; border: none; cursor: pointer; margin-left: 8px;">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('app').innerHTML = `
+                <div class="container">
+                    <div class="glass-container" style="padding: 30px;">
+                        <div class="flex-between" style="margin-bottom: 24px;">
+                            <h1 style="font-size: 2.5em;">💰 КАССА</h1>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn-icon btn-purple" onclick="quickOrder()">⚡ БЫСТРЫЙ</button>
+                                <button class="btn-icon btn-danger" onclick="logout()">🚪 ВЫХОД</button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid-2" style="gap: 24px;">
+                            <div>
+                                <div class="card" style="margin-bottom: 24px; text-align: center;">
+                                    <div class="ticket-display">БИЛЕТ №${currentTicket}</div>
+                                </div>
+                                
+                                <div class="grid-3" style="margin-bottom: 16px;">
+                                    <button onclick="addToCart('ручка')" class="btn-icon">✍️ РУЧКА<br><small>4 коп</small></button>
+                                    <button onclick="addToCart('маркер')" class="btn-icon">🖍️ МАРКЕР<br><small>6 коп</small></button>
+                                    <button onclick="addToCart('тату набор')" class="btn-icon">🎨 НАБОР<br><small>12 коп</small></button>
+                                    <button onclick="addToCart('временная тату')" class="btn-icon">✨ ВРЕМЕННАЯ<br><small>8 коп</small></button>
+                                    <button onclick="addToCart('блеск-тату')" class="btn-icon">💎 БЛЕСК<br><small>10 коп</small></button>
+                                    <button onclick="addToCart('хна')" class="btn-icon">🌿 ХНА<br><small>15 коп</small></button>
+                                </div>
+                                
+                                <div class="card">
+                                    <h3>КОЛИЧЕСТВО</h3>
+                                    <div class="grid-3" style="gap: 8px;">
+                                        ${[1,2,3,4,5,10].map(n => 
+                                            `<button onclick="setCount(${n})" class="btn-icon">x${n}</button>`
+                                        ).join('')}
+                                        <button onclick="setCountCustom()" class="btn-icon btn-purple">🔢 СВОЁ</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3>🛒 КОРЗИНА</h3>
+                                <div class="card" style="min-height: 300px;">
+                                    ${cartHtml || '<p style="text-align:center; color: var(--text-secondary); padding: 40px;">Корзина пуста</p>'}
+                                </div>
+                                <div style="font-size: 2em; font-weight: 900; text-align: right; margin: 16px 0;
+                                    background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+                                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                    ${total} коп
+                                </div>
+                                <div class="grid-2" style="gap: 12px;">
+                                    <button onclick="confirmOrder()" class="btn-gradient btn-success">✅ ПОДТВЕРДИТЬ</button>
+                                    <button onclick="clearCart()" class="btn-gradient btn-danger">🗑️ ОЧИСТИТЬ</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
         }
         
-        function setCount(c) { currentCount = c; }
-        function addToCart(service) { cart.push({ service, count: currentCount, price: prices[service] }); renderCashierScreen(); }
-        function removeFromCart(idx) { cart.splice(idx, 1); renderCashierScreen(); }
-        function clearCart() { cart = []; renderCashierScreen(); }
+        function setCount(c) { currentCount = c; toast(`Количество: ${c}`); }
+        function setCountCustom() {
+            const c = prompt('Введите количество:', 1);
+            if(c && !isNaN(c) && c > 0) {
+                currentCount = parseInt(c);
+                toast(`Количество: ${currentCount}`);
+            }
+        }
+        function addToCart(service) {
+            cart.push({ service, count: currentCount, price: prices[service] });
+            renderCashier();
+        }
+        function removeFromCart(idx) {
+            cart.splice(idx, 1);
+            renderCashier();
+        }
+        function clearCart() {
+            cart = [];
+            renderCashier();
+            toast('Корзина очищена');
+        }
+        
+        async function quickOrder() {
+            cart = [{ service: 'ручка', count: 1, price: 4 }];
+            await confirmOrder();
+        }
         
         async function confirmOrder() {
-            if(cart.length === 0) { alert("Корзина пуста!"); return; }
+            if(cart.length === 0) {
+                toast('Корзина пуста!', 'warning');
+                return;
+            }
+            
             const total = cart.reduce((s,i) => s + i.count * i.price, 0);
             const ticketId = currentTicket;
             const code = generateCode();
             
-            const users = await loadUsers();
-            const freeMaster = Object.entries(users).find(([id, u]) => u.role === "WORKER" && u.workStatus === "free");
+            const users = await fbGet('users');
+            const freeMaster = Object.entries(users).find(([id, u]) => 
+                u.role === 'WORKER' && u.workStatus === 'free' && u.online
+            );
             
             if(!freeMaster) {
-                alert("Нет свободных мастеров!");
+                toast('Нет свободных мастеров! Заказ в очереди', 'warning');
                 return;
             }
             
-            const masterId = freeMaster[0];
-            const masterName = freeMaster[1].name;
+            const [masterId, master] = freeMaster;
             
-            await updateUserStatus(masterId, "busy");
+            await fbUpdate(`users/${masterId}`, { workStatus: 'busy' });
             
             const task = {
                 id: ticketId,
                 items: [...cart],
-                total: total,
-                code: code,
-                time: new Date().toLocaleTimeString(),
-                master: masterName,
-                status: "active"
+                total,
+                code,
+                time: new Date().toLocaleTimeString('ru-RU'),
+                master: master.name,
+                masterId,
+                status: 'active',
+                timestamp: Date.now()
             };
-            await saveTask(task);
             
-            announceNewOrder(ticketId, code, masterName);
-            alert(`✅ БИЛЕТ №${ticketId}\n🔑 КОД: ${code}\n💰 ${total} коп\n🎨 Мастер: ${masterName}`);
+            await fbSet(`tasks/${ticketId}`, task);
+            await fbSet(`history/${ticketId}`, task);
+            
+            speak(`Новый заказ! Билет ${ticketId}. Код ${code}. Мастер ${master.name}`);
+            toast(`✅ БИЛЕТ №${ticketId} | КОД: ${code} | ${total} коп`, 'success');
             
             currentTicket++;
-            await saveCounter(currentTicket);
+            await fbSet('counter', currentTicket);
             cart = [];
-            renderCashierScreen();
+            renderCashier();
         }
         
         // ============ МАСТЕР ============
-        async function renderWorkerScreen() {
-            const tasks = await loadTasks();
-            const myTasks = Object.values(tasks).filter(t => t.master === currentWindow && t.status === "active");
+        async function renderWorker() {
+            const [tasks, users] = await Promise.all([fbGet('tasks'), fbGet('users')]);
+            const myTasks = tasks ? Object.values(tasks).filter(t => 
+                t.masterId === currentUser && t.status === 'active'
+            ) : [];
             
             let tasksHtml = '';
-            for(const task of myTasks) {
+            myTasks.forEach(task => {
                 const itemsText = task.items.map(i => `${i.service} x${i.count}`).join(', ');
                 tasksHtml += `
                     <div class="task-card" onclick="selectTask(${task.id})">
-                        <strong>🎫 БИЛЕТ №${task.id}</strong><br>
-                        📦 ${itemsText}<br>
-                        💰 ${task.total} коп<br>
-                        🔑 ${task.code}
+                        <div class="flex-between">
+                            <strong>🎫 БИЛЕТ №${task.id}</strong>
+                            <span style="color: var(--accent-cyan);">${task.code}</span>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.9em;">📦 ${itemsText}</div>
+                        <div style="color: var(--accent-green); font-weight: 700;">💰 ${task.total} коп</div>
                     </div>
                 `;
-            }
-            if(!tasksHtml) tasksHtml = '<div style="text-align:center;color:#555;">✨ НЕТ ЗАКАЗОВ ✨</div>';
+            });
             
             document.getElementById('app').innerHTML = `
                 <div class="container">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                        <h1>🎨 ${currentWindow}</h1>
-                        <button class="btn-icon btn-danger" onclick="logout()">🚪 ВЫХОД</button>
-                    </div>
-                    <div class="flex-row">
-                        <div class="flex-col">
-                            <h3>📋 МОИ ЗАДАНИЯ</h3>
-                            <div id="tasksContainer">${tasksHtml}</div>
-                        </div>
-                        <div class="flex-col">
-                            <h3>🔍 ПОИСК ПО КОДУ</h3>
-                            <input type="text" id="searchCode" placeholder="6-значный код">
-                            <button onclick="searchByCode()" class="btn-info">🔍 НАЙТИ</button>
-                            <div class="card" id="currentTaskCard" style="margin-top:15px;">
-                                <div style="text-align:center;color:#555;">Нет активного заказа</div>
-                            </div>
-                            <div style="display:flex; gap:10px; margin-top:15px;">
-                                <button onclick="clientArrived()" class="btn-warning">👋 КЛИЕНТ ПРИШЁЛ</button>
-                                <button onclick="sendProblem()" class="btn-danger">🔴 ПРОБЛЕМА</button>
-                                <button onclick="completeTask()" class="btn-success">✅ ЗАВЕРШИТЬ</button>
+                    <div class="glass-container" style="padding: 30px;">
+                        <div class="flex-between" style="margin-bottom: 24px;">
+                            <h1 style="font-size: 2.5em;">🎨 ${currentWindow}</h1>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn-icon btn-warning" onclick="takeBreak()">☕ ПЕРЕРЫВ</button>
+                                <button class="btn-icon btn-danger" onclick="logout()">🚪 ВЫХОД</button>
                             </div>
                         </div>
+                        
+                        <div class="grid-2" style="gap: 24px;">
+                            <div>
+                                <h3>📋 МОИ ЗАДАНИЯ (${myTasks.length})</h3>
+                                <div style="max-height: 500px; overflow-y: auto;">
+                                    ${tasksHtml || '<p style="text-align:center; color: var(--text-secondary); padding: 40px;">✨ НЕТ АКТИВНЫХ ЗАКАЗОВ ✨</p>'}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3>🔍 ПОИСК ПО КОДУ</h3>
+                                <input type="text" id="searchCode" class="neo-input" placeholder="Введите 6-значный код">
+                                <button onclick="searchByCode()" class="btn-gradient" style="margin-top: 8px;">🔍 НАЙТИ</button>
+                                
+                                <div class="card" id="currentTaskCard" style="margin-top: 16px; min-height: 200px;">
+                                    <p style="text-align:center; color: var(--text-secondary); padding: 40px;">Выберите заказ</p>
+                                </div>
+                                
+                                <div class="grid-2" style="gap: 12px; margin-top: 16px;">
+                                    <button onclick="clientArrived()" class="btn-icon btn-warning" style="padding: 16px;">👋 ПРИШЁЛ</button>
+                                    <button onclick="sendProblem()" class="btn-icon btn-danger" style="padding: 16px;">🔴 ПРОБЛЕМА</button>
+                                    <button onclick="completeTask()" class="btn-icon btn-success" style="padding: 16px;">✅ ЗАВЕРШИТЬ</button>
+                                    <button onclick="cancelTask()" class="btn-icon btn-danger" style="padding: 16px;">❌ ОТМЕНИТЬ</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="clock-display" id="liveClock" style="margin-top: 24px;"></div>
                     </div>
-                    <div class="clock-time" id="liveClock"></div>
                 </div>
             `;
             
             setInterval(() => {
                 const clock = document.getElementById('liveClock');
-                if(clock) clock.innerText = new Date().toLocaleTimeString('ru-RU');
+                if(clock) clock.textContent = new Date().toLocaleTimeString('ru-RU');
             }, 1000);
         }
         
         async function selectTask(taskId) {
-            const tasks = await loadTasks();
+            const tasks = await fbGet('tasks');
             currentTask = tasks[taskId];
-            if(currentTask) {
-                const itemsText = currentTask.items.map(i => `• ${i.service} x${i.count} = ${i.count * i.price} коп`).join('<br>');
-                document.getElementById('currentTaskCard').innerHTML = `
-                    <div class="ticket-number">🎫 БИЛЕТ №${currentTask.id}</div>
-                    <div style="margin:10px 0;">${itemsText}</div>
-                    <div><strong>💰 ИТОГО: ${currentTask.total} коп</strong></div>
-                    <div>🔑 Код: ${currentTask.code}</div>
-                `;
-            }
+            if(!currentTask) return;
+            
+            const card = document.getElementById('currentTaskCard');
+            if(!card) return;
+            
+            const itemsText = currentTask.items.map(i => 
+                `• ${i.service} x${i.count} = ${i.count * i.price} коп`
+            ).join('<br>');
+            
+            card.innerHTML = `
+                <div class="ticket-display" style="font-size: 2em;">🎫 БИЛЕТ №${currentTask.id}</div>
+                <div style="margin: 16px 0; line-height: 1.8;">${itemsText}</div>
+                <div style="font-size: 1.5em; font-weight: 900; color: var(--accent-green);">
+                    💰 ИТОГО: ${currentTask.total} коп
+                </div>
+                <div style="color: var(--accent-cyan); margin-top: 8px;">
+                    🔑 Код: <strong>${currentTask.code}</strong>
+                </div>
+            `;
         }
         
         async function searchByCode() {
-            const code = document.getElementById('searchCode').value;
-            const tasks = await loadTasks();
-            const task = Object.values(tasks).find(t => t.code === code);
+            const code = document.getElementById('searchCode').value.trim();
+            if(!code) {
+                toast('Введите код!', 'warning');
+                return;
+            }
+            
+            const tasks = await fbGet('tasks');
+            const task = Object.values(tasks || {}).find(t => t.code === code);
+            
             if(task) {
                 await selectTask(task.id);
-                alert(`Заказ найден! Билет №${task.id}`);
+                toast(`Заказ найден! Билет №${task.id}`, 'success');
             } else {
-                alert("Заказ не найден!");
+                toast('Заказ не найден', 'danger');
             }
         }
         
         function clientArrived() {
-            if(!currentTask) { alert("Нет активного заказа!"); return; }
-            speakText("Здравствуйте, присаживайтесь! Выберите татуировку");
-            alert(`👋 Клиент пришёл на билет №${currentTask.id}`);
+            if(!currentTask) {
+                toast('Нет активного заказа!', 'warning');
+                return;
+            }
+            speak('Здравствуйте, присаживайтесь! Выберите татуировку');
+            toast('👋 Клиент пришёл');
         }
         
         function sendProblem() {
-            alert("🔴 Сигнал о проблеме отправлен кассиру");
+            if(!currentTask) {
+                toast('Нет активного заказа!', 'warning');
+                return;
+            }
+            toast('🔴 Сигнал отправлен администратору', 'danger');
         }
         
         async function completeTask() {
-            if(!currentTask) { alert("Нет активного заказа!"); return; }
-            await deleteTask(currentTask.id);
-            await updateUserStatus(currentUser, "free");
+            if(!currentTask) {
+                toast('Нет активного заказа!', 'warning');
+                return;
+            }
             
-            const users = await loadUsers();
+            await fbRemove(`tasks/${currentTask.id}`);
+            await fbUpdate(`users/${currentUser}`, { workStatus: 'free' });
+            
+            const users = await fbGet('users');
             const newOrders = (users[currentUser].todayOrders || 0) + 1;
-            await updateUserOrders(currentUser, newOrders);
+            const totalOrders = (users[currentUser].totalOrders || 0) + 1;
+            await fbUpdate(`users/${currentUser}`, {
+                todayOrders: newOrders,
+                totalOrders
+            });
             
-            speakText("Хорошего дня, будем ждать вас снова");
-            alert(`✅ Заказ №${currentTask.id} завершён!`);
+            speak('Хорошего дня! Будем ждать вас снова');
+            toast(`✅ Заказ №${currentTask.id} завершён!`, 'success');
             currentTask = null;
-            renderWorkerScreen();
+            renderWorker();
         }
         
+        async function cancelTask() {
+            if(!currentTask) {
+                toast('Нет активного заказа!', 'warning');
+                return;
+            }
+            
+            if(confirm('Вы уверены, что хотите отменить заказ?')) {
+                await fbRemove(`tasks/${currentTask.id}`);
+                await fbUpdate(`users/${currentUser}`, { workStatus: 'free' });
+                toast(`❌ Заказ №${currentTask.id} отменён`, 'danger');
+                currentTask = null;
+                renderWorker();
+            }
+        }
+        
+        function takeBreak() {
+            toast('☕ Перерыв 5 минут');
+            setTimeout(() => toast('☕ Перерыв окончен'), 5000);
+        }
+        
+        // ============ СИСТЕМНЫЕ ФУНКЦИИ ============
         async function logout() {
             if(currentUser) {
-                await database.ref(`users/${currentUser}`).update({ online: false });
+                await fbUpdate(`users/${currentUser}`, { online: false });
             }
             currentUser = null;
-            renderLoginScreen();
+            cart = [];
+            currentTask = null;
+            renderLogin();
+            toast('Вы вышли из системы');
+        }
+        
+        async function changePassword(userId) {
+            const newPass = prompt(`Новый пароль для окна ${userId}:`);
+            if(!newPass || newPass.length < 4) {
+                toast('Пароль должен быть не менее 4 символов', 'warning');
+                return;
+            }
+            await fbUpdate(`users/${userId}`, { password: newPass });
+            toast(`✅ Пароль для окна ${userId} изменён!`, 'success');
+            renderAdmin();
+        }
+        
+        async function changeAdminPassword() {
+            const newPass = prompt('Новый пароль администратора:');
+            if(!newPass || newPass.length < 6) {
+                toast('Пароль должен быть не менее 6 символов', 'warning');
+                return;
+            }
+            await fbUpdate('users/0', { password: newPass });
+            toast('✅ Пароль администратора изменён! Новый пароль: ' + newPass, 'success');
+            renderAdmin();
+        }
+        
+        async function resetWorker(userId) {
+            if(!confirm(`Сбросить статистику мастера окна ${userId}?`)) return;
+            await fbUpdate(`users/${userId}`, {
+                todayOrders: 0,
+                totalOrders: 0,
+                workStatus: 'free'
+            });
+            toast(`🔄 Мастер окна ${userId} сброшен`);
+            renderAdmin();
+        }
+        
+        async function saveWorkHours() {
+            const start = parseInt(document.getElementById('startHour').value);
+            const end = parseInt(document.getElementById('endHour').value);
+            
+            if(start >= end) {
+                toast('Время начала должно быть меньше времени конца', 'warning');
+                return;
+            }
+            
+            await fbSet('settings/workingHours', { start, end });
+            toast('⚙️ Рабочие часы сохранены', 'success');
+        }
+        
+        async function resetDay() {
+            if(!confirm('Сбросить ВСЕ данные за сегодня?')) return;
+            
+            await fbRemove('tasks');
+            await fbSet('counter', 1);
+            
+            const users = await fbGet('users');
+            for(const [id, user] of Object.entries(users)) {
+                if(user.role === 'WORKER') {
+                    await fbUpdate(`users/${id}`, {
+                        todayOrders: 0,
+                        workStatus: 'free'
+                    });
+                }
+            }
+            
+            toast('🔄 День сброшен!');
+            renderAdmin();
+        }
+        
+        async function exportData() {
+            const data = {
+                users: await fbGet('users'),
+                tasks: await fbGet('tasks'),
+                history: await fbGet('history'),
+                settings: await fbGet('settings'),
+                counter: await fbGet('counter'),
+                exportDate: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lion_tatu_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast('📥 Данные экспортированы!');
+        }
+        
+        function toggleSound() {
+            ttsEnabled = !ttsEnabled;
+            toast(`🔊 Звук ${ttsEnabled ? 'включен' : 'выключен'}`);
+            renderAdmin();
         }
         
         // ============ ЗАПУСК ============
-        loadRussianVoice();
-        initDefaultUsers().then(() => {
-            renderLoginScreen();
-        });
+        (async () => {
+            await initVoice();
+            await initDefaults();
+            renderLogin();
+        })();
     </script>
 </body>
 </html>
