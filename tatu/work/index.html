@@ -1,496 +1,201 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>LION t.A.T.u. — Терминал v3.0</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <title>LION t.A.T.u. — Рабочий терминал</title>
     <style>
-        :root {
-            --bg-primary: #0a0a1a;
-            --bg-secondary: #13132b;
-            --accent-pink: #ff2a6d;
-            --accent-cyan: #05d9e8;
-            --accent-green: #00ff88;
-            --accent-purple: #b537f2;
-            --accent-orange: #ff6b35;
-            --glass: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-primary: #e8e8f0;
-            --text-secondary: #8888a0;
-            --shadow-glow: 0 0 30px rgba(5, 217, 232, 0.3);
-            --shadow-pink: 0 0 30px rgba(255, 42, 109, 0.3);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: var(--bg-primary);
-            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a0b2e 100%);
+            font-family: 'Segoe UI', sans-serif;
             min-height: 100vh;
-            color: var(--text-primary);
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        /* Анимированный фон */
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(5, 217, 232, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 42, 109, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(181, 55, 242, 0.05) 0%, transparent 50%);
-            animation: bgMove 20s ease-in-out infinite;
-            z-index: -1;
-        }
-
-        @keyframes bgMove {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            33% { transform: translate(2%, 1%) rotate(1deg); }
-            66% { transform: translate(-1%, -2%) rotate(-1deg); }
-        }
-
-        /* Стеклянные контейнеры */
-        .glass-container {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        .login-container {
-            max-width: 440px;
-            margin: 80px auto;
-            padding: 48px 40px;
-            text-align: center;
-            animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(5, 217, 232, 0.3); }
-            50% { box-shadow: 0 0 40px rgba(5, 217, 232, 0.6); }
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .logo-animation {
-            font-size: 5em;
-            animation: float 3s ease-in-out infinite;
-            display: inline-block;
-        }
-
-        /* Инпуты в стиле нео-брутализм */
-        .neo-input {
-            width: 100%;
-            padding: 16px 20px;
-            margin: 12px 0;
-            background: rgba(10, 10, 30, 0.8);
-            border: 2px solid var(--glass-border);
-            border-radius: 16px;
-            color: white;
-            font-size: 16px;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            outline: none;
-        }
-
-        .neo-input:focus {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 20px rgba(5, 217, 232, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .neo-input::placeholder {
-            color: var(--text-secondary);
-        }
-
-        /* Кнопки с градиентом */
-        .btn-gradient {
-            width: 100%;
-            padding: 16px 24px;
-            margin: 10px 0;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-            border: none;
-            border-radius: 16px;
-            color: white;
-            font-weight: 700;
-            font-size: 16px;
-            font-family: 'Inter', sans-serif;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            position: relative;
-            overflow: hidden;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .btn-gradient::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn-gradient:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(5, 217, 232, 0.4);
-        }
-
-        .btn-gradient:hover::before {
-            left: 100%;
-        }
-
-        .btn-gradient:active {
-            transform: translateY(-1px);
-        }
-
-        /* Кнопки действий */
-        .btn-success { 
-            background: linear-gradient(135deg, #00ff88, #00cc6a);
-            color: #000;
-            font-weight: 700;
-        }
-        .btn-danger { 
-            background: linear-gradient(135deg, #ff2a6d, #cc1155);
-            color: white;
-            font-weight: 700;
-        }
-        .btn-warning { 
-            background: linear-gradient(135deg, #ff6b35, #ff8c42);
-            color: white;
-            font-weight: 700;
-        }
-        .btn-info { 
-            background: linear-gradient(135deg, #05d9e8, #00b4d8);
-            color: #000;
-            font-weight: 700;
-        }
-        .btn-purple { 
-            background: linear-gradient(135deg, #b537f2, #7b2ff7);
-            color: white;
-            font-weight: 700;
-        }
-
-        .btn-icon {
-            padding: 10px 16px;
-            border-radius: 12px;
-            border: 2px solid var(--glass-border);
-            background: var(--glass);
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            font-size: 14px;
-            backdrop-filter: blur(10px);
-        }
-
-        .btn-icon:hover {
-            border-color: var(--accent-cyan);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-glow);
-        }
-
-        /* Карточки */
-        .card {
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            border-radius: 20px;
             padding: 20px;
-            border: 1px solid var(--glass-border);
-            transition: all 0.3s ease;
         }
-
-        .card:hover {
-            border-color: rgba(5, 217, 232, 0.3);
-            box-shadow: var(--shadow-glow);
-        }
-
-        /* Тикет */
-        .ticket-display {
-            font-size: 3em;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-align: center;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        /* Статистика */
-        .stat-card {
-            background: linear-gradient(135deg, rgba(5, 217, 232, 0.1), rgba(181, 55, 242, 0.1));
-            border-radius: 20px;
-            padding: 24px;
-            text-align: center;
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-glow);
-        }
-
-        .stat-value {
-            font-size: 3.5em;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stat-label {
-            font-size: 0.9em;
-            color: var(--text-secondary);
-            margin-top: 8px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        /* Табы */
-        .tab-nav {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
-            padding: 4px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 16px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 12px;
-            color: var(--text-secondary);
-            background: transparent;
-            cursor: pointer;
-            font-weight: 600;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 14px;
-        }
-
-        .tab-btn.active {
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-            color: white;
-            box-shadow: 0 4px 15px rgba(5, 217, 232, 0.3);
-        }
-
-        /* Прогресс-бар */
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 16px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green), var(--accent-pink));
-            border-radius: 4px;
-            transition: width 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { filter: brightness(1); }
-            50% { filter: brightness(1.3); }
-            100% { filter: brightness(1); }
-        }
-
-        /* Уведомления */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 16px 24px;
-            border-radius: 16px;
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            color: white;
-            z-index: 2000;
-            animation: slideInRight 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-            font-weight: 600;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(100%);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        /* Онлайн индикатор */
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-            box-shadow: 0 0 10px currentColor;
-        }
-
-        .status-online {
-            background: var(--accent-green);
-            box-shadow: 0 0 15px var(--accent-green);
-        }
-
-        .status-offline {
-            background: #ff2a6d;
-            box-shadow: 0 0 15px #ff2a6d;
-        }
-
-        .status-busy {
-            background: var(--accent-orange);
-            box-shadow: 0 0 15px var(--accent-orange);
-            animation: pulse 1s infinite;
-        }
-
-        /* Сетка */
-        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-
-        .flex-between {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 24px;
+            background: rgba(26, 26, 46, 0.95);
+            border-radius: 35px;
+            padding: 25px;
+            box-shadow: 0 0 50px rgba(255, 42, 109, 0.3);
+            border: 1px solid rgba(5, 217, 232, 0.3);
         }
-
-        h1 {
-            font-size: 2em;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 8px;
+        .flex-row { display: flex; gap: 20px; flex-wrap: wrap; }
+        .flex-col { flex: 1; min-width: 280px; }
+        .card {
+            background: #1a1a2e;
+            border-radius: 25px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(5, 217, 232, 0.2);
         }
-
-        h3 {
-            font-size: 1.2em;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 16px;
+        .ticket-card { cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
+        .ticket-card:hover { border-color: #05d9e8; transform: translateX(5px); }
+        .ticket-number { font-size: 2em; color: #ff2a6d; font-weight: bold; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
         }
-
-        .task-card {
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 12px;
+        .status-free { background: #00ff66; color: #0a0a0f; }
+        .status-busy { background: #ff0000; color: white; }
+        .status-break { background: #ffcc00; color: #0a0a0f; }
+        .status-waiting { background: #ffcc00; color: #0a0a0f; }
+        .status-session { background: #b300ff; color: white; }
+        .window-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #333;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #333;
+        }
+        .total { font-size: 1.5em; font-weight: bold; color: #00ff66; text-align: right; padding: 10px; }
+        .clock { font-size: 2em; font-family: monospace; color: #05d9e8; text-align: right; }
+        button {
+            padding: 12px 20px;
+            font-size: 1em;
+            background: #05d9e8;
+            border: none;
+            border-radius: 35px;
+            color: #0a0a0f;
+            font-weight: bold;
             cursor: pointer;
-            border-left: 4px solid var(--accent-cyan);
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            transition: 0.2s;
         }
-
-        .task-card:hover {
-            transform: translateX(8px);
-            border-left-color: var(--accent-pink);
-            box-shadow: var(--shadow-glow);
+        button:active { transform: scale(0.97); }
+        .btn-danger { background: #ff0000; color: white; }
+        .btn-success { background: #00ff66; color: #0a0a0f; }
+        .btn-warning { background: #ff6600; color: white; }
+        .btn-purple { background: #b300ff; color: white; }
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background: #252540;
+            border: 1px solid #05d9e8;
+            border-radius: 25px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 10px;
         }
-
-        .clock-display {
-            font-size: 2.5em;
-            font-weight: 900;
-            font-family: 'Inter', monospace;
-            text-align: right;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        h1 { text-align: center; color: #ff2a6d; font-size: 1.8em; margin-bottom: 15px; }
+        h2 { color: #05d9e8; font-size: 1.2em; margin-bottom: 10px; }
+        h3 { color: #ffcc00; font-size: 1em; margin-bottom: 8px; }
+        .error { color: #ff0000; text-align: center; padding: 10px; }
+        .success { color: #00ff66; text-align: center; padding: 10px; }
+        .tts-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #252540;
+            padding: 10px;
+            border-radius: 25px;
+            margin-bottom: 15px;
         }
-
-        /* Адаптивность */
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .mode-btn { flex: 1; text-align: center; }
+        .mode-btn.active { background: #00ff66; color: #0a0a0f; }
+        .floating-code {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #1a1a2e, #0a0a0f);
+            border: 2px solid #00ff66;
+            border-radius: 20px;
+            padding: 15px 25px;
+            box-shadow: 0 0 20px rgba(0,255,102,0.3);
+            z-index: 1000;
+            text-align: center;
+            animation: fadeInOut 10s ease;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(50px); }
+            10% { opacity: 1; transform: translateX(0); }
+            80% { opacity: 1; transform: translateX(0); }
+            100% { opacity: 0; transform: translateX(50px); visibility: hidden; }
+        }
+        .problem-notify {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #ff0000, #990000);
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(255,0,0,0.3);
+            z-index: 1000;
+        }
+        .queue-container-scroll {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .queue-item {
+            border-bottom: 1px solid #333;
+            padding: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .queue-item:hover {
+            background: #252540;
+        }
+        .queue-wait {
+            color: #ffcc00;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        .queue-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            gap: 10px;
+        }
+        .queue-nav button {
+            flex: 1;
+            padding: 8px;
+            font-size: 14px;
+        }
+        .current-page {
+            color: #00ff66;
+            font-weight: bold;
+        }
         @media (max-width: 768px) {
-            .grid-2, .grid-3, .grid-4 {
-                grid-template-columns: 1fr;
-            }
-            .login-container {
-                margin: 40px 20px;
-                padding: 30px 20px;
-            }
-            .stat-value {
-                font-size: 2.5em;
-            }
-        }
-
-        /* Скроллбар */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg-secondary);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(var(--accent-cyan), var(--accent-purple));
-            border-radius: 4px;
+            .container { padding: 15px; }
+            .flex-row { flex-direction: column; }
+            .window-row { flex-direction: column; align-items: stretch; }
+            button { width: 100%; }
+            .problem-notify { left: 10px; right: 10px; }
+            .floating-code { left: 10px; right: 10px; bottom: 10px; }
         }
     </style>
 </head>
 <body>
     <div id="app"></div>
-    <div id="toastContainer"></div>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <script>
-        // ============ FIREBASE КОНФИГ ============
-        const FIREBASE_CONFIG = {
+        // ============ FIREBASE КОНФИГ (ОСНОВНАЯ БАЗА) ============
+        const MAIN_FIREBASE_CONFIG = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_AUTH_DOMAIN",
             databaseURL: "https://pvz-database-default-rtdb.firebaseio.com/",
@@ -500,818 +205,1341 @@
             appId: "YOUR_APP_ID"
         };
         
-        firebase.initializeApp(FIREBASE_CONFIG);
-        const database = firebase.database();
+        // ============ FIREBASE КОНФИГ (БАЗА ЧЕКОВ) ============
+        const CHEKI_FIREBASE_CONFIG = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "https://cheki-tatu-save-default-rtdb.firebaseio.com/",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
         
-        // ============ СОСТОЯНИЕ ============
+        // Инициализация ДВУХ баз
+        firebase.initializeApp(MAIN_FIREBASE_CONFIG, 'main');
+        firebase.initializeApp(CHEKI_FIREBASE_CONFIG, 'cheki');
+        
+        const database = firebase.app('main').database();
+        const chekiDatabase = firebase.app('cheki').database();
+        
+        // ============ ПЕРЕМЕННЫЕ ============
         let currentUser = null;
         let currentRole = null;
         let currentWindow = null;
         let cart = [];
         let currentCount = 1;
         let ttsEnabled = true;
+        let voices = [];
         let selectedVoice = null;
-        let currentTicket = 1;
-        let currentTask = null;
-        let activeTab = 'stats';
+        let currentTicketNumber = 1;
+        let distributionMode = "auto";
+        let windowPriorities = {};
+        let currentActiveTask = null;
+        let problemListenerStarted = false;
+        let queueCurrentPage = 1;
+        let queueItemsPerPage = 5;
         
-        const prices = { 
-            "ручка": 4, 
-            "маркер": 6,
-            "тату набор": 12,
-            "временная тату": 8,
-            "блеск-тату": 10,
-            "хна": 15
-        };
+        const prices = { "ручка": 4, "маркер": 6 };
         
         // ============ TTS ============
-        function initVoice() {
-            return new Promise((resolve) => {
-                const voices = window.speechSynthesis.getVoices();
-                if(voices.length) {
+        function initTTS() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    voices = window.speechSynthesis.getVoices();
                     selectedVoice = voices.find(v => v.lang.includes('ru')) || voices[0];
-                    resolve();
-                } else {
-                    window.speechSynthesis.onvoiceschanged = () => {
-                        const v = window.speechSynthesis.getVoices();
-                        selectedVoice = v.find(vo => vo.lang.includes('ru')) || v[0];
-                        resolve();
-                    };
-                }
-            });
+                };
+                voices = window.speechSynthesis.getVoices();
+                selectedVoice = voices.find(v => v.lang.includes('ru')) || voices[0];
+            }
         }
         
         function speak(text) {
-            if(!ttsEnabled || !text) return;
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = 'ru-RU';
-            u.rate = 0.9;
-            if(selectedVoice) u.voice = selectedVoice;
-            window.speechSynthesis.speak(u);
+            if (!ttsEnabled) return;
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ru-RU';
+                if (selectedVoice) utterance.voice = selectedVoice;
+                utterance.rate = 0.85;
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            }
         }
         
-        function toast(msg, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const el = document.createElement('div');
-            el.className = 'toast';
-            const icons = { success: '✅', danger: '🔴', warning: '⚠️', info: 'ℹ️' };
-            el.innerHTML = `${icons[type] || 'ℹ️'} ${msg}`;
-            container.appendChild(el);
-            setTimeout(() => {
-                el.style.opacity = '0';
-                el.style.transform = 'translateX(100%)';
-                setTimeout(() => el.remove(), 300);
-            }, 3000);
-        }
-        
-        function generateCode() {
+        // ============ ГЕНЕРАЦИЯ ============
+        function generate6DigitCode() {
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
         
-        // ============ FIREBASE API ============
-        async function fbGet(path) {
-            const snap = await database.ref(path).once('value');
-            return snap.val();
+        function getDeviceInfo() {
+            const ua = navigator.userAgent;
+            if (ua.includes("iPhone")) return "iPhone";
+            if (ua.includes("iPad")) return "iPad";
+            if (ua.includes("Android")) return "Android";
+            if (ua.includes("Windows")) return "Windows PC";
+            if (ua.includes("Mac")) return "Mac";
+            return "Unknown";
         }
         
-        async function fbSet(path, data) {
-            await database.ref(path).set(data);
-        }
-        
-        async function fbUpdate(path, data) {
-            await database.ref(path).update(data);
-        }
-        
-        async function fbRemove(path) {
-            await database.ref(path).remove();
-        }
-        
-        // ============ ИНИЦИАЛИЗАЦИЯ ============
-        async function initDefaults() {
-            const users = await fbGet('users');
-            if(users) return;
+        // ============ ИНИЦИАЛИЗАЦИЯ ПОЛЬЗОВАТЕЛЕЙ ============
+        async function initDefaultUsers() {
+            const snapshot = await database.ref('users').once('value');
+            if (snapshot.exists()) return;
             
             const defaultUsers = {
-                "0": { password: "admin123321", role: "ADMIN", name: "Администратор", workStatus: "free", online: false, todayOrders: 0, rating: 5.0, totalOrders: 0 },
-                "1": { password: "okno1", role: "WORKER", name: "Александр", workStatus: "free", online: false, todayOrders: 0, rating: 4.8, totalOrders: 0 },
-                "2": { password: "okno2", role: "WORKER", name: "Мария", workStatus: "free", online: false, todayOrders: 0, rating: 4.9, totalOrders: 0 },
-                "3": { password: "okno3", role: "WORKER", name: "Иван", workStatus: "free", online: false, todayOrders: 0, rating: 4.7, totalOrders: 0 },
-                "4": { password: "okno4", role: "WORKER", name: "Екатерина", workStatus: "free", online: false, todayOrders: 0, rating: 5.0, totalOrders: 0 }
+                "0": { password: "admin123321", role: "CASHBOX", name: "Касса", workStatus: "free", online: false, priority: 0, todayOrders: 0 },
+                "1": { password: "okno1", role: "WORKER", name: "Александр", workStatus: "free", online: false, priority: 1, todayOrders: 0 },
+                "2": { password: "okno2", role: "WORKER", name: "Мария", workStatus: "free", online: false, priority: 1, todayOrders: 0 },
+                "3": { password: "okno3", role: "WORKER", name: "Иван", workStatus: "free", online: false, priority: 1, todayOrders: 0 },
+                "4": { password: "okno4", role: "WORKER", name: "Екатерина", workStatus: "free", online: false, priority: 1, todayOrders: 0 }
             };
             
-            for(const [id, data] of Object.entries(defaultUsers)) {
-                await fbSet(`users/${id}`, data);
+            for (const [key, value] of Object.entries(defaultUsers)) {
+                await database.ref(`users/${key}`).set(value);
             }
-            await fbSet('counter', 1);
-            await fbSet('settings', { workingHours: { start: 9, end: 21 }, soundEnabled: true });
+            
+            await database.ref('settings/distributionMode').set("auto");
+            await database.ref('settings/windowPriorities').set({ "1": 1, "2": 1, "3": 1, "4": 1 });
+            await database.ref('counter').set(1);
+            await initDefaultSchedule();
+        }
+        
+        async function initDefaultSchedule() {
+            const snapshot = await database.ref('schedule').once('value');
+            if (snapshot.exists()) return;
+            
+            const defaultSchedule = {};
+            for (let hour = 12; hour <= 20; hour++) {
+                for (const minute of ['00', '15', '30', '45']) {
+                    const time = `${hour}:${minute}`;
+                    defaultSchedule[time] = { available: true, bookedBy: null };
+                }
+            }
+            await database.ref('schedule').set(defaultSchedule);
         }
         
         // ============ АВТОРИЗАЦИЯ ============
-        function renderLogin() {
-            document.getElementById('app').innerHTML = `
-                <div class="glass-container login-container">
-                    <div class="logo-animation">🦁</div>
-                    <h1 style="font-size: 2.5em; margin: 20px 0;">LION t.A.T.u.</h1>
-                    <p style="color: var(--text-secondary); margin-bottom: 30px;">Рабочий терминал v3.0</p>
-                    
-                    <input type="number" id="userNum" class="neo-input" placeholder="Номер окна (0-4)" value="0" autofocus>
-                    <input type="password" id="userPass" class="neo-input" placeholder="Пароль">
-                    
-                    <button onclick="doLogin()" class="btn-gradient">
-                        🔓 ВОЙТИ В СИСТЕМУ
-                    </button>
-                    
-                    <div style="margin-top: 24px; color: var(--text-secondary); font-size: 0.85em; line-height: 1.6;">
-                        <div>👑 Админ: <strong>0</strong> | 🎨 Мастера: <strong>1-4</strong></div>
-                        <div style="margin-top: 8px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px;">
-                            <div>🔑 Пароли загружаются из Firebase</div>
-                            <div style="font-size: 0.9em; margin-top: 4px;">Изменить можно в админ-панели</div>
+        async function login(windowNumber, password) {
+            const snapshot = await database.ref(`users/${windowNumber}`).once('value');
+            const userData = snapshot.val();
+            
+            if (!userData) { showError("Неверный номер окна!"); return false; }
+            if (userData.password !== password) { showError("Неверный пароль!"); return false; }
+            
+            await database.ref(`users/${windowNumber}`).update({
+                online: true,
+                lastSeen: Date.now(),
+                deviceModel: getDeviceInfo()
+            });
+            
+            currentUser = windowNumber;
+            currentRole = userData.role;
+            currentWindow = userData.name;
+            
+            localStorage.setItem('user', JSON.stringify({
+                windowNumber: windowNumber,
+                role: userData.role,
+                name: userData.name
+            }));
+            
+            initTTS();
+            return true;
+        }
+        
+        async function logout() {
+            if (currentUser) await database.ref(`users/${currentUser}`).update({ online: false });
+            if (problemListenerStarted) {
+                database.ref('problems').off();
+                problemListenerStarted = false;
+            }
+            currentUser = null; currentRole = null; currentWindow = null;
+            localStorage.removeItem('user');
+            renderLoginScreen();
+        }
+        
+        // ============ ЗАГРУЗКА ДАННЫХ ============
+        async function loadCounter() {
+            const snapshot = await database.ref('counter').once('value');
+            return snapshot.val() || 1;
+        }
+        
+        async function updateCounter(value) {
+            await database.ref('counter').set(value);
+        }
+        
+        async function loadTasks() {
+            const snapshot = await database.ref('tasks').once('value');
+            return snapshot.val() || {};
+        }
+        
+        async function saveTask(task) {
+            await database.ref(`tasks/${task.id}`).set(task);
+        }
+        
+        async function deleteTask(taskId) {
+            await database.ref(`tasks/${taskId}`).remove();
+        }
+        
+        async function updateTaskStatus(taskId, status, master = null) {
+            const taskRef = database.ref(`tasks/${taskId}`);
+            const snapshot = await taskRef.once('value');
+            const task = snapshot.val();
+            if (task) {
+                task.status = status;
+                if (master) task.master = master;
+                await taskRef.set(task);
+            }
+        }
+        
+        async function loadUsers() {
+            const snapshot = await database.ref('users').once('value');
+            return snapshot.val() || {};
+        }
+        
+        async function updateUserStatus(windowNumber, status) {
+            await database.ref(`users/${windowNumber}/workStatus`).set(status);
+        }
+        
+        async function updateUserTodayOrders(windowNumber, increment = true) {
+            const userRef = database.ref(`users/${windowNumber}`);
+            const snapshot = await userRef.once('value');
+            const user = snapshot.val();
+            if (user) {
+                const newCount = (user.todayOrders || 0) + (increment ? 1 : 0);
+                await userRef.update({ todayOrders: newCount });
+            }
+        }
+        
+        // ============ РАСПРЕДЕЛЕНИЕ ЗАКАЗОВ ============
+        async function loadDistributionSettings() {
+            const modeSnap = await database.ref('settings/distributionMode').once('value');
+            distributionMode = modeSnap.val() || "auto";
+            const prioritiesSnap = await database.ref('settings/windowPriorities').once('value');
+            windowPriorities = prioritiesSnap.val() || { "1": 1, "2": 1, "3": 1, "4": 1 };
+        }
+        
+        async function saveDistributionMode(mode) {
+            distributionMode = mode;
+            await database.ref('settings/distributionMode').set(mode);
+            showSuccess(`Режим распределения: ${mode === 'auto' ? 'Автоматический' : mode === 'manual' ? 'Ручной' : 'Приоритетный'}`);
+            if (currentRole === 'CASHBOX') renderCashierScreen();
+        }
+        
+        async function saveWindowPriority(windowNum, priority) {
+            windowPriorities[windowNum] = priority;
+            await database.ref('settings/windowPriorities').set(windowPriorities);
+            await database.ref(`users/${windowNum}/priority`).set(priority);
+            showSuccess(`Приоритет окна ${windowNum} установлен на ${priority}`);
+        }
+        
+        async function getAvailableSlots() {
+            const schedule = await database.ref('schedule').once('value');
+            const scheduleData = schedule.val() || {};
+            const tasks = await loadTasks();
+            const bookedTimes = Object.values(tasks).map(t => t.appointmentTime).filter(t => t);
+            
+            const slots = [];
+            for (const [time, data] of Object.entries(scheduleData)) {
+                if (data.available && !bookedTimes.includes(time)) {
+                    slots.push(time);
+                }
+            }
+            return slots.sort();
+        }
+        
+        // ============ ОЧЕРЕДЬ ============
+        async function addToQueue(orderData) {
+            const queueId = Date.now();
+            await database.ref(`queue/${queueId}`).set({
+                ...orderData,
+                queueId: queueId,
+                queuedAt: Date.now(),
+                status: "waiting"
+            });
+        }
+        
+        async function getNextFromQueue() {
+            const snapshot = await database.ref('queue').orderByChild('queuedAt').once('value');
+            const queue = snapshot.val() || {};
+            const sorted = Object.values(queue).sort((a, b) => a.queuedAt - b.queuedAt);
+            return sorted[0] || null;
+        }
+        
+        async function getAllQueueItems() {
+            const snapshot = await database.ref('queue').orderByChild('queuedAt').once('value');
+            const queue = snapshot.val() || {};
+            return Object.values(queue).sort((a, b) => a.queuedAt - b.queuedAt);
+        }
+        
+        async function removeFromQueue(queueId) {
+            await database.ref(`queue/${queueId}`).remove();
+        }
+        
+        async function assignOrderToMaster(order, masterNum) {
+            const users = await loadUsers();
+            const masterName = users[masterNum]?.name || `Окно ${masterNum}`;
+            
+            await updateUserStatus(masterNum, "busy");
+            
+            const task = {
+                id: order.id,
+                code6: order.code6,
+                items: order.items,
+                total: order.total,
+                time: order.time,
+                appointmentTime: order.appointmentTime,
+                status: "waiting",
+                master: masterName,
+                clientStatus: "waiting",
+                createdAt: order.createdAt,
+                windowNum: masterNum
+            };
+            
+            await saveTask(task);
+            
+            showSuccess(`✅ ЗАКАЗ №${order.id} автоматически назначен ${masterName}`);
+            speak(`Заказ номер ${order.id} назначен ${masterName}`, false);
+            
+            if (currentRole === 'CASHBOX') {
+                await loadWindowsStatus();
+                await updateTimeSelect();
+                await loadQueueDisplay();
+            }
+        }
+        
+        async function loadQueueDisplay() {
+            const container = document.getElementById('queueContainer');
+            if (!container) return;
+            
+            const allItems = await getAllQueueItems();
+            const totalPages = Math.ceil(allItems.length / queueItemsPerPage);
+            const startIndex = (queueCurrentPage - 1) * queueItemsPerPage;
+            const pageItems = allItems.slice(startIndex, startIndex + queueItemsPerPage);
+            
+            if (allItems.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #555; padding: 15px;">✨ ОЧЕРЕДЬ ПУСТА ✨</div>';
+                return;
+            }
+            
+            let html = `<div class="queue-container-scroll">`;
+            for (const order of pageItems) {
+                const itemsText = order.items.map(item => `${item.service} x${item.count}`).join(', ');
+                const waitMinutes = Math.ceil((order.queuedAt + 5 * 60000 - Date.now()) / 60000);
+                html += `
+                    <div class="queue-item" onclick="showQueueItemDetails('${order.queueId}')">
+                        <div><strong>🎫 БИЛЕТ №${order.id}</strong> | ⏰ ${order.appointmentTime} | 💰 ${order.total} коп</div>
+                        <div style="font-size: 13px; color: #aaa;">📦 ${itemsText}</div>
+                        <div style="font-size: 12px; color: #05d9e8;">🔑 Код: ${order.code6}</div>
+                        <div class="queue-wait">⏳ В очереди: ${waitMinutes > 0 ? waitMinutes : 0} мин</div>
+                        <button onclick="event.stopPropagation(); removeQueueItem('${order.queueId}')" class="btn-sm btn-danger" style="margin-top: 5px;">🗑 Удалить из очереди</button>
+                    </div>
+                `;
+            }
+            html += `</div>`;
+            
+            if (totalPages > 1) {
+                html += `
+                    <div class="queue-nav">
+                        <button onclick="changeQueuePage(-1)" class="btn-sm" ${queueCurrentPage === 1 ? 'disabled' : ''}>◀ Назад</button>
+                        <span class="current-page">Страница ${queueCurrentPage} из ${totalPages}</span>
+                        <button onclick="changeQueuePage(1)" class="btn-sm" ${queueCurrentPage === totalPages ? 'disabled' : ''}>Вперед ▶</button>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function changeQueuePage(delta) {
+            queueCurrentPage += delta;
+            if (queueCurrentPage < 1) queueCurrentPage = 1;
+            loadQueueDisplay();
+        }
+        
+        async function showQueueItemDetails(queueId) {
+            const snapshot = await database.ref(`queue/${queueId}`).once('value');
+            const order = snapshot.val();
+            if (order) {
+                const itemsText = order.items.map(item => `${item.service.toUpperCase()} x${item.count} = ${item.count * item.price} коп`).join('\n');
+                alert(`🎫 БИЛЕТ №${order.id}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📦 СОСТАВ:\n${itemsText}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n💰 ИТОГО: ${order.total} коп\n🔑 КОД: ${order.code6}\n⏰ ВРЕМЯ: ${order.appointmentTime}`);
+            }
+        }
+        
+        async function removeQueueItem(queueId) {
+            if (confirm("Удалить заказ из очереди?")) {
+                await removeFromQueue(queueId);
+                await loadQueueDisplay();
+                showSuccess("✅ Заказ удалён из очереди");
+            }
+        }
+        
+        function startQueueListener() {
+            database.ref('users').on('child_changed', async (snapshot) => {
+                const user = snapshot.val();
+                if (user && user.role === "WORKER" && user.workStatus === "free") {
+                    const nextOrder = await getNextFromQueue();
+                    if (nextOrder) {
+                        await removeFromQueue(nextOrder.queueId);
+                        await assignOrderToMaster(nextOrder, snapshot.key);
+                        await loadQueueDisplay();
+                    }
+                }
+            });
+            
+            database.ref('queue').on('value', () => {
+                if (currentRole === 'CASHBOX') loadQueueDisplay();
+            });
+        }
+        
+        // ============ СОХРАНЕНИЕ В БАЗУ ЧЕКОВ (ВТОРАЯ БАЗА) ============
+        async function saveToCheckLog(checkData) {
+            const logId = `${Date.now()}_${checkData.id}`;
+            // Сохраняем во ВТОРУЮ базу (cheki-tatu-save)
+            await chekiDatabase.ref(`checkLogs/${logId}`).set({
+                ...checkData,
+                logId: logId,
+                timestamp: Date.now(),
+                date: new Date().toLocaleDateString('ru-RU'),
+                fullDateTime: new Date().toLocaleString('ru-RU')
+            });
+            console.log("✅ Чек сохранён во вторую базу:", logId);
+        }
+        
+        async function getBestWindow() {
+            const users = await loadUsers();
+            let freeWindows = Object.entries(users)
+                .filter(([_, u]) => u.role === "WORKER" && u.workStatus === "free")
+                .map(([num, data]) => ({ 
+                    num: parseInt(num), 
+                    name: data.name, 
+                    todayOrders: data.todayOrders || 0,
+                    priority: windowPriorities[num] || 1
+                }));
+            
+            if (freeWindows.length === 0) return null;
+            
+            if (distributionMode === "auto") {
+                freeWindows.sort((a, b) => a.todayOrders - b.todayOrders);
+                const minOrders = freeWindows[0].todayOrders;
+                const leastBusy = freeWindows.filter(w => w.todayOrders === minOrders);
+                if (leastBusy.length > 1) {
+                    const lastWindow = parseInt(localStorage.getItem('lastWindow') || "0");
+                    const sorted = leastBusy.sort((a, b) => a.num - b.num);
+                    let nextIndex = sorted.findIndex(w => w.num === lastWindow) + 1;
+                    if (nextIndex >= sorted.length) nextIndex = 0;
+                    const selected = sorted[nextIndex];
+                    localStorage.setItem('lastWindow', selected.num);
+                    return selected.num;
+                }
+                return leastBusy[0].num;
+            } else if (distributionMode === "priority") {
+                freeWindows.sort((a, b) => a.priority - b.priority);
+                return freeWindows[0].num;
+            } else {
+                return null;
+            }
+        }
+        
+        // ============ ПРОБЛЕМЫ ============
+        async function sendProblemFromWorker() {
+            const problemData = {
+                id: Date.now(),
+                window: currentWindow,
+                windowNum: currentUser,
+                ticket: currentActiveTask?.id || null,
+                time: new Date().toLocaleTimeString(),
+                timestamp: Date.now(),
+                status: "new"
+            };
+            await database.ref('problems').push(problemData);
+            showSuccess(`🔴 Сигнал о проблеме отправлен кассиру`);
+        }
+        
+        async function sendProblemFromCashierToWindow(windowNum) {
+            const users = await loadUsers();
+            if (!users[windowNum]) { showError(`Окно ${windowNum} не найдено!`); return; }
+            
+            const problemData = {
+                id: Date.now(),
+                window: users[windowNum].name,
+                windowNum: windowNum,
+                ticket: null,
+                time: new Date().toLocaleTimeString(),
+                timestamp: Date.now(),
+                status: "new"
+            };
+            await database.ref('problems').push(problemData);
+            showSuccess(`🔴 Сигнал о проблеме отправлен на окно ${windowNum}`);
+        }
+        
+        function startProblemListener() {
+            if (problemListenerStarted) return;
+            if (currentRole !== 'CASHBOX') return;
+            
+            problemListenerStarted = true;
+            
+            database.ref('problems').orderByChild('status').equalTo('new').on('child_added', (snapshot) => {
+                const problem = snapshot.val();
+                if (problem && problem.status === 'new') {
+                    showProblemNotification(problem, snapshot.key);
+                }
+            });
+        }
+        
+        function showProblemNotification(problem, problemId) {
+            speak(`ВНИМАНИЕ! ПРОБЛЕМА НА ОКНЕ ${problem.windowNum}!`, true);
+            
+            const notificationHtml = `
+                <div id="problemNotify_${problem.id}" class="problem-notify">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <div style="font-size: 24px; font-weight: bold;">🔴 ПРОБЛЕМА!</div>
+                            <div style="font-size: 18px; margin-top: 5px;">📌 Окно: ${problem.window} (№${problem.windowNum})</div>
+                            ${problem.ticket ? `<div style="font-size: 16px;">🎫 Билет: №${problem.ticket}</div>` : '<div style="font-size: 16px;">⚠️ Общая проблема</div>'}
+                            <div style="font-size: 14px;">⏰ Время: ${problem.time}</div>
                         </div>
+                        <button onclick="resolveProblem('${problemId}', '${problem.windowNum}')" style="background: #00ff66; color: #0a0a0f; padding: 15px 30px; font-size: 18px; font-weight: bold; border: none; border-radius: 50px; cursor: pointer;">
+                            🚶‍♂️ ИДУ
+                        </button>
                     </div>
                 </div>
             `;
             
-            // Enter для входа
-            document.addEventListener('keydown', function(e) {
-                if(e.key === 'Enter' && document.getElementById('userPass')) {
-                    doLogin();
-                }
-            });
+            const app = document.getElementById('app');
+            const notifyDiv = document.createElement('div');
+            notifyDiv.id = `problemNotify_${problem.id}`;
+            notifyDiv.innerHTML = notificationHtml;
+            app.insertBefore(notifyDiv, app.firstChild);
+        }
+        
+        async function resolveProblem(problemId, windowNum) {
+            await database.ref(`problems/${problemId}`).update({ status: "resolved" });
+            const notifyDiv = document.getElementById(`problemNotify_${problemId.split('_')[1]}`);
+            if (notifyDiv) notifyDiv.remove();
+            showSuccess(`✅ Проблема на окне ${windowNum} решена`);
+        }
+        
+        // ============ УВЕДОМЛЕНИЯ ============
+        function showError(msg) {
+            const app = document.getElementById('app');
+            const div = document.createElement('div');
+            div.className = 'error';
+            div.innerText = msg;
+            app.insertBefore(div, app.firstChild);
+            setTimeout(() => div.remove(), 3000);
+        }
+        
+        function showSuccess(msg) {
+            const app = document.getElementById('app');
+            const div = document.createElement('div');
+            div.className = 'success';
+            div.innerText = msg;
+            app.insertBefore(div, app.firstChild);
+            setTimeout(() => div.remove(), 3000);
+        }
+        
+        // ============ ПЛАВАЮЩИЙ КОД ============
+        function showFloatingCode(code, ticketId) {
+            const app = document.getElementById('app');
+            const floatingDiv = document.createElement('div');
+            floatingDiv.className = 'floating-code';
+            floatingDiv.innerHTML = `
+                <div style="font-size: 12px; color: #888;">НОВЫЙ ЗАКАЗ</div>
+                <div style="font-size: 28px; font-weight: bold; color: #00ff66; font-family: monospace; letter-spacing: 5px;">${code}</div>
+                <div style="font-size: 14px; color: #05d9e8;">БИЛЕТ №${ticketId}</div>
+                <div style="font-size: 10px; color: #555; margin-top: 5px;">Скажите код клиенту</div>
+            `;
+            app.appendChild(floatingDiv);
+            setTimeout(() => { if (floatingDiv) floatingDiv.remove(); }, 10000);
+        }
+        
+        // ============ ЭКРАН ВХОДА ============
+        function renderLoginScreen() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="container" style="max-width: 450px; margin: 0 auto;">
+                    <h1>🦁 LION t.A.T.u.</h1>
+                    <div class="tts-control">
+                        <label>🔊 Озвучка</label>
+                        <input type="checkbox" id="ttsToggle" checked>
+                    </div>
+                    <input type="number" id="windowNumber" placeholder="Номер окна (0 - касса, 1-4 - мастера)" value="0">
+                    <input type="password" id="password" placeholder="Пароль">
+                    <div style="font-size: 12px; color: #555; text-align: center; margin-bottom: 15px;">
+                        📋 Пароли: Касса(0): admin123321 | Окна 1-4: okno1, okno2, okno3, okno4
+                    </div>
+                    <button onclick="doLogin()">🔓 ВОЙТИ</button>
+                </div>
+            `;
+            document.getElementById('ttsToggle').addEventListener('change', (e) => { ttsEnabled = e.target.checked; });
         }
         
         async function doLogin() {
-            const num = document.getElementById('userNum').value;
-            const pass = document.getElementById('userPass').value;
+            const windowNumber = document.getElementById('windowNumber').value;
+            const password = document.getElementById('password').value;
+            ttsEnabled = document.getElementById('ttsToggle').checked;
             
-            const users = await fbGet('users');
-            
-            if(!users || !users[num]) {
-                toast('Пользователь не найден', 'danger');
-                return;
-            }
-            
-            const user = users[num];
-            
-            if(user.password !== pass) {
-                toast('Неверный пароль! Проверьте данные в Firebase', 'danger');
-                return;
-            }
-            
-            currentUser = num;
-            currentRole = user.role;
-            currentWindow = user.name;
-            
-            await fbUpdate(`users/${num}`, { 
-                online: true, 
-                lastSeen: Date.now() 
-            });
-            
-            currentTicket = (await fbGet('counter')) || 1;
-            
-            toast(`Добро пожаловать, ${user.name}!`, 'success');
-            
-            switch(user.role) {
-                case 'ADMIN': renderAdmin(); break;
-                case 'CASHBOX': renderCashier(); break;
-                case 'WORKER': renderWorker(); break;
-                default: renderWorker();
+            const success = await login(windowNumber, password);
+            if (success) {
+                await loadDistributionSettings();
+                if (currentRole === 'CASHBOX') {
+                    startProblemListener();
+                    startQueueListener();
+                    renderCashierScreen();
+                } else {
+                    renderWorkerScreen();
+                }
             }
         }
         
-        // ============ АДМИН-ПАНЕЛЬ ============
-        async function renderAdmin() {
-            const [users, tasks, history, settings] = await Promise.all([
-                fbGet('users'),
-                fbGet('tasks'),
-                fbGet('history'),
-                fbGet('settings')
-            ]);
-            
-            const totalEarnings = history ? Object.values(history).reduce((s, h) => s + (h.total || 0), 0) : 0;
-            const totalOrders = history ? Object.values(history).length : 0;
-            const activeTasks = tasks ? Object.values(tasks).filter(t => t.status === 'active').length : 0;
-            const avgCheck = totalOrders > 0 ? (totalEarnings / totalOrders).toFixed(1) : 0;
-            
-            document.getElementById('app').innerHTML = `
+        // ============ ЭКРАН КАССЫ ============
+        function renderCashierScreen() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
                 <div class="container">
-                    <div class="glass-container" style="padding: 30px;">
-                        <div class="flex-between" style="margin-bottom: 24px;">
-                            <div>
-                                <h1 style="font-size: 2.5em;">👑 АДМИН-ПАНЕЛЬ</h1>
-                                <p style="color: var(--text-secondary);">Управление системой LION t.A.T.u.</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <h1>🦁 LION t.A.T.u. — КАССА</h1>
+                        <div class="clock" id="clock"></div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <button class="btn-purple" onclick="showAdminPanel()">👑 АДМИН</button>
+                        <button class="btn-danger" onclick="sendProblemFromCashier()">🔴 ПРОБЛЕМА</button>
+                        <button class="btn-danger" onclick="logout()">🚪 ВЫХОД</button>
+                    </div>
+                    
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <div class="card">
+                                <div class="ticket-number" id="ticketNumber">БИЛЕТ №1</div>
                             </div>
-                            <div style="display: flex; gap: 12px;">
-                                <button class="btn-icon" onclick="toggleSound()">
-                                    ${ttsEnabled ? '🔊' : '🔇'} ЗВУК
-                                </button>
-                                <button class="btn-icon btn-danger" onclick="logout()">
-                                    🚪 ВЫХОД
-                                </button>
+                            
+                            <h2>➕ ДОБАВИТЬ В ЧЕК</h2>
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                                <button onclick="addToCart('ручка')" style="background: #05d9e8;">✍️ РУЧКА (4 коп)</button>
+                                <button onclick="addToCart('маркер')" style="background: #ff6600;">🖍️ МАРКЕР (6 коп)</button>
+                            </div>
+                            
+                            <div class="card">
+                                <h3>КОЛИЧЕСТВО</h3>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button onclick="setCount(1)" class="btn-sm">x1</button>
+                                    <button onclick="setCount(2)" class="btn-sm">x2</button>
+                                    <button onclick="setCount(3)" class="btn-sm">x3</button>
+                                    <button onclick="setCount(4)" class="btn-sm">x4</button>
+                                    <button onclick="setCount(5)" class="btn-sm">x5</button>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <h3>⚙️ РАСПРЕДЕЛЕНИЕ ЗАКАЗОВ</h3>
+                                <div class="mode-selector">
+                                    <button class="mode-btn ${distributionMode === 'auto' ? 'active' : ''}" onclick="saveDistributionMode('auto')">🔄 АВТО</button>
+                                    <button class="mode-btn ${distributionMode === 'manual' ? 'active' : ''}" onclick="saveDistributionMode('manual')">✋ РУЧНОЙ</button>
+                                    <button class="mode-btn ${distributionMode === 'priority' ? 'active' : ''}" onclick="saveDistributionMode('priority')">⭐ ПРИОРИТЕТ</button>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <h3>⏰ ВРЕМЯ ЗАПИСИ</h3>
+                                <select id="timeSelect"></select>
                             </div>
                         </div>
                         
-                        <div class="tab-nav">
-                            <button class="tab-btn ${activeTab === 'stats' ? 'active' : ''}" onclick="switchTab('stats')">📊 СТАТИСТИКА</button>
-                            <button class="tab-btn ${activeTab === 'monitor' ? 'active' : ''}" onclick="switchTab('monitor')">👥 МОНИТОРИНГ</button>
-                            <button class="tab-btn ${activeTab === 'history' ? 'active' : ''}" onclick="switchTab('history')">📋 ИСТОРИЯ</button>
-                            <button class="tab-btn ${activeTab === 'settings' ? 'active' : ''}" onclick="switchTab('settings')">⚙️ НАСТРОЙКИ</button>
+                        <div class="flex-col">
+                            <h2>🛒 КОРЗИНА</h2>
+                            <div class="card" id="cartContainer"></div>
+                            <div class="total" id="totalAmount">💰 ИТОГО: 0 коп</div>
+                            
+                            <button class="btn-success" onclick="confirmOrder()">✅ ПОДТВЕРДИТЬ ЗАКАЗ</button>
+                            <button class="btn-danger" onclick="clearCart()">🗑 ОЧИСТИТЬ</button>
+                            
+                            <h2>📋 ОКНА</h2>
+                            <div id="windowsContainer"></div>
+                            
+                            <h2>⏳ ОЧЕРЕДЬ ЗАКАЗОВ</h2>
+                            <div id="queueContainer" class="card"></div>
                         </div>
-                        
-                        <div id="adminContent"></div>
                     </div>
                 </div>
             `;
             
-            renderAdminContent(users, tasks, history, settings);
+            updateClock();
+            setInterval(updateClock, 1000);
+            loadCashierData();
+            startRealtimeUpdates();
+            updateTimeSelect();
+            loadQueueDisplay();
         }
         
-        function renderAdminContent(users, tasks, history, settings) {
-            const content = document.getElementById('adminContent');
-            if(!content) return;
+        async function sendProblemFromCashier() {
+            const targetWindow = prompt("Введите номер окна (1-4):");
+            if (!targetWindow) return;
+            await sendProblemFromCashierToWindow(targetWindow);
+        }
+        
+        async function updateTimeSelect() {
+            const timeSelect = document.getElementById('timeSelect');
+            if (!timeSelect) return;
             
-            switch(activeTab) {
-                case 'stats':
-                    const totalEarnings = history ? Object.values(history).reduce((s, h) => s + (h.total || 0), 0) : 0;
-                    const totalOrders = history ? Object.values(history).length : 0;
-                    const avgCheck = totalOrders > 0 ? (totalEarnings / totalOrders).toFixed(1) : 0;
-                    const popular = getPopularService(history);
-                    
-                    content.innerHTML = `
-                        <div class="grid-4" style="margin-bottom: 24px;">
-                            <div class="stat-card">
-                                <div class="stat-value">${totalEarnings}</div>
-                                <div class="stat-label">💰 ВЫРУЧКА (коп)</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value">${totalOrders}</div>
-                                <div class="stat-label">📦 ЗАКАЗОВ</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value">${avgCheck}</div>
-                                <div class="stat-label">📊 СРЕДНИЙ ЧЕК</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value" style="font-size: 2em;">${popular || '—'}</div>
-                                <div class="stat-label">🔥 ПОПУЛЯРНОЕ</div>
-                            </div>
-                        </div>
-                        
-                        <div class="card" style="margin-top: 20px;">
-                            <h3>📈 ЗАГРУЗКА ПО ЧАСАМ</h3>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${getCurrentHourLoad()}%;"></div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.85em;">
-                                <span>9:00</span><span>12:00</span><span>15:00</span><span>18:00</span><span>21:00</span>
-                            </div>
-                        </div>
-                    `;
-                    break;
-                    
-                case 'monitor':
-                    let workersHtml = '<div class="grid-2">';
-                    for(const [id, user] of Object.entries(users || {})) {
-                        if(user.role === 'WORKER') {
-                            const statusClass = !user.online ? 'status-offline' : 
-                                              user.workStatus === 'busy' ? 'status-busy' : 'status-online';
-                            const statusText = !user.online ? 'ОФЛАЙН' : 
-                                             user.workStatus === 'busy' ? 'ЗАНЯТ' : 'СВОБОДЕН';
-                            
-                            workersHtml += `
-                                <div class="card">
-                                    <div class="flex-between">
-                                        <div>
-                                            <span class="status-dot ${statusClass}"></span>
-                                            <strong>${user.name}</strong>
-                                            <span style="color: var(--text-secondary);">(Окно ${id})</span>
-                                        </div>
-                                        <div>
-                                            <span style="color: var(--accent-cyan);">⭐ ${user.rating || '5.0'}</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex-between" style="margin-top: 12px; color: var(--text-secondary);">
-                                        <span>📦 Сегодня: ${user.todayOrders || 0}</span>
-                                        <span>📦 Всего: ${user.totalOrders || 0}</span>
-                                        <span style="color: ${user.workStatus === 'free' ? 'var(--accent-green)' : 'var(--accent-orange)'};">
-                                            ${statusText}
-                                        </span>
-                                    </div>
-                                    <div style="margin-top: 12px; display: flex; gap: 8px;">
-                                        <button class="btn-icon" onclick="changePassword('${id}')" style="flex:1;">🔑 ПАРОЛЬ</button>
-                                        <button class="btn-icon" onclick="resetWorker('${id}')" style="flex:1;">🔄 СБРОС</button>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    }
-                    workersHtml += '</div>';
-                    content.innerHTML = workersHtml;
-                    break;
-                    
-                case 'history':
-                    let histHtml = '<div style="max-height: 500px; overflow-y: auto;">';
-                    const sorted = history ? Object.entries(history).sort((a,b) => b[1].timestamp - a[1].timestamp).slice(0, 20) : [];
-                    for(const [id, record] of sorted) {
-                        histHtml += `
-                            <div class="task-card">
-                                <div class="flex-between">
-                                    <strong>🎫 БИЛЕТ №${record.id || id}</strong>
-                                    <span>💰 ${record.total} коп</span>
-                                </div>
-                                <div style="color: var(--text-secondary); font-size: 0.9em; margin-top: 8px;">
-                                    👤 ${record.master} | 🕒 ${new Date(record.timestamp).toLocaleString('ru-RU')}
-                                </div>
-                                <div style="margin-top: 4px; font-size: 0.85em;">
-                                    ${record.items ? record.items.map(i => `${i.service} x${i.count}`).join(', ') : '—'}
-                                </div>
-                            </div>
-                        `;
-                    }
-                    histHtml += sorted.length === 0 ? '<p style="text-align:center; color: var(--text-secondary);">Нет записей</p>' : '';
-                    histHtml += '</div>';
-                    content.innerHTML = `<h3>📋 ПОСЛЕДНИЕ ЗАКАЗЫ</h3>${histHtml}`;
-                    break;
-                    
-                case 'settings':
-                    content.innerHTML = `
-                        <div class="grid-2">
-                            <div class="card">
-                                <h3>⚙️ РАБОЧИЕ ЧАСЫ</h3>
-                                <label style="color: var(--text-secondary);">Начало:</label>
-                                <input type="number" id="startHour" class="neo-input" value="${settings?.workingHours?.start || 9}" min="0" max="23">
-                                <label style="color: var(--text-secondary);">Конец:</label>
-                                <input type="number" id="endHour" class="neo-input" value="${settings?.workingHours?.end || 21}" min="0" max="23">
-                                <button onclick="saveWorkHours()" class="btn-gradient" style="margin-top: 16px;">💾 СОХРАНИТЬ</button>
-                            </div>
-                            <div class="card">
-                                <h3>🔧 ДЕЙСТВИЯ</h3>
-                                <button onclick="resetDay()" class="btn-icon btn-warning" style="width:100%; margin-bottom:12px;">🔄 СБРОСИТЬ ДЕНЬ</button>
-                                <button onclick="exportData()" class="btn-icon btn-info" style="width:100%; margin-bottom:12px;">📥 ЭКСПОРТ ДАННЫХ</button>
-                                <button onclick="changeAdminPassword()" class="btn-icon btn-purple" style="width:100%;">🔑 СМЕНИТЬ ПАРОЛЬ АДМИНА</button>
-                            </div>
-                        </div>
-                    `;
-                    break;
+            const availableSlots = await getAvailableSlots();
+            timeSelect.innerHTML = '';
+            for (const slot of availableSlots) {
+                const option = document.createElement('option');
+                option.value = slot;
+                option.textContent = slot;
+                timeSelect.appendChild(option);
+            }
+            if (availableSlots.length === 0) {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "Нет свободных слотов";
+                timeSelect.appendChild(option);
             }
         }
         
-        function switchTab(tab) {
-            activeTab = tab;
-            renderAdmin();
+        function updateClock() {
+            const clock = document.getElementById('clock');
+            if (clock) clock.innerText = new Date().toLocaleTimeString('ru-RU');
         }
         
-        function getPopularService(history) {
-            if(!history) return null;
-            const count = {};
-            Object.values(history).forEach(h => {
-                if(h.items) h.items.forEach(i => {
-                    count[i.service] = (count[i.service] || 0) + i.count;
-                });
-            });
-            const sorted = Object.entries(count).sort((a,b) => b[1] - a[1]);
-            return sorted[0] ? sorted[0][0] : null;
+        async function loadCashierData() {
+            currentTicketNumber = await loadCounter();
+            document.getElementById('ticketNumber').innerText = `БИЛЕТ №${currentTicketNumber}`;
+            updateCartDisplay();
+            await loadWindowsStatus();
         }
         
-        function getCurrentHourLoad() {
-            const hour = new Date().getHours();
-            if(hour < 9) return 0;
-            if(hour > 21) return 100;
-            return Math.min(100, ((hour - 9) / 12) * 100);
-        }
+        function setCount(count) { currentCount = count; }
         
-        // ============ КАССА ============
-        function renderCashier() {
-            let cartHtml = '';
-            let total = 0;
-            cart.forEach((item, i) => {
-                const itemTotal = item.count * item.price;
-                total += itemTotal;
-                cartHtml += `
-                    <div class="flex-between" style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 8px;">
-                        <span>${item.service.toUpperCase()} x${item.count}</span>
-                        <div>
-                            <span style="font-weight: 700;">${itemTotal} коп</span>
-                            <button onclick="removeFromCart(${i})" style="background: none; border: none; cursor: pointer; margin-left: 8px;">🗑️</button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            document.getElementById('app').innerHTML = `
-                <div class="container">
-                    <div class="glass-container" style="padding: 30px;">
-                        <div class="flex-between" style="margin-bottom: 24px;">
-                            <h1 style="font-size: 2.5em;">💰 КАССА</h1>
-                            <div style="display: flex; gap: 12px;">
-                                <button class="btn-icon btn-purple" onclick="quickOrder()">⚡ БЫСТРЫЙ</button>
-                                <button class="btn-icon btn-danger" onclick="logout()">🚪 ВЫХОД</button>
-                            </div>
-                        </div>
-                        
-                        <div class="grid-2" style="gap: 24px;">
-                            <div>
-                                <div class="card" style="margin-bottom: 24px; text-align: center;">
-                                    <div class="ticket-display">БИЛЕТ №${currentTicket}</div>
-                                </div>
-                                
-                                <div class="grid-3" style="margin-bottom: 16px;">
-                                    <button onclick="addToCart('ручка')" class="btn-icon">✍️ РУЧКА<br><small>4 коп</small></button>
-                                    <button onclick="addToCart('маркер')" class="btn-icon">🖍️ МАРКЕР<br><small>6 коп</small></button>
-                                    <button onclick="addToCart('тату набор')" class="btn-icon">🎨 НАБОР<br><small>12 коп</small></button>
-                                    <button onclick="addToCart('временная тату')" class="btn-icon">✨ ВРЕМЕННАЯ<br><small>8 коп</small></button>
-                                    <button onclick="addToCart('блеск-тату')" class="btn-icon">💎 БЛЕСК<br><small>10 коп</small></button>
-                                    <button onclick="addToCart('хна')" class="btn-icon">🌿 ХНА<br><small>15 коп</small></button>
-                                </div>
-                                
-                                <div class="card">
-                                    <h3>КОЛИЧЕСТВО</h3>
-                                    <div class="grid-3" style="gap: 8px;">
-                                        ${[1,2,3,4,5,10].map(n => 
-                                            `<button onclick="setCount(${n})" class="btn-icon">x${n}</button>`
-                                        ).join('')}
-                                        <button onclick="setCountCustom()" class="btn-icon btn-purple">🔢 СВОЁ</button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <h3>🛒 КОРЗИНА</h3>
-                                <div class="card" style="min-height: 300px;">
-                                    ${cartHtml || '<p style="text-align:center; color: var(--text-secondary); padding: 40px;">Корзина пуста</p>'}
-                                </div>
-                                <div style="font-size: 2em; font-weight: 900; text-align: right; margin: 16px 0;
-                                    background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
-                                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                                    ${total} коп
-                                </div>
-                                <div class="grid-2" style="gap: 12px;">
-                                    <button onclick="confirmOrder()" class="btn-gradient btn-success">✅ ПОДТВЕРДИТЬ</button>
-                                    <button onclick="clearCart()" class="btn-gradient btn-danger">🗑️ ОЧИСТИТЬ</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function setCount(c) { currentCount = c; toast(`Количество: ${c}`); }
-        function setCountCustom() {
-            const c = prompt('Введите количество:', 1);
-            if(c && !isNaN(c) && c > 0) {
-                currentCount = parseInt(c);
-                toast(`Количество: ${currentCount}`);
-            }
-        }
         function addToCart(service) {
             cart.push({ service, count: currentCount, price: prices[service] });
-            renderCashier();
-        }
-        function removeFromCart(idx) {
-            cart.splice(idx, 1);
-            renderCashier();
-        }
-        function clearCart() {
-            cart = [];
-            renderCashier();
-            toast('Корзина очищена');
+            updateCartDisplay();
         }
         
-        async function quickOrder() {
-            cart = [{ service: 'ручка', count: 1, price: 4 }];
-            await confirmOrder();
-        }
-        
-        async function confirmOrder() {
-            if(cart.length === 0) {
-                toast('Корзина пуста!', 'warning');
-                return;
-            }
-            
-            const total = cart.reduce((s,i) => s + i.count * i.price, 0);
-            const ticketId = currentTicket;
-            const code = generateCode();
-            
-            const users = await fbGet('users');
-            const freeMaster = Object.entries(users).find(([id, u]) => 
-                u.role === 'WORKER' && u.workStatus === 'free' && u.online
-            );
-            
-            if(!freeMaster) {
-                toast('Нет свободных мастеров! Заказ в очереди', 'warning');
-                return;
-            }
-            
-            const [masterId, master] = freeMaster;
-            
-            await fbUpdate(`users/${masterId}`, { workStatus: 'busy' });
-            
-            const task = {
-                id: ticketId,
-                items: [...cart],
-                total,
-                code,
-                time: new Date().toLocaleTimeString('ru-RU'),
-                master: master.name,
-                masterId,
-                status: 'active',
-                timestamp: Date.now()
-            };
-            
-            await fbSet(`tasks/${ticketId}`, task);
-            await fbSet(`history/${ticketId}`, task);
-            
-            speak(`Новый заказ! Билет ${ticketId}. Код ${code}. Мастер ${master.name}`);
-            toast(`✅ БИЛЕТ №${ticketId} | КОД: ${code} | ${total} коп`, 'success');
-            
-            currentTicket++;
-            await fbSet('counter', currentTicket);
-            cart = [];
-            renderCashier();
-        }
-        
-        // ============ МАСТЕР ============
-        async function renderWorker() {
-            const [tasks, users] = await Promise.all([fbGet('tasks'), fbGet('users')]);
-            const myTasks = tasks ? Object.values(tasks).filter(t => 
-                t.masterId === currentUser && t.status === 'active'
-            ) : [];
-            
-            let tasksHtml = '';
-            myTasks.forEach(task => {
-                const itemsText = task.items.map(i => `${i.service} x${i.count}`).join(', ');
-                tasksHtml += `
-                    <div class="task-card" onclick="selectTask(${task.id})">
-                        <div class="flex-between">
-                            <strong>🎫 БИЛЕТ №${task.id}</strong>
-                            <span style="color: var(--accent-cyan);">${task.code}</span>
-                        </div>
-                        <div style="margin-top: 8px; font-size: 0.9em;">📦 ${itemsText}</div>
-                        <div style="color: var(--accent-green); font-weight: 700;">💰 ${task.total} коп</div>
+        function updateCartDisplay() {
+            const container = document.getElementById('cartContainer');
+            if (!container) return;
+            let total = 0;
+            container.innerHTML = '';
+            cart.forEach((item, idx) => {
+                const itemTotal = item.count * item.price;
+                total += itemTotal;
+                container.innerHTML += `
+                    <div class="cart-item">
+                        <span>${item.service.toUpperCase()} x${item.count}</span>
+                        <span>${itemTotal} коп</span>
+                        <button onclick="removeFromCart(${idx})" class="btn-sm">🗑</button>
                     </div>
                 `;
             });
+            document.getElementById('totalAmount').innerHTML = `💰 ИТОГО: ${total} коп`;
+        }
+        
+        function removeFromCart(idx) { cart.splice(idx, 1); updateCartDisplay(); }
+        function clearCart() { cart = []; updateCartDisplay(); }
+        
+        async function confirmOrder() {
+            if (cart.length === 0) { showError("Корзина пуста!"); return; }
             
-            document.getElementById('app').innerHTML = `
-                <div class="container">
-                    <div class="glass-container" style="padding: 30px;">
-                        <div class="flex-between" style="margin-bottom: 24px;">
-                            <h1 style="font-size: 2.5em;">🎨 ${currentWindow}</h1>
-                            <div style="display: flex; gap: 12px;">
-                                <button class="btn-icon btn-warning" onclick="takeBreak()">☕ ПЕРЕРЫВ</button>
-                                <button class="btn-icon btn-danger" onclick="logout()">🚪 ВЫХОД</button>
+            const total = cart.reduce((sum, item) => sum + item.count * item.price, 0);
+            const ticketId = currentTicketNumber;
+            const code6 = generate6DigitCode();
+            const currentTime = new Date();
+            
+            let targetWindow = null;
+            let appointmentTime = null;
+            
+            // Пытаемся найти свободного мастера
+            if (distributionMode === "manual") {
+                const users = await loadUsers();
+                const freeWindows = Object.entries(users)
+                    .filter(([_, u]) => u.role === "WORKER" && u.workStatus === "free");
+                
+                if (freeWindows.length > 0) {
+                    const windowList = freeWindows.map(([num, u]) => `${num}: ${u.name}`).join('\n');
+                    const selected = prompt(`Выберите окно:\n${windowList}\n\nВведите номер окна:`);
+                    if (!selected || !freeWindows.find(([num]) => num === selected)) {
+                        showError("Неверный выбор окна!");
+                        return;
+                    }
+                    targetWindow = selected;
+                }
+            } else {
+                targetWindow = await getBestWindow();
+            }
+            
+            if (targetWindow) {
+                // Есть свободный мастер — отправляем сразу
+                const users = await loadUsers();
+                const masterName = users[targetWindow]?.name || `Окно ${targetWindow}`;
+                const timeSelect = document.getElementById('timeSelect');
+                appointmentTime = timeSelect ? timeSelect.value : currentTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                
+                await updateUserStatus(targetWindow, "busy");
+                
+                const task = {
+                    id: ticketId,
+                    code6: code6,
+                    items: [...cart],
+                    total: total,
+                    time: currentTime.toLocaleTimeString('ru-RU'),
+                    appointmentTime: appointmentTime,
+                    status: "waiting",
+                    master: masterName,
+                    clientStatus: "waiting",
+                    createdAt: Date.now(),
+                    windowNum: targetWindow
+                };
+                
+                await saveTask(task);
+                
+                // ============ СОХРАНЯЕМ ЧЕК ВО ВТОРУЮ БАЗУ ============
+                await saveToCheckLog({
+                    id: ticketId,
+                    code6: code6,
+                    items: [...cart],
+                    total: total,
+                    time: task.time,
+                    appointmentTime: appointmentTime,
+                    master: masterName,
+                    windowNum: targetWindow,
+                    status: "created"
+                });
+                
+                showFloatingCode(code6, ticketId);
+                showSuccess(`✅ БИЛЕТ №${ticketId}\n🔑 КОД: ${code6}\n💰 ${total} коп\n🎯 ${masterName}\n⏰ ${appointmentTime}`);
+                await navigator.clipboard.writeText(code6);
+                
+            } else {
+                // Нет свободных мастеров — ставим в очередь (+5 минут)
+                const futureTime = new Date(currentTime.getTime() + 5 * 60000);
+                const hours = futureTime.getHours().toString().padStart(2, '0');
+                const minutes = futureTime.getMinutes().toString().padStart(2, '0');
+                appointmentTime = `${hours}:${minutes}`;
+                
+                const orderData = {
+                    id: ticketId,
+                    code6: code6,
+                    items: [...cart],
+                    total: total,
+                    time: currentTime.toLocaleTimeString('ru-RU'),
+                    appointmentTime: appointmentTime,
+                    status: "waiting",
+                    createdAt: Date.now()
+                };
+                
+                await addToQueue(orderData);
+                
+                // ============ СОХРАНЯЕМ ЧЕК ВО ВТОРУЮ БАЗУ ============
+                await saveToCheckLog({
+                    id: ticketId,
+                    code6: code6,
+                    items: [...cart],
+                    total: total,
+                    time: orderData.time,
+                    appointmentTime: appointmentTime,
+                    master: "В очереди",
+                    windowNum: null,
+                    status: "queued"
+                });
+                
+                showFloatingCode(code6, ticketId);
+                showSuccess(`⏰ БИЛЕТ №${ticketId} поставлен в ОЧЕРЕДЬ\n🔑 КОД: ${code6}\n💰 ${total} коп\n⏰ Примерное время: ${appointmentTime}\n\nМастер подойдёт автоматически!`);
+                await navigator.clipboard.writeText(code6);
+            }
+            
+            await updateCounter(ticketId + 1);
+            if (targetWindow) await updateUserTodayOrders(targetWindow, true);
+            
+            cart = [];
+            currentTicketNumber = ticketId + 1;
+            document.getElementById('ticketNumber').innerText = `БИЛЕТ №${currentTicketNumber}`;
+            updateCartDisplay();
+            await loadWindowsStatus();
+            await updateTimeSelect();
+            await loadQueueDisplay();
+        }
+        
+        async function loadWindowsStatus() {
+            const container = document.getElementById('windowsContainer');
+            if (!container) return;
+            
+            const users = await loadUsers();
+            container.innerHTML = '';
+            
+            for (const [num, user] of Object.entries(users)) {
+                if (user.role === "WORKER") {
+                    const status = user.workStatus || "free";
+                    let statusText = "", color = "";
+                    if (status === "free") { statusText = "🟢 СВОБОДЕН"; color = "#00ff66"; }
+                    else if (status === "busy") { statusText = "🔴 ЗАНЯТ"; color = "#ff0000"; }
+                    else if (status === "break") { statusText = "🟡 ПЕРЕРЫВ"; color = "#ffcc00"; }
+                    
+                    const priority = windowPriorities[num] || 1;
+                    
+                    container.innerHTML += `
+                        <div class="window-row">
+                            <span><strong>${user.name}</strong> (приор: ${priority})</span>
+                            <span style="color: ${color}">${statusText}</span>
+                            <span>📊 заказов: ${user.todayOrders || 0}</span>
+                            <div style="display: flex; gap: 5px;">
+                                ${status === "busy" ? `<button onclick="freeWindow(${num})" class="btn-sm">🔓 Освободить</button>` : ''}
+                                ${status === "free" ? `<button onclick="setBreakByCashier(${num})" class="btn-sm btn-warning">🟡 Перерыв</button>` : ''}
+                                ${status === "break" ? `<button onclick="removeBreakByCashier(${num})" class="btn-sm btn-success">✅ Снять перерыв</button>` : ''}
+                                <button onclick="sendProblemFromCashierToWindow(${num})" class="btn-sm btn-danger">🔴</button>
                             </div>
                         </div>
-                        
-                        <div class="grid-2" style="gap: 24px;">
-                            <div>
-                                <h3>📋 МОИ ЗАДАНИЯ (${myTasks.length})</h3>
-                                <div style="max-height: 500px; overflow-y: auto;">
-                                    ${tasksHtml || '<p style="text-align:center; color: var(--text-secondary); padding: 40px;">✨ НЕТ АКТИВНЫХ ЗАКАЗОВ ✨</p>'}
-                                </div>
+                    `;
+                }
+            }
+        }
+        
+        async function freeWindow(windowNum) {
+            await updateUserStatus(windowNum, "free");
+            await loadWindowsStatus();
+        }
+        
+        async function setBreakByCashier(windowNum) {
+            await updateUserStatus(windowNum, "break");
+            showSuccess(`🟡 Окно ${windowNum} на перерыве`);
+            await loadWindowsStatus();
+        }
+        
+        async function removeBreakByCashier(windowNum) {
+            await updateUserStatus(windowNum, "free");
+            showSuccess(`✅ Окно ${windowNum} возвращено к работе`);
+            await loadWindowsStatus();
+        }
+        
+        // ============ ЭКРАН МАСТЕРА ============
+        function renderWorkerScreen() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h1>🦁 ${currentWindow}</h1>
+                        <div class="clock" id="clock"></div>
+                    </div>
+                    
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2>📋 ДОСТУПНЫЕ ЗАКАЗЫ</h2>
+                            <div id="tasksContainer"></div>
+                        </div>
+                        <div class="flex-col">
+                            <h2>🔍 ПОИСК ПО КОДУ</h2>
+                            <input type="text" id="codeInput" placeholder="Введите 6-значный код" maxlength="6">
+                            <button onclick="searchByCode()">🔍 НАЙТИ ЗАКАЗ</button>
+                            
+                            <h2>📌 ТЕКУЩИЙ ЗАКАЗ</h2>
+                            <div class="card" id="currentOrderCard">
+                                <div style="text-align: center; color: #555;">Нет активного заказа</div>
                             </div>
                             
-                            <div>
-                                <h3>🔍 ПОИСК ПО КОДУ</h3>
-                                <input type="text" id="searchCode" class="neo-input" placeholder="Введите 6-значный код">
-                                <button onclick="searchByCode()" class="btn-gradient" style="margin-top: 8px;">🔍 НАЙТИ</button>
-                                
-                                <div class="card" id="currentTaskCard" style="margin-top: 16px; min-height: 200px;">
-                                    <p style="text-align:center; color: var(--text-secondary); padding: 40px;">Выберите заказ</p>
-                                </div>
-                                
-                                <div class="grid-2" style="gap: 12px; margin-top: 16px;">
-                                    <button onclick="clientArrived()" class="btn-icon btn-warning" style="padding: 16px;">👋 ПРИШЁЛ</button>
-                                    <button onclick="sendProblem()" class="btn-icon btn-danger" style="padding: 16px;">🔴 ПРОБЛЕМА</button>
-                                    <button onclick="completeTask()" class="btn-icon btn-success" style="padding: 16px;">✅ ЗАВЕРШИТЬ</button>
-                                    <button onclick="cancelTask()" class="btn-icon btn-danger" style="padding: 16px;">❌ ОТМЕНИТЬ</button>
-                                </div>
+                            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                                <button class="btn-warning" onclick="clientArrived()" style="flex:1;">👋 КЛИЕНТ ПРИШЁЛ</button>
+                                <button class="btn-danger" onclick="sendProblemFromWorker()" style="flex:1;">🔴 ПРОБЛЕМА</button>
+                            </div>
+                            <button class="btn-success" onclick="completeOrder()">✅ ЗАВЕРШИТЬ</button>
+                            
+                            <div style="margin-top: 15px; font-size: 12px; color: #555; text-align: center;">
+                                🔒 Для выхода обратитесь к кассиру
                             </div>
                         </div>
-                        
-                        <div class="clock-display" id="liveClock" style="margin-top: 24px;"></div>
                     </div>
                 </div>
             `;
             
-            setInterval(() => {
-                const clock = document.getElementById('liveClock');
-                if(clock) clock.textContent = new Date().toLocaleTimeString('ru-RU');
-            }, 1000);
+            updateClock();
+            setInterval(updateClock, 1000);
+            loadWorkerTasks();
+            startRealtimeUpdates();
+            document.getElementById('codeInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchByCode();
+            });
         }
         
-        async function selectTask(taskId) {
-            const tasks = await fbGet('tasks');
-            currentTask = tasks[taskId];
-            if(!currentTask) return;
+        async function loadWorkerTasks() {
+            const container = document.getElementById('tasksContainer');
+            if (!container) return;
             
-            const card = document.getElementById('currentTaskCard');
-            if(!card) return;
+            const tasks = await loadTasks();
+            const waitingTasks = Object.values(tasks).filter(t => t.status === "waiting");
             
-            const itemsText = currentTask.items.map(i => 
-                `• ${i.service} x${i.count} = ${i.count * i.price} коп`
-            ).join('<br>');
+            if (waitingTasks.length === 0) {
+                container.innerHTML = '<div class="card" style="text-align: center; color: #555;">✨ НЕТ ЗАКАЗОВ ✨</div>';
+                return;
+            }
             
-            card.innerHTML = `
-                <div class="ticket-display" style="font-size: 2em;">🎫 БИЛЕТ №${currentTask.id}</div>
-                <div style="margin: 16px 0; line-height: 1.8;">${itemsText}</div>
-                <div style="font-size: 1.5em; font-weight: 900; color: var(--accent-green);">
-                    💰 ИТОГО: ${currentTask.total} коп
-                </div>
-                <div style="color: var(--accent-cyan); margin-top: 8px;">
-                    🔑 Код: <strong>${currentTask.code}</strong>
-                </div>
-            `;
+            container.innerHTML = '';
+            for (const task of waitingTasks) {
+                const itemsText = task.items.map(i => `${i.service.toUpperCase()} x${i.count}`).join(', ');
+                container.innerHTML += `
+                    <div class="card ticket-card" onclick="takeOrder(${task.id})">
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                            <span class="ticket-number">🎫 БИЛЕТ №${task.id}</span>
+                            <span class="status-badge status-waiting">ОЖИДАЕТ</span>
+                        </div>
+                        <div>📦 ${itemsText}</div>
+                        <div>💰 ${task.total} коп</div>
+                        <div>🔑 Код: ${task.code6}</div>
+                        <div>⏰ Запись: ${task.appointmentTime || 'Сейчас'}</div>
+                    </div>
+                `;
+            }
+        }
+        
+        async function takeOrder(taskId) {
+            const tasks = await loadTasks();
+            const task = tasks[taskId];
+            if (!task || task.status !== "waiting") { 
+                showError("Заказ уже взят!"); 
+                return; 
+            }
+            
+            await updateTaskStatus(taskId, "active", currentWindow);
+            await updateUserStatus(currentUser, "busy");
+            
+            currentActiveTask = task;
+            displayCurrentOrder(task);
+            await loadWorkerTasks();
+            showSuccess(`✅ Заказ №${task.id} взят в работу`);
         }
         
         async function searchByCode() {
-            const code = document.getElementById('searchCode').value.trim();
-            if(!code) {
-                toast('Введите код!', 'warning');
-                return;
+            const code = document.getElementById('codeInput').value.trim();
+            if (code.length !== 6) { showError("Введите 6-значный код!"); return; }
+            
+            const tasks = await loadTasks();
+            const task = Object.values(tasks).find(t => t.code6 === code);
+            
+            if (!task) { 
+                showError("Заказ не найден!"); 
+                return; 
             }
             
-            const tasks = await fbGet('tasks');
-            const task = Object.values(tasks || {}).find(t => t.code === code);
-            
-            if(task) {
-                await selectTask(task.id);
-                toast(`Заказ найден! Билет №${task.id}`, 'success');
+            if (task.status === "active" && task.master === currentWindow) {
+                currentActiveTask = task;
+                displayCurrentOrder(task);
+                showSuccess(`Заказ найден! Билет №${task.id}`);
+            } else if (task.status === "waiting") {
+                await takeOrder(task.id);
             } else {
-                toast('Заказ не найден', 'danger');
+                showError(`Этот заказ уже ${task.status === "completed" ? "завершён" : "выполняет другой мастер"}`);
             }
         }
         
-        function clientArrived() {
-            if(!currentTask) {
-                toast('Нет активного заказа!', 'warning');
-                return;
-            }
-            speak('Здравствуйте, присаживайтесь! Выберите татуировку');
-            toast('👋 Клиент пришёл');
+        function displayCurrentOrder(task) {
+            const container = document.getElementById('currentOrderCard');
+            const itemsText = task.items.map(i => `• ${i.service.toUpperCase()} x${i.count} = ${i.count * i.price} коп`).join('<br>');
+            container.innerHTML = `
+                <div class="ticket-number">🎫 БИЛЕТ №${task.id}</div>
+                <div style="margin: 10px 0;">${itemsText}</div>
+                <div><strong>💰 ИТОГО: ${task.total} коп</strong></div>
+                <div>🔑 Код: ${task.code6}</div>
+                <div>⏰ Заказано: ${task.time}</div>
+                <div>⏰ Запись на: <strong style="color: #00ff66;">${task.appointmentTime || 'Сейчас'}</strong></div>
+                <div style="margin-top: 10px;"><span class="status-badge status-session">🟣 СТАТУС: ${task.clientStatus === 'session' ? 'НА СЕАНСЕ' : 'ОЖИДАЕТ'}</span></div>
+            `;
         }
         
-        function sendProblem() {
-            if(!currentTask) {
-                toast('Нет активного заказа!', 'warning');
-                return;
-            }
-            toast('🔴 Сигнал отправлен администратору', 'danger');
+        async function clientArrived() {
+            if (!currentActiveTask) { showError("Нет активного заказа!"); return; }
+            await updateTaskStatus(currentActiveTask.id, "active", currentWindow);
+            await database.ref(`tasks/${currentActiveTask.id}`).update({ clientStatus: "session" });
+            speak("Здравствуйте, присаживайтесь! Выберите татуировку");
+            showSuccess(`👋 Клиент пришёл на сеанс (билет №${currentActiveTask.id})`);
+            displayCurrentOrder(currentActiveTask);
         }
         
-        async function completeTask() {
-            if(!currentTask) {
-                toast('Нет активного заказа!', 'warning');
-                return;
-            }
+        async function completeOrder() {
+            if (!currentActiveTask) { showError("Нет активного заказа!"); return; }
             
-            await fbRemove(`tasks/${currentTask.id}`);
-            await fbUpdate(`users/${currentUser}`, { workStatus: 'free' });
+            await updateTaskStatus(currentActiveTask.id, "completed");
+            await updateUserStatus(currentUser, "free");
+            await deleteTask(currentActiveTask.id);
             
-            const users = await fbGet('users');
-            const newOrders = (users[currentUser].todayOrders || 0) + 1;
-            const totalOrders = (users[currentUser].totalOrders || 0) + 1;
-            await fbUpdate(`users/${currentUser}`, {
-                todayOrders: newOrders,
-                totalOrders
-            });
+            speak("Хорошего дня, будем ждать вас снова");
+            showSuccess(`✅ Заказ №${currentActiveTask.id} завершён!`);
             
-            speak('Хорошего дня! Будем ждать вас снова');
-            toast(`✅ Заказ №${currentTask.id} завершён!`, 'success');
-            currentTask = null;
-            renderWorker();
+            currentActiveTask = null;
+            document.getElementById('currentOrderCard').innerHTML = '<div style="text-align: center; color: #555;">Нет активного заказа</div>';
+            document.getElementById('codeInput').value = '';
+            await loadWorkerTasks();
         }
         
-        async function cancelTask() {
-            if(!currentTask) {
-                toast('Нет активного заказа!', 'warning');
-                return;
-            }
+        // ============ АДМИН-ПАНЕЛЬ ============
+        async function showAdminPanel() {
+            const users = await loadUsers();
+            let windowsHtml = '';
             
-            if(confirm('Вы уверены, что хотите отменить заказ?')) {
-                await fbRemove(`tasks/${currentTask.id}`);
-                await fbUpdate(`users/${currentUser}`, { workStatus: 'free' });
-                toast(`❌ Заказ №${currentTask.id} отменён`, 'danger');
-                currentTask = null;
-                renderWorker();
-            }
-        }
-        
-        function takeBreak() {
-            toast('☕ Перерыв 5 минут');
-            setTimeout(() => toast('☕ Перерыв окончен'), 5000);
-        }
-        
-        // ============ СИСТЕМНЫЕ ФУНКЦИИ ============
-        async function logout() {
-            if(currentUser) {
-                await fbUpdate(`users/${currentUser}`, { online: false });
-            }
-            currentUser = null;
-            cart = [];
-            currentTask = null;
-            renderLogin();
-            toast('Вы вышли из системы');
-        }
-        
-        async function changePassword(userId) {
-            const newPass = prompt(`Новый пароль для окна ${userId}:`);
-            if(!newPass || newPass.length < 4) {
-                toast('Пароль должен быть не менее 4 символов', 'warning');
-                return;
-            }
-            await fbUpdate(`users/${userId}`, { password: newPass });
-            toast(`✅ Пароль для окна ${userId} изменён!`, 'success');
-            renderAdmin();
-        }
-        
-        async function changeAdminPassword() {
-            const newPass = prompt('Новый пароль администратора:');
-            if(!newPass || newPass.length < 6) {
-                toast('Пароль должен быть не менее 6 символов', 'warning');
-                return;
-            }
-            await fbUpdate('users/0', { password: newPass });
-            toast('✅ Пароль администратора изменён! Новый пароль: ' + newPass, 'success');
-            renderAdmin();
-        }
-        
-        async function resetWorker(userId) {
-            if(!confirm(`Сбросить статистику мастера окна ${userId}?`)) return;
-            await fbUpdate(`users/${userId}`, {
-                todayOrders: 0,
-                totalOrders: 0,
-                workStatus: 'free'
-            });
-            toast(`🔄 Мастер окна ${userId} сброшен`);
-            renderAdmin();
-        }
-        
-        async function saveWorkHours() {
-            const start = parseInt(document.getElementById('startHour').value);
-            const end = parseInt(document.getElementById('endHour').value);
-            
-            if(start >= end) {
-                toast('Время начала должно быть меньше времени конца', 'warning');
-                return;
-            }
-            
-            await fbSet('settings/workingHours', { start, end });
-            toast('⚙️ Рабочие часы сохранены', 'success');
-        }
-        
-        async function resetDay() {
-            if(!confirm('Сбросить ВСЕ данные за сегодня?')) return;
-            
-            await fbRemove('tasks');
-            await fbSet('counter', 1);
-            
-            const users = await fbGet('users');
-            for(const [id, user] of Object.entries(users)) {
-                if(user.role === 'WORKER') {
-                    await fbUpdate(`users/${id}`, {
-                        todayOrders: 0,
-                        workStatus: 'free'
-                    });
+            for (const [num, user] of Object.entries(users)) {
+                if (user.role === "WORKER") {
+                    windowsHtml += `
+                        <div class="window-row">
+                            <span><strong>${user.name}</strong></span>
+                            <span>${user.online ? '🟢 Онлайн' : '⚫ Оффлайн'}</span>
+                            <span>${user.deviceModel || 'Unknown'}</span>
+                            <span>📊 заказов: <strong style="color: #00ff66;">${user.todayOrders || 0}</strong></span>
+                            <span>${user.workStatus === 'free' ? '🟢 Свободен' : user.workStatus === 'busy' ? '🔴 Занят' : '🟡 Перерыв'}</span>
+                            <div style="display: flex; gap: 5px;">
+                                <button onclick="kickWorker(${num})" class="btn-danger btn-sm">🚪 ВЫГНАТЬ</button>
+                                <button onclick="forceFreeWindow(${num})" class="btn-success btn-sm">🔓 Освободить</button>
+                                <button onclick="setBreakByCashier(${num})" class="btn-warning btn-sm">🟡 Перерыв</button>
+                            </div>
+                        </div>
+                    `;
                 }
             }
             
-            toast('🔄 День сброшен!');
-            renderAdmin();
-        }
-        
-        async function exportData() {
-            const data = {
-                users: await fbGet('users'),
-                tasks: await fbGet('tasks'),
-                history: await fbGet('history'),
-                settings: await fbGet('settings'),
-                counter: await fbGet('counter'),
-                exportDate: new Date().toISOString()
-            };
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="container" style="max-width: 1000px; margin: 0 auto;">
+                    <h1>👑 АДМИН-ПАНЕЛЬ</h1>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <button onclick="addNewWindow()" class="btn-success">➕ ДОБАВИТЬ ОКНО</button>
+                        <button onclick="renderCashierScreen()" class="btn-purple">◀ НАЗАД</button>
+                        <button onclick="forceLogoutAll()" class="btn-danger">🚪 ВЫГНАТЬ ВСЕХ</button>
+                        <button onclick="clearAllTasks()" class="btn-warning">🗑 ОЧИСТИТЬ ВСЕ</button>
+                        <button onclick="showSchedulePanel()" class="btn-warning">⏰ РАСПИСАНИЕ</button>
+                        <button onclick="showCheckLogs()" class="btn-success">📊 ЛОГ ЧЕКОВ</button>
+                    </div>
+                    
+                    <h2>🪟 УПРАВЛЕНИЕ ОКНАМИ</h2>
+                    <div class="card">
+                        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; font-weight: bold; padding: 10px; border-bottom: 1px solid #333;">
+                            <div>Окно</div><div>Статус</div><div>Устройство</div><div>Заказов</div><div>Работа</div><div>Действия</div>
+                        </div>
+                        ${windowsHtml}
+                    </div>
+                    
+                    <h2>⚙️ НАСТРОЙКИ РАСПРЕДЕЛЕНИЯ</h2>
+                    <div class="card">
+                        <div class="mode-selector">
+                            <button class="mode-btn ${distributionMode === 'auto' ? 'active' : ''}" onclick="saveDistributionMode('auto')">🔄 АВТО</button>
+                            <button class="mode-btn ${distributionMode === 'manual' ? 'active' : ''}" onclick="saveDistributionMode('manual')">✋ РУЧНОЙ</button>
+                            <button class="mode-btn ${distributionMode === 'priority' ? 'active' : ''}" onclick="saveDistributionMode('priority')">⭐ ПРИОРИТЕТ</button>
+                        </div>
+                        <div id="prioritySettings"></div>
+                    </div>
+                </div>
+            `;
             
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `lion_tatu_backup_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            toast('📥 Данные экспортированы!');
+            if (distributionMode === 'priority') {
+                const priorityDiv = document.getElementById('prioritySettings');
+                priorityDiv.innerHTML = '<h3>Приоритет окон (меньше = выше)</h3><div style="display: flex; gap: 10px; flex-wrap: wrap;">';
+                for (const [num, user] of Object.entries(users)) {
+                    if (user.role === "WORKER") {
+                        priorityDiv.innerHTML += `
+                            <div style="background: #252540; border-radius: 20px; padding: 10px; text-align: center;">
+                                <div>${user.name}</div>
+                                <input type="number" id="priority_${num}" value="${windowPriorities[num] || 1}" min="1" max="10" style="width: 60px; text-align: center;">
+                                <button onclick="setPriority(${num})" class="btn-sm btn-success">💾</button>
+                            </div>
+                        `;
+                    }
+                }
+                priorityDiv.innerHTML += '</div>';
+            }
         }
         
-        function toggleSound() {
-            ttsEnabled = !ttsEnabled;
-            toast(`🔊 Звук ${ttsEnabled ? 'включен' : 'выключен'}`);
-            renderAdmin();
+        async function setPriority(windowNum) {
+            const input = document.getElementById(`priority_${windowNum}`);
+            const priority = parseInt(input.value);
+            await saveWindowPriority(windowNum, priority);
+            showAdminPanel();
+        }
+        
+        async function kickWorker(windowNum) {
+            await database.ref(`users/${windowNum}`).update({ online: false, workStatus: "free" });
+            await database.ref(`commands/${windowNum}`).set({ action: "logout", timestamp: Date.now() });
+            showSuccess(`✅ Мастер окна ${windowNum} выгнан`);
+            showAdminPanel();
+        }
+        
+        async function forceFreeWindow(windowNum) {
+            await updateUserStatus(windowNum, "free");
+            showSuccess(`🔓 Окно ${windowNum} освобождено`);
+            showAdminPanel();
+        }
+        
+        async function forceLogoutAll() {
+            const users = await loadUsers();
+            for (const [num, user] of Object.entries(users)) {
+                if (user.role === "WORKER") {
+                    await database.ref(`users/${num}`).update({ online: false, workStatus: "free" });
+                    await database.ref(`commands/${num}`).set({ action: "logout", timestamp: Date.now() });
+                }
+            }
+            showSuccess(`✅ Все мастера выгнаны`);
+            showAdminPanel();
+        }
+        
+        async function clearAllTasks() {
+            if (confirm("⚠️ Удалить ВСЕ заказы?")) {
+                await database.ref('tasks').remove();
+                showSuccess("✅ Все заказы удалены");
+                showAdminPanel();
+            }
+        }
+        
+        async function showSchedulePanel() {
+            const schedule = await database.ref('schedule').once('value');
+            const scheduleData = schedule.val() || {};
+            const tasks = await loadTasks();
+            const bookedTimes = Object.values(tasks).map(t => t.appointmentTime).filter(t => t);
+            
+            let html = `<div class="card"><h3>📅 РАСПИСАНИЕ</h3><div style="display: flex; flex-wrap: wrap; gap: 10px;">`;
+            for (const [time, data] of Object.entries(scheduleData).sort()) {
+                const isBooked = bookedTimes.includes(time);
+                html += `
+                    <div style="background: #252540; border-radius: 20px; padding: 10px; text-align: center; min-width: 100px;">
+                        <div style="font-size: 1.2em; font-weight: bold; color: #05d9e8;">${time}</div>
+                        <div style="color: ${isBooked ? '#ff0000' : (data.available ? '#00ff66' : '#ff6600')};">${isBooked ? 'ЗАНЯТ' : (data.available ? 'СВОБОДЕН' : 'БЛОК')}</div>
+                        <button onclick="toggleSlot('${time}')" class="btn-sm">${data.available ? '🔒' : '🔓'}</button>
+                        <button onclick="removeSlot('${time}')" class="btn-sm btn-danger">🗑</button>
+                    </div>
+                `;
+            }
+            html += `</div></div>
+            <div class="card"><h3>➕ ДОБАВИТЬ СЛОТ</h3>
+            <select id="newHour"><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option></select>
+            <select id="newMinute"><option>00</option><option>15</option><option>30</option><option>45</option></select>
+            <button onclick="addTimeSlot()" class="btn-success">➕ ДОБАВИТЬ</button></div>`;
+            
+            const app = document.getElementById('app');
+            app.innerHTML += `<div id="schedulePanel" style="margin-top: 20px;">${html}</div>`;
+        }
+        
+        async function toggleSlot(time) {
+            const schedule = await database.ref('schedule').once('value');
+            const scheduleData = schedule.val() || {};
+            if (scheduleData[time]) {
+                scheduleData[time].available = !scheduleData[time].available;
+                await database.ref('schedule').set(scheduleData);
+                showSuccess(`Слот ${time} ${scheduleData[time].available ? 'доступен' : 'заблокирован'}`);
+                showSchedulePanel();
+            }
+        }
+        
+        async function removeSlot(time) {
+            const schedule = await database.ref('schedule').once('value');
+            const scheduleData = schedule.val() || {};
+            delete scheduleData[time];
+            await database.ref('schedule').set(scheduleData);
+            showSuccess(`Слот ${time} удалён`);
+            showSchedulePanel();
+        }
+        
+        async function addTimeSlot() {
+            const hour = document.getElementById('newHour').value;
+            const minute = document.getElementById('newMinute').value;
+            const time = `${hour}:${minute}`;
+            const schedule = await database.ref('schedule').once('value');
+            const scheduleData = schedule.val() || {};
+            if (!scheduleData[time]) {
+                scheduleData[time] = { available: true, bookedBy: null };
+                await database.ref('schedule').set(scheduleData);
+                showSuccess(`Слот ${time} добавлен`);
+                showSchedulePanel();
+            } else {
+                showError(`Слот ${time} уже существует`);
+            }
+        }
+        
+        async function showCheckLogs() {
+            const snapshot = await chekiDatabase.ref('checkLogs').once('value');
+            const logs = snapshot.val() || {};
+            let logsHtml = '<div class="card"><h3>📊 ЛОГ ЧЕКОВ (ВТОРАЯ БАЗА)</h3><div style="max-height: 400px; overflow-y: auto;">';
+            
+            const sorted = Object.values(logs).sort((a, b) => b.timestamp - a.timestamp);
+            let totalSum = 0;
+            let totalOrders = 0;
+            
+            for (const log of sorted.slice(0, 100)) {
+                totalSum += log.total;
+                totalOrders++;
+                const itemsText = log.items.map(i => `${i.service} x${i.count}`).join(', ');
+                logsHtml += `
+                    <div style="border-bottom: 1px solid #333; padding: 10px;">
+                        <div><strong>🎫 БИЛЕТ №${log.id}</strong> | ${log.date} | ${log.time}</div>
+                        <div>📦 ${itemsText} = <span style="color: #00ff66;">${log.total} коп</span></div>
+                        <div>🎨 ${log.master} | ⏰ ${log.appointmentTime}</div>
+                        <div>🔑 Код: ${log.code6}</div>
+                    </div>
+                `;
+            }
+            
+            logsHtml += `
+                </div></div>
+                <div class="card" style="text-align: center;">
+                    <div>📊 ВСЕГО ЗАКАЗОВ: <strong style="color: #00ff66;">${totalOrders}</strong></div>
+                    <div>💰 ОБЩАЯ ВЫРУЧКА: <strong style="color: #ffcc00;">${totalSum} коп (${(totalSum/100).toFixed(2)} руб)</strong></div>
+                </div>
+                <button onclick="renderCashierScreen()" class="btn-purple">◀ НАЗАД</button>
+            `;
+            
+            const app = document.getElementById('app');
+            app.innerHTML = `<div class="container">${logsHtml}</div>`;
+        }
+        
+        function addNewWindow() {
+            const newNum = prompt("Номер окна (1-10):");
+            if (!newNum) return;
+            const newPass = prompt("Пароль:");
+            if (!newPass) return;
+            const newName = prompt("Название окна:");
+            if (!newName) return;
+            
+            database.ref(`users/${newNum}`).set({
+                password: newPass, role: "WORKER", name: newName,
+                workStatus: "free", online: false, priority: 5, todayOrders: 0
+            }).then(() => { showSuccess(`Окно ${newName} добавлено`); showAdminPanel(); });
+        }
+        
+        // ============ РЕАЛЬНОЕ ВРЕМЯ ============
+        function startRealtimeUpdates() {
+            database.ref('tasks').on('value', () => {
+                if (currentRole === 'CASHBOX') {
+                    loadWindowsStatus();
+                } else {
+                    loadWorkerTasks();
+                }
+            });
+            database.ref('users').on('value', () => {
+                if (currentRole === 'CASHBOX') loadWindowsStatus();
+            });
+            if (currentRole === 'WORKER') {
+                database.ref(`commands/${currentUser}`).on('value', (snapshot) => {
+                    const command = snapshot.val();
+                    if (command && command.action === 'logout') {
+                        showError("🔒 Администратор вышел из вашего аккаунта!");
+                        setTimeout(() => logout(), 2000);
+                    }
+                });
+            }
         }
         
         // ============ ЗАПУСК ============
-        (async () => {
-            await initVoice();
-            await initDefaults();
-            renderLogin();
-        })();
+        initTTS();
+        initDefaultUsers().then(() => {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                const user = JSON.parse(savedUser);
+                currentUser = user.windowNumber;
+                currentRole = user.role;
+                currentWindow = user.name;
+                if (currentRole === 'CASHBOX') {
+                    startProblemListener();
+                    startQueueListener();
+                    renderCashierScreen();
+                } else {
+                    renderWorkerScreen();
+                }
+            } else {
+                renderLoginScreen();
+            }
+        });
     </script>
 </body>
 </html>
