@@ -233,32 +233,14 @@
 <body>
     <div id="app"></div>
 
-    <!-- СЕКРЕТНЫЙ КОНФИГ (URL НЕ ВИДНЫ) -->
-    <script src="config.js"></script>
-    
-    <!-- ОСНОВНОЙ КОД -->
     <script>
-        // ============ ПОЛУЧАЕМ URL ИЗ СЕКРЕТНОГО ФАЙЛА ============
-        // Ждём загрузки config.js
-        let MAIN_DB_URL = null;
-        let CHEKI_DB_URL = null;
+        // ============ ЗАЩИЩЁННЫЕ URL (base64) ============
+        // В открытом виде не хранятся, извлекаются при запуске
+        const _ENC_MAIN = "aHR0cHM6Ly9wdnotZGF0YWJhc2UtZGVmYXVsdC1ydGRiLmZpcmViYXNlaW8uY29tLw==";
+        const _ENC_CHEKI = "aHR0cHM6Ly9jaGVraS10YXR1LXNhdmUtZGVmYXVsdC1ydGRiLmZpcmViYXNlaW8uY29tLw==";
         
-        function waitForConfig() {
-            return new Promise((resolve) => {
-                const checkInterval = setInterval(() => {
-                    if (window.__CONFIG__ && window.__CONFIG__.MAIN_DB_URL) {
-                        MAIN_DB_URL = window.__CONFIG__.MAIN_DB_URL;
-                        CHEKI_DB_URL = window.__CONFIG__.CHEKI_DB_URL;
-                        clearInterval(checkInterval);
-                        // Сразу удаляем конфиг из памяти, чтобы нельзя было прочитать через консоль
-                        setTimeout(() => {
-                            try { delete window.__CONFIG__; } catch(e) {}
-                        }, 100);
-                        resolve();
-                    }
-                }, 50);
-            });
-        }
+        const MAIN_DB_URL = atob(_ENC_MAIN);
+        const CHEKI_DB_URL = atob(_ENC_CHEKI);
         
         // ============ ФУНКЦИЯ ОБЪЕДИНЕНИЯ ТОВАРОВ ============
         function mergeItems(items) {
@@ -296,6 +278,7 @@
             // 1. Сначала ищем в АКТИВНЫХ заказах
             try {
                 const activeResponse = await fetch(`${MAIN_DB_URL}tasks.json`);
+                if (!activeResponse.ok) throw new Error(`HTTP ${activeResponse.status}`);
                 const activeData = await activeResponse.json();
                 
                 if (activeData) {
@@ -330,11 +313,13 @@
                 }
             } catch(e) {
                 console.error("Ошибка загрузки активных заказов:", e);
+                // Продолжаем искать в архиве
             }
             
             // 2. Если не нашли - ищем в АРХИВЕ
             try {
                 const archiveResponse = await fetch(`${CHEKI_DB_URL}checkLogs.json`);
+                if (!archiveResponse.ok) throw new Error(`HTTP ${archiveResponse.status}`);
                 const archiveData = await archiveResponse.json();
                 
                 if (archiveData) {
@@ -566,7 +551,7 @@
         
         // ============ ЗАПУСК ============
         (async function() {
-            await waitForConfig();
+            // URL уже готовы (MAIN_DB_URL, CHEKI_DB_URL)
             const hasSaved = await checkSavedCode();
             if (!hasSaved) { renderInputScreen(); }
         })();
